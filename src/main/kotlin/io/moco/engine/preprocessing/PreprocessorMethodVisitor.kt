@@ -14,16 +14,17 @@ class PreprocessorMethodVisitor(
     exceptions: Array<String?>?
 ) : MethodNode(ASMInfoUtil.ASM_VERSION, access, name, desc, signature, exceptions) {
 
-    override fun visitCode() {
-        mv.visitCode()
+    override fun visitEnd() {
         // collect blocks info
-        val blocks: List<Block> = MethodAnalyser.analyse(this)
+        val blocks: MutableList<Block> = MethodAnalyser.analyse(this)
         // TODO: record blocks of method here
         PreprocessorTracker.registerBlock(className, blocks)
 
         // call method of preprocessorTracker to register cut name to test
         mv.visitLdcInsn(className)
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, PreprocessorTracker::class.java.name,
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, PreprocessorTracker.internalClsName,
             "registerCUT", "(Ljava/lang/String;)V", false)
+
+        accept(mv)
     }
 }

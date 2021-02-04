@@ -1,13 +1,14 @@
 package io.moco.engine.test
 
-import mu.KotlinLogging
+//import mu.KotlinLogging
+import io.moco.engine.preprocessing.PreprocessorTracker
 import org.junit.internal.builders.AllDefaultPossibilitiesBuilder
 import org.junit.internal.runners.ErrorReportingRunner
 import org.junit.runner.Runner
 import org.junit.runner.notification.RunListener
 import java.lang.Exception
 import org.junit.runner.notification.RunNotifier
-import org.junit.runners.BlockJUnit4ClassRunner
+//import org.junit.runners.BlockJUnit4ClassRunner
 
 
 class TestItem(
@@ -15,7 +16,7 @@ class TestItem(
 ) {
     val desc: Description = Description(this.cls.name, this.cls.name)
     fun execute(tra: TestResultAggregator) {
-        val runner: Runner = BlockJUnit4ClassRunner(cls)
+        val runner: Runner = createRunner(cls)
         if (runner is ErrorReportingRunner) {
             println("Error while running test of $cls")
 //            logger.warn { "Error while running test of $cls" }
@@ -32,7 +33,7 @@ class TestItem(
     }
 
     companion object {
-        private val logger = KotlinLogging.logger {}
+//        private val logger = KotlinLogging.logger {}
 
         fun createRunner(cls: Class<*>): Runner {
             val builder = AllDefaultPossibilitiesBuilder(true)

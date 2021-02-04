@@ -6,12 +6,18 @@ import java.util.stream.Stream
 
 data class ClassName (val name: String) {
 
+    private val javaName = name.replace('/', '.')
+
     fun getJavaName(): String {
-        return name
+        return javaName
     }
 
     fun getInternalName(): String {
-        return name.replace('.', '/')
+        return name
+    }
+
+    fun getQualifiedName(): String {
+        return name
     }
 
     companion object {
@@ -38,7 +44,7 @@ data class ClassName (val name: String) {
             try {
                 print(loader)
                 return Class.forName(
-                    clsName.getJavaName(), false,
+                    clsName.javaName, false,
                     loader
                 )
             } catch (ex: ClassNotFoundException) {
@@ -63,7 +69,7 @@ data class ClassName (val name: String) {
             return { clsName ->
                 try {
                     val cls: Class<*> = Class.forName(
-                        clsName.getJavaName(), false,
+                        clsName.javaName, false,
                         loader
                     )
                     Stream.of(cls)

@@ -32,7 +32,7 @@ class Codebase(
         val res = file.absolutePath.substring(
             root.absolutePath.length + 1,
             file.absolutePath.length - ".class".length
-        ).replace(File.separatorChar, '.')
+        )
         // Remove inner class in compiled class names at the moment
         val indexOfDollarSign = res.indexOf("$", 0)
         // Return class name

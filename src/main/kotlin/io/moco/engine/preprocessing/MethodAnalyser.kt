@@ -9,7 +9,7 @@ object MethodAnalyser {
 
     // analyse method to collect information about blocks
     // TODO: Add logic to record static initializer and finally blocks
-    fun analyse(mn: MethodNode): List<Block> {
+    fun analyse(mn: MethodNode): MutableList<Block> {
         val blocks: MutableList<Block> = mutableListOf()
         val jumpTargets: MutableSet<LabelNode> = getJumpTargets(mn.instructions)
 

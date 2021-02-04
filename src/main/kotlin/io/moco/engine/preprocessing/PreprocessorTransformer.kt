@@ -1,14 +1,22 @@
 package io.moco.engine.preprocessing
 
 //import jdk.internal.org.objectweb.asm.ClassWriter.COMPUTE_MAXS
-import org.objectweb.asm.ClassReader
-import org.objectweb.asm.ClassWriter
+
+import io.moco.engine.ClassName
+import org.objectweb.asm.*;
+import org.objectweb.asm.ClassWriter.COMPUTE_FRAMES
+import org.objectweb.asm.ClassWriter.COMPUTE_MAXS
+import org.objectweb.asm.util.TraceClassVisitor
 import java.lang.instrument.ClassFileTransformer
 import java.lang.instrument.IllegalClassFormatException
 import java.security.ProtectionDomain
+import java.io.PrintWriter
 
 
-class PreprocessorTransformer : ClassFileTransformer {
+class PreprocessorTransformer(targets: MutableList<ClassName?>) : ClassFileTransformer {
+
+    private val includedTargets = targets
+
     @Throws(IllegalClassFormatException::class)
     override fun transform(
         loader: ClassLoader, className: String,
@@ -18,11 +26,13 @@ class PreprocessorTransformer : ClassFileTransformer {
         return if (isCUT(className)) {
             try {
                 val cr = ClassReader(classfileBuffer)
-                val cw = ClassWriter(cr, 0);
+                val cw = ClassWriter(cr, COMPUTE_MAXS);
+                val cv = TraceClassVisitor(cw, PrintWriter(System.out))
+
                 return try {
                     cr.accept(
                         PreprocessorClassVisitor(cw),
-                        ClassReader.EXPAND_FRAMES
+                        ClassReader.SKIP_FRAMES
                     )
                     cw.toByteArray()
                 } catch (e: Exception) {
@@ -41,6 +51,12 @@ class PreprocessorTransformer : ClassFileTransformer {
 
     // TODO: find a way to choose only source classes -> by using codebase class for instance
     private fun isCUT(className: String): Boolean {
-        return true
+        if (includedTargets.any { it?.getInternalName() == className })  {
+            if (className == "io/moco/engine/preprocessing/PreprocessorTracker") {
+                return false
+            }
+            return true
+        }
+        return false
     }
 }

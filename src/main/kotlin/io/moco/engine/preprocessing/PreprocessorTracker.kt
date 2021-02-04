@@ -4,43 +4,47 @@ import io.moco.engine.tracker.Block
 import java.util.concurrent.ConcurrentHashMap
 
 
-object PreprocessorTracker {
-    //TODO: map from test class to list of CUT
-    var testToCUTTracker: ConcurrentHashMap<String, MutableSet<String>> = ConcurrentHashMap()
-    //TODO: map from CUT to list of blocks
-    var blockTracker: ConcurrentHashMap<String, MutableList<Block>> = ConcurrentHashMap()
-    var cutRecord: MutableSet<String> = mutableSetOf()
+class PreprocessorTracker {
+    companion object {
+        //TODO: map from test class to list of CUT
+        var testToCUTTracker: ConcurrentHashMap<String, MutableSet<String>> = ConcurrentHashMap()
+        //TODO: map from CUT to list of blocks
+        var blockTracker: ConcurrentHashMap<String, MutableList<Block>> = ConcurrentHashMap()
+        var cutRecord: MutableSet<String> = mutableSetOf()
+        val internalClsName: String = PreprocessorTracker::class.qualifiedName.toString().replace(".", "/")
 
 
-    @Synchronized
-    fun registerBlock(className: String, blocks: List<Block>) {
-        if (blockTracker.containsKey(className)) {
-            blockTracker[className]?.addAll(blocks)
-        } else {
-            blockTracker[className] = blocks.toMutableList()
-        }
-    }
-
-    @Synchronized
-    fun registerMappingTestToCUT(testClass: String) {
-        if (testToCUTTracker.containsKey(testClass)) {
-            testToCUTTracker[testClass]?.addAll(cutRecord)
-        } else {
-            testToCUTTracker[testClass] = cutRecord
+        @Synchronized
+        @JvmStatic
+        fun registerBlock(className: String, blocks: List<Block>) {
+            if (blockTracker.containsKey(className)) {
+                blockTracker[className]?.addAll(blocks)
+            } else {
+                blockTracker[className] = blocks.toMutableList()
+            }
         }
 
-        println("co vao day ko")
-        println(testToCUTTracker)
+        @Synchronized
+        @JvmStatic
+        fun registerMappingTestToCUT(testClass: String) {
+            if (testToCUTTracker.containsKey(testClass)) {
+                testToCUTTracker[testClass]?.addAll(cutRecord)
+            } else {
+                testToCUTTracker[testClass] = cutRecord
+            }
+        }
 
-    }
+        @Synchronized
+        @JvmStatic
+        fun registerCUT(cut: String) {
+            cutRecord.add(cut)
+        }
 
-    @Synchronized
-    fun registerCUT(cut: String) {
-        cutRecord.add(cut)
-    }
+        @Synchronized
+        @JvmStatic
+        fun clearTracker() {
+            cutRecord = mutableSetOf()
+        }
 
-    @Synchronized
-    fun clearTracker() {
-        cutRecord = mutableSetOf()
     }
 }

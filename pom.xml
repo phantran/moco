@@ -147,13 +147,13 @@
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm-util</artifactId>
       <version>${asm.version}</version>
-      <scope>test</scope>
+<!--      <scope>test</scope>-->
     </dependency>
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm-analysis</artifactId>
       <version>${asm.version}</version>
-      <scope>test</scope>
+<!--      <scope>test</scope>-->
     </dependency>
     <dependency>
       <groupId>io.github.microutils</groupId>

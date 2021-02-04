@@ -1,9 +1,9 @@
 package io.moco.engine
 
 
-import org.gamekins.mutation.io.BytecodeLoader
-import org.gamekins.mutation.operator.Operator
-import org.gamekins.mutation.tracker.MutatedClassTracker
+import io.moco.engine.io.BytecodeLoader
+import io.moco.engine.operator.Operator
+import io.moco.engine.tracker.MutatedClassTracker
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 
