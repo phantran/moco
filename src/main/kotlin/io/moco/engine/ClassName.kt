@@ -42,7 +42,6 @@ data class ClassName (val name: String) {
             clsName: ClassName, loader: ClassLoader? = ClassLoaderUtil.clsLoader
         ) : Class<*>? {
             try {
-                print(loader)
                 return Class.forName(
                     clsName.javaName, false,
                     loader

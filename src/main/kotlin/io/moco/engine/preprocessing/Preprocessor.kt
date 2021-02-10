@@ -34,11 +34,11 @@ class Preprocessor(
                 if (test != null) {
                     test.call()
                     PreprocessorTracker.registerMappingTestToCUT(test.testItem.cls.name)
+                    PreprocessorTracker.clearTracker()
                 }
             } catch (e: Exception) {
                 println("Error while executing test ${test?.testItem}")
             } finally {
-                PreprocessorTracker.clearTracker()
             }
         }
     }

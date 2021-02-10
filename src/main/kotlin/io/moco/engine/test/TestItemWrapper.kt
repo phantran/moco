@@ -9,6 +9,6 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
         val t0 = System.currentTimeMillis()
         this.testItem.execute(testResultAggregator)
         val executionTime = (System.currentTimeMillis() - t0).toInt()
-        println(executionTime)
+        println("Execution time: $executionTime milliseconds")
     }
 }

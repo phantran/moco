@@ -71,9 +71,9 @@ class PreprocessExporter(dir: String) {
         blocks?.sortedBy { it.getFstIns() }
         blocks?.forEachIndexed { index, item ->
             write(writer, "<block id='$index' first_ins='${item.getFstIns()}' " +
-                    "last_ins='${item.getLstIns()}' 'lines=${
+                    "last_ins='${item.getLstIns()}' lines='${
                         item.getLines().joinToString { it.toString() }
-                    }}'/>\n"
+                    }'/>\n"
             )
         }
         write(writer, "</blocks>\n")

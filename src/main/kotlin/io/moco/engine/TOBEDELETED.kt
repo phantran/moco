@@ -99,16 +99,17 @@ fun main() {
 //    print(PreprocessorTracker.testToCUTTracker)
 //    print(PreprocessorTracker.cutRecord)
 
-    val root =
-        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/"
+    val buildRoot =
+        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target"
     val codeRoot =
         "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
     val testRoot =
         "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
-
-    val temp = Codebase(codeRoot,
-        testRoot, "")
-    print(temp.sourceClassNames)
-    print(temp.testClassesNames)
+//
+//    val temp = Codebase(codeRoot,
+//        testRoot, "")
+//    print(temp.sourceClassNames)
+//    print(temp.testClassesNames)
+    MocoEntryPoint(codeRoot, testRoot, "", buildRoot).execute()
 
 }

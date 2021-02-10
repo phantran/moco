@@ -10,7 +10,6 @@ public class PreprocessorAgent {
 
     public static void premain(final String agentArguments, // NO_UCD
                                final Instrumentation inst) {
-        System.out.println("Mutation agent");
         instrumentation = inst;
     }
 

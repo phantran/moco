@@ -10,9 +10,6 @@ import java.io.File
 import org.apache.maven.project.MavenProject
 
 
-
-
-
 /**
  * Goal which touches a timestamp file.
  */

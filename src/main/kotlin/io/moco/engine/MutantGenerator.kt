@@ -24,6 +24,7 @@ package io.moco.engine
  * @since 1.0
  */
 class MutantGenerator() {
-
-
+    fun dummy() {
+        val a = 1
+    }
 }
