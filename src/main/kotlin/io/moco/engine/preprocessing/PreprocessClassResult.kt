@@ -14,8 +14,8 @@ import io.moco.engine.tracker.Block
  * @constructor Create empty Preprocess result
  */
 data class PreprocessClassResult(
-    val testClassName: String,
+    val testClassesNames: List<String>,
     val classUnderTestName: String,
-    val blockLists: List<Block>,
+    val blockLists: List<Block>?,
 ) {
 }

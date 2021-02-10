@@ -1,29 +1,28 @@
 package io.moco.engine.preprocessing
 
-import java.io.IOException
+import java.net.Socket
 
-class PreprocessorWorker(private val toBeExecutedCls: Class<*>,
-                         private val processArgs: Map<String, String>) {
-    private var process: Process? = null
 
-    @Throws(IOException::class)
-    fun start() {
-        val commandsToProcess: MutableList<String> = mutableListOf()
-        commandsToProcess.add(processArgs["javaExecutable"] as String)
-        if (processArgs["javaAgentPath"] != null) {
-            commandsToProcess.add("-javaagent:" + processArgs["javaAgentPath"] as String)
+object PreprocessorWorker {
+    @JvmStatic
+    fun main(args: List<String>) {
+        var socket: Socket? = null
+        var buildRoot: String = ""  // path to build or target folder of project
+        try {
+            socket = Socket("localhost", args[0].toInt())
+            val codeRoot  = args[1]  // root of the classes under test folder
+            val testRoot = args[2]  // root of the test folder
+            val excludedClasses = args[3]  // classes to be excluded, regex or string
+            buildRoot  = args[4]
+            val analysedCodeBase = Codebase(codeRoot, testRoot, excludedClasses)
+            PreprocessorAgent.addTransformer(PreprocessorTransformer(analysedCodeBase.sourceClassNames))
+            val worker = Preprocessor(analysedCodeBase)
+            worker.preprocessing()
+        } catch (ex: Exception) {
+            ex.printStackTrace(System.out)
+        } finally {
+            PreprocessExporter(buildRoot).savePreprocessResult(PreprocessorTracker.getPreprocessResults())
+            socket?.close()
         }
-        if (processArgs["classPath"] != null) {
-            commandsToProcess.add("-cp " + processArgs["classPath"] as String)
-        }
-        commandsToProcess.add(toBeExecutedCls.name)
-        commandsToProcess.add(processArgs["workerArgs"] as String)
-
-        val processBuilder = ProcessBuilder(commandsToProcess)
-        process = processBuilder.inheritIO().start()
-    }
-
-    fun getProcess(): Process? {
-        return process
     }
 }

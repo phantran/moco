@@ -7,7 +7,7 @@ import java.io.IOException
 
 /**
  * Main
- * This file is used for testing and debugging purpose
+ * This file is only used temporarily for testing and debugging purposes
  */
 
 object JavaProcess {
@@ -58,13 +58,13 @@ object ABC {
     fun main(args: Array<String>) {
 
         val root =
-            File("/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/")
+           "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/"
         val codeRoot =
-            File("/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes")
+           "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
         val testRoot =
-            File("/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes")
+           "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
 
-        val temp = Codebase(root, testRoot, codeRoot)
+        val temp = Codebase(root, testRoot, "")
         PreprocessorAgent.addTransformer(PreprocessorTransformer(temp.sourceClassNames))
 
 
@@ -94,8 +94,21 @@ object ABC {
 }
 
 fun main() {
-    val status = JavaProcess.exec(ABC::class.java, null)
-    println(status)
-    print(PreprocessorTracker.testToCUTTracker)
-    print(PreprocessorTracker.cutRecord)
+//    val status = JavaProcess.exec(ABC::class.java, null)
+//    println(status)
+//    print(PreprocessorTracker.testToCUTTracker)
+//    print(PreprocessorTracker.cutRecord)
+
+    val root =
+        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/"
+    val codeRoot =
+        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
+    val testRoot =
+        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
+
+    val temp = Codebase(codeRoot,
+        testRoot, "")
+    print(temp.sourceClassNames)
+    print(temp.testClassesNames)
+
 }

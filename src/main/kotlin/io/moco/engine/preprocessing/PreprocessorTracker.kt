@@ -11,6 +11,7 @@ class PreprocessorTracker {
         //TODO: map from CUT to list of blocks
         var blockTracker: ConcurrentHashMap<String, MutableList<Block>> = ConcurrentHashMap()
         var cutRecord: MutableSet<String> = mutableSetOf()
+        // Internal class name of ProcessorTracker to be called by asm method visitor
         val internalClsName: String = PreprocessorTracker::class.qualifiedName.toString().replace(".", "/")
 
 
@@ -44,6 +45,20 @@ class PreprocessorTracker {
         @JvmStatic
         fun clearTracker() {
             cutRecord = mutableSetOf()
+        }
+
+        fun getPreprocessResults(): List<PreprocessClassResult> {
+            val res: MutableList<PreprocessClassResult> = mutableListOf()
+            for (cutCls: String in blockTracker.keys) {
+                val recordTestClasses: MutableList<String> = mutableListOf()
+                for (testCls: String in testToCUTTracker.keys) {
+                    if (testToCUTTracker.get(testCls)?.contains(cutCls) == true) {
+                        recordTestClasses.add(testCls)
+                    }
+                }
+                res.add(PreprocessClassResult(recordTestClasses, cutCls, blockTracker.get(cutCls)))
+            }
+            return res
         }
 
     }

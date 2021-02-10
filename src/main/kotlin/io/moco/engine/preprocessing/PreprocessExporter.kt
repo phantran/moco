@@ -1,42 +1,43 @@
 package io.moco.engine.preprocessing
 
+import io.moco.engine.tracker.Block
 import java.io.*
 
 /**
- * Mapping exporter
+ * Preprocess Exporter
  * This class is responsible for exporting the map of class names to test class names to an XML file
  * The exported XML file will be read in each execution to retrieve this mapping information
  * @constructor Create empty Mapping exporter
  *
- * @param baseDir
+ * @param dir
  */
-class MappingExporter(baseDir: String) {
+class PreprocessExporter(dir: String) {
 
     private var storeDir: File? = null
 
     init {
-        val temp = File(baseDir)
+        val temp = File("$dir/moco/preprocess/")
         if (!temp.exists()) {
             temp.mkdirs()
         }
-        storeDir = temp
+        this.storeDir = temp
     }
 
     /**
-     * Save mapping, mapping a map of class under test to test classes
+     * Save preprocess result
      *
-     * @param mappings
+     * @param results
      */
-    fun saveMapping(mappings: MutableMap<String, List<String>>) {
+    fun savePreprocessResult(results: List<PreprocessClassResult>) {
         try {
-            val outWriter = createWriter("testmapping.xml")
+            val outWriter = createWriter()
             write(outWriter, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-            write(outWriter, "<coverage>\n")
-            mappings.map { writeMapping(it, outWriter) }
-            write(outWriter, "</coverage>\n")
+            write(outWriter, "<preprocess_result>\n")
+            results.map { writeResult(it, outWriter) }
+            write(outWriter, "</preprocess_result>\n")
             outWriter.close()
         } catch (e: IOException) {
-            throw RuntimeException("Error while creating test mapping file")
+            throw RuntimeException("Error while saving result to preprocessing file")
         }
     }
 
@@ -46,24 +47,36 @@ class MappingExporter(baseDir: String) {
      * @param file
      * @return
      */
-    fun createWriter(file: String): Writer {
+    private fun createWriter(file: String="storage.xml"): Writer {
         try {
             val fw = FileWriter(storeDir!!.absolutePath + File.separatorChar + file)
             return BufferedWriter(fw)
         } catch (ex: IOException) {
-            throw RuntimeException("Error while creating test mapping file")
+            throw RuntimeException("Error while saving result to preprocessing file")
         }
     }
 
-    private fun writeMapping(entry: Map.Entry<String, List<String>>, writer: Writer) {
-        write(writer, "<entry classname='" + entry.key + "'>\n")
+    private fun writeResult(entry: PreprocessClassResult, writer: Writer) {
+        write(writer, "<entry classname='" + entry.classUnderTestName + "'>\n")
         write(writer, "<tests>\n")
-        val tests: List<String> = entry.value
+        val tests: List<String> = entry.testClassesNames
         tests.sorted()
         for (test: String in tests) {
             write(writer, "<test name='" + escapeHtmlChars(test) + "'/>\n")
         }
         write(writer, "</tests>\n")
+
+        write(writer, "<blocks>\n")
+        val blocks: List<Block>? = entry.blockLists
+        blocks?.sortedBy { it.getFstIns() }
+        blocks?.forEachIndexed { index, item ->
+            write(writer, "<block id='$index' first_ins='${item.getFstIns()}' " +
+                    "last_ins='${item.getLstIns()}' 'lines=${
+                        item.getLines().joinToString { it.toString() }
+                    }}'/>\n"
+            )
+        }
+        write(writer, "</blocks>\n")
         write(writer, "</entry>\n")
     }
 
@@ -81,7 +94,7 @@ class MappingExporter(baseDir: String) {
      * @param s
      * @return
      */
-    fun escapeHtmlChars(s: String): String {
+    private fun escapeHtmlChars(s: String): String {
         val stringBuilder = StringBuilder()
         for (element in s) {
             val v = element.toInt()

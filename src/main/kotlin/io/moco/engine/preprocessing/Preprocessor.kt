@@ -11,9 +11,7 @@ import java.util.concurrent.Executors
 
 
 class Preprocessor(
-    val workspace: File,
-    val codeBase: Codebase,
-    val preprocessResults: List<PreprocessClassResult>?
+    private val codeBase: Codebase,
 ) {
     /**
     This class is responsible for parsing the whole codebase to get the information of
@@ -31,17 +29,6 @@ class Preprocessor(
     private fun collectInfo(
         wrappedTests: Collection<TestItemWrapper?>,
     ) {
-        /*
-        Fixme: Execute tests synchronously
-        // Collect test mapping and block information concurrently by using thread pool
-        val executorService = Executors.newFixedThreadPool(3)
-        for (test: TestItemWrapper? in tests) {
-            if (test != null) {
-                executorService.submit(test)
-            }
-        }
-        executorService.shutdown()
-         */
         for (test: TestItemWrapper? in wrappedTests) {
             try {
                 if (test != null) {
@@ -58,7 +45,8 @@ class Preprocessor(
 
     private fun testClassesToTestItems(): List<TestItem?> {
         // convert from test classes to test items so it can be executed
-        return codeBase.testClassesNames.map { it?.let { ClassName.clsNameToClass(it)?.let { it1 -> TestItem(it1) } } }.toList()
+        return codeBase.testClassesNames.map { it?.let { ClassName.clsNameToClass(it)?.let { it1 -> TestItem(it1) } } }
+            .toList()
     }
 
     private fun wrapTestItem(testItems: List<TestItem?>): List<TestItemWrapper?> {
@@ -66,6 +54,4 @@ class Preprocessor(
         return testItems.map { it?.let { TestItemWrapper(it, TestResultAggregator(mutableListOf())) } }.toList()
 
     }
-
-    // TODO: Implement actually instrumentation by executing test item
 }
