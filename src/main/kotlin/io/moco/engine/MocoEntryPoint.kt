@@ -15,10 +15,14 @@ class MocoEntryPoint(
     // (which test classes are responsible for which classes under test)
 
     fun execute() {
+        // Preprocessing step
         val workerArgs = mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot)
         val workerProcess = WorkerProcess(PreprocessorWorker.javaClass,
             getPreprocessWorkerArgs(), workerArgs)
         workerProcess.start()
+
+        // Mutation step
+
     }
 
     private fun getPreprocessWorkerArgs(): MutableMap<String, Any> {

@@ -2,7 +2,6 @@ package io.moco.engine.preprocessing
 
 import io.moco.engine.tracker.Block
 
-
 /**
  * Preprocess result of a class under test
  * An instant of this class contains information that is collected during preprocessing of codebase of a specific class
@@ -14,8 +13,8 @@ import io.moco.engine.tracker.Block
  * @constructor Create empty Preprocess result
  */
 data class PreprocessClassResult(
-    val testClassesNames: List<String>,
     val classUnderTestName: String,
-    val blockLists: List<Block>?,
+    val testClasses: MutableList<String>,
+    val blockLists: MutableList<Block>?,
 ) {
 }

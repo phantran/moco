@@ -58,11 +58,11 @@ object ABC {
     fun main(args: Array<String>) {
 
         val root =
-           "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/"
+            "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/"
         val codeRoot =
-           "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
+            "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
         val testRoot =
-           "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
+            "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
 
         val temp = Codebase(root, testRoot, "")
         PreprocessorAgent.addTransformer(PreprocessorTransformer(temp.sourceClassNames))
@@ -82,9 +82,9 @@ object ABC {
         PreprocessorTracker.registerMappingTestToCUT(beanClass.canonicalName)
 
         for (failure in result.failures) {
-            println("fail ho gaya$failure")
+            println("$failure")
         }
-        System.out.println(
+        println(
             "passed:" + result.wasSuccessful() +
                     PreprocessorTracker.cutRecord +
                     PreprocessorTracker.testToCUTTracker +
@@ -105,11 +105,7 @@ fun main() {
         "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
     val testRoot =
         "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
-//
-//    val temp = Codebase(codeRoot,
-//        testRoot, "")
-//    print(temp.sourceClassNames)
-//    print(temp.testClassesNames)
-    MocoEntryPoint(codeRoot, testRoot, "", buildRoot).execute()
 
+    MocoEntryPoint(codeRoot, testRoot, "", buildRoot).execute()
+    val abc = PreprocessExporter(buildRoot).retrievePreprocessResultFromCsv()
 }

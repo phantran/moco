@@ -27,15 +27,15 @@ object MethodAnalyser {
                 blockLines.add(ins.line)
                 lastLine = ins.line
             } else if (jumpTargets.contains(ins) && blockStart != i) {
-                if (blockLines.isEmpty() && blocks.size > 0 && !blocks[blocks.size - 1].getLines().isEmpty()) {
-                    blockLines.addAll(blocks[blocks.size - 1].getLines())
+                if (blockLines.isEmpty() && blocks.size > 0 && blocks[blocks.size - 1].lines.isNotEmpty()) {
+                    blockLines.addAll(blocks[blocks.size - 1].lines)
                 }
                 blocks.add(Block(blockStart, i - 1, blockLines))
                 blockStart = i
                 blockLines = mutableSetOf()
             } else if (blockEnding(ins)) {
-                if (blockLines.isEmpty() && blocks.size > 0 && !blocks[blocks.size - 1].getLines().isEmpty()) {
-                    blockLines.addAll(blocks[blocks.size - 1].getLines())
+                if (blockLines.isEmpty() && blocks.size > 0 && blocks[blocks.size - 1].lines.isNotEmpty()) {
+                    blockLines.addAll(blocks[blocks.size - 1].lines)
                 }
                 blocks.add(Block(blockStart, i, blockLines))
                 blockStart = i + 1
