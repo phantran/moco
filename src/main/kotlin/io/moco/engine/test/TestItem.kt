@@ -34,7 +34,6 @@ class TestItem(
 
     companion object {
 //        private val logger = KotlinLogging.logger {}
-
         fun createRunner(cls: Class<*>): Runner {
             val builder = AllDefaultPossibilitiesBuilder(true)
             try {

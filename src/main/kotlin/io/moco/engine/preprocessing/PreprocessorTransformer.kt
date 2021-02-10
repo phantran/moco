@@ -1,7 +1,5 @@
 package io.moco.engine.preprocessing
 
-//import jdk.internal.org.objectweb.asm.ClassWriter.COMPUTE_MAXS
-
 import io.moco.engine.ClassName
 import org.objectweb.asm.*;
 import org.objectweb.asm.ClassWriter.COMPUTE_FRAMES
@@ -27,8 +25,7 @@ class PreprocessorTransformer(targets: MutableList<ClassName?>) : ClassFileTrans
             try {
                 val cr = ClassReader(classfileBuffer)
                 val cw = ClassWriter(cr, COMPUTE_MAXS);
-                val cv = TraceClassVisitor(cw, PrintWriter(System.out))
-
+//                val cv = TraceClassVisitor(cw, PrintWriter(System.out))
                 return try {
                     cr.accept(
                         PreprocessorClassVisitor(cw),
