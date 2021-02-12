@@ -1,6 +1,7 @@
-package io.moco.engine
+package io.moco.engine.mutation
 
-
+import io.moco.engine.ClassName
+import io.moco.engine.DefaultClassVisitor
 import io.moco.engine.io.BytecodeLoader
 import io.moco.engine.operator.Operator
 import io.moco.engine.tracker.MutatedClassTracker
@@ -16,8 +17,8 @@ import org.objectweb.asm.ClassWriter
  */
 
 class MutationFinder(
-    val bytecodeLoader: BytecodeLoader,
-    val operators: List<Operator>?
+    private val bytecodeLoader: BytecodeLoader,
+    private val operators: List<Operator>?
 ) {
     /**
      * Find possible mutations
@@ -25,9 +26,9 @@ class MutationFinder(
      * @param clsToMutate
      * @return
      *///TODO: add filter as a property of this class to excluded classes and functions specify by users
-    fun findPossibleMutations(
+    fun findPossibleMutationsOfClass(
         clsToMutate: ClassName
-    ): List<Mutant?> {
+    ): List<Mutant> {
         val tracker = MutatedClassTracker()
         val byteArray: ByteArray? = bytecodeLoader.getByteCodeArray(
             clsToMutate.getInternalName()
@@ -35,13 +36,13 @@ class MutationFinder(
         if (byteArray != null) {
             return visitAndCollectMutations(tracker, byteArray)
         }
-        return listOf<Mutant>()
+        return listOf()
     }
 
 
     private fun visitAndCollectMutations(
         tracker: MutatedClassTracker, clsToMutate: ByteArray
-    ): List<Mutant?> {
+    ): List<Mutant> {
         val cr = ClassReader(clsToMutate)
         val filter = listOf<String>()
         val mcv = MutatedClassVisitor(DefaultClassVisitor(), tracker, filter, operators)

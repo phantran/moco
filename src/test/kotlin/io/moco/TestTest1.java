@@ -1,6 +1,6 @@
 package io.moco;
 
-import io.moco.engine.MutantGenerator;
+import io.moco.engine.DummyForTesting;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -10,7 +10,7 @@ public class TestTest1 {
 
     @Test
     public void test_hihi() {
-        MutantGenerator t = new MutantGenerator();
+        DummyForTesting t = new DummyForTesting();
         t.dummy();
         int a = 1;
         int b = 2;

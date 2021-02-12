@@ -1,5 +1,10 @@
 package io.moco.engine
 
+import io.moco.engine.io.BytecodeLoader
+import io.moco.engine.mutation.Mutant
+import io.moco.engine.mutation.MutationFinder
+import io.moco.engine.mutation.MutationGenerator
+import io.moco.engine.operator.Operator
 import io.moco.engine.preprocessing.PreprocessorWorker
 import java.io.File
 import java.net.ServerSocket
@@ -15,17 +20,40 @@ class MocoEntryPoint(
     // (which test classes are responsible for which classes under test)
 
     fun execute() {
+        //TODO: replace later
+        val classpath = System.getProperty("java.class.path")
+        val temp0 = "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
+        val temp1 =
+            "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin"
+        val temp2 =
+            "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
+        val cp = "$classpath:$temp0:$temp1:$temp2"
+        //TODO: replace included operators by params from mojo configuration
+        val temp = listOf<String>("AOR", "LCR", "ROR", "UOI")
+
+
         // Preprocessing step
         val workerArgs = mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot)
         val workerProcess = WorkerProcess(PreprocessorWorker.javaClass,
-            getPreprocessWorkerArgs(), workerArgs)
+            getPreprocessWorkerArgs(cp), workerArgs)
         workerProcess.start()
 
         // Mutation step
+        // Mutations collecting
+        val toBeMutatedCodeBase = Codebase(codeRoot, testRoot, excludedClasses)
+        val includedMutationOperators: List<Operator> = temp.mapNotNull { Operator.nameToOperator(it) }
+        val clsLoader = BytecodeLoader(cp)
+        val mutationFinder = MutationFinder(clsLoader, includedMutationOperators)
+        val mGen = MutationGenerator(toBeMutatedCodeBase, mutationFinder)
+        val foundMutations: Map<ClassName, List<Mutant>> = mGen.codeBaseMutationAnalyze()
+
+        // Mutation test generating and executing
+
 
     }
 
-    private fun getPreprocessWorkerArgs(): MutableMap<String, Any> {
+    private fun getPreprocessWorkerArgs(cp: Any): MutableMap<String, Any> {
+        // TODO: will be replaced by configuration from Maven configuration parameters
         val preprocessWorkerArgs: MutableMap<String, Any> = mutableMapOf()
         preprocessWorkerArgs["port"] = ServerSocket(0)
         val javaHome = System.getProperty("java.home")
@@ -35,13 +63,7 @@ class MocoEntryPoint(
         preprocessWorkerArgs["javaExecutable"] = javaBin
         val agentArg = "-javaagent:MyJar.jar"
         preprocessWorkerArgs["javaAgentJarPath"] = agentArg
-        val classpath = System.getProperty("java.class.path")
-        val temp = "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
-        val temp1 =
-            "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin"
-        val temp2 =
-            "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
-        preprocessWorkerArgs["classPath"] = "$classpath:$temp:$temp1:$temp2"
+        preprocessWorkerArgs["classPath"] = cp
         return preprocessWorkerArgs
     }
 }

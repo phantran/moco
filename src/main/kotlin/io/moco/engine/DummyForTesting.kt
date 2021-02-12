@@ -16,14 +16,13 @@
 
 package io.moco.engine
 
-
 /**
  * Mutation Generator to create mutants.
  *
  * @author Tran Phan
  * @since 1.0
  */
-class MutantGenerator() {
+class DummyForTesting() {
     fun dummy() {
         val a = 1
     }

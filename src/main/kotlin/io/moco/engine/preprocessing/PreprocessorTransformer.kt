@@ -11,7 +11,7 @@ import java.security.ProtectionDomain
 import java.io.PrintWriter
 
 
-class PreprocessorTransformer(private val includedTargets: MutableList<ClassName?>) : ClassFileTransformer {
+class PreprocessorTransformer(private val includedTargets: MutableList<ClassName>) : ClassFileTransformer {
 
     @Throws(IllegalClassFormatException::class)
     override fun transform(

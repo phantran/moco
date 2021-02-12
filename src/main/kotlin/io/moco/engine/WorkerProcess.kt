@@ -4,9 +4,11 @@ import java.io.IOException
 import java.lang.Exception
 import java.net.ServerSocket
 
-class WorkerProcess(private val toBeExecutedWorker: Class<*>,
-                    private val processArgs: Map<String, Any>,
-                    private val workerArgs: List<String>?) {
+class WorkerProcess(
+    private val toBeExecutedWorker: Class<*>,
+    private val processArgs: Map<String, Any>,
+    private val workerArgs: List<String>?
+) {
     private var process: Process? = null
 
     @Throws(IOException::class)

@@ -1,7 +1,7 @@
 package io.moco.engine.tracker
 
 import io.moco.engine.ClassInfo
-import io.moco.engine.Mutant
+import io.moco.engine.mutation.Mutant
 
 
 class MutatedClassTracker {

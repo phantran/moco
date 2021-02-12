@@ -1,6 +1,5 @@
-package io.moco.engine.preprocessing
+package io.moco.engine
 
-import io.moco.engine.ClassName
 import java.io.File
 
 class Codebase(
@@ -9,14 +8,14 @@ class Codebase(
     testPath: String,
     val excludedClasses: String="",  // comma separated classes names to be excluded
 ) {
-    val codeRoots: List<File> = codePath.split(",").map { File(it) }
-    val testRoots: List<File> = testPath.split(",").map { File(it) }
-    val sourceClassNames: MutableList<ClassName?> = getAllClassNames(codeRoots)
-    val testClassesNames: MutableList<ClassName?> = getAllClassNames(testRoots)
+    private val codeRoots: List<File> = codePath.split(",").map { File(it) }
+    private val testRoots: List<File> = testPath.split(",").map { File(it) }
+    val sourceClassNames: MutableList<ClassName> = getAllClassNames(codeRoots)
+    val testClassesNames: MutableList<ClassName> = getAllClassNames(testRoots)
     private var curRoot: File = File("")
 
-    private fun getAllClassNames(roots: List<File>): MutableList<ClassName?> {
-        val res: MutableList<ClassName?> = mutableListOf()
+    private fun getAllClassNames(roots: List<File>): MutableList<ClassName> {
+        val res: MutableList<ClassName> = mutableListOf()
         for (root: File in roots) {
             curRoot = root
             res.addAll(getClassNames(root))
@@ -24,8 +23,8 @@ class Codebase(
         return res
     }
 
-    private fun getClassNames(curRoot: File): MutableList<ClassName?> {
-        val clsNames: MutableList<ClassName?> = mutableListOf()
+    private fun getClassNames(curRoot: File): MutableList<ClassName> {
+        val clsNames: MutableList<ClassName> = mutableListOf()
         val listOfFiles = curRoot.listFiles()
         if (listOfFiles != null) {
             for (file in listOfFiles) {

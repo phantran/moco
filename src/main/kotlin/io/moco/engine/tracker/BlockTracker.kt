@@ -1,7 +1,7 @@
 package io.moco.engine.tracker
 
 
-class BlockTracker  {
+class BlockTracker {
     var currBlockOfClass = 0
         private set
     var currBlockOfMethod = 0

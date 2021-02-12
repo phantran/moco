@@ -94,10 +94,6 @@ object ABC {
 }
 
 fun main() {
-//    val status = JavaProcess.exec(ABC::class.java, null)
-//    println(status)
-//    print(PreprocessorTracker.testToCUTTracker)
-//    print(PreprocessorTracker.cutRecord)
 
     val buildRoot =
         "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target"
@@ -108,4 +104,6 @@ fun main() {
 
     MocoEntryPoint(codeRoot, testRoot, "", buildRoot).execute()
     val abc = PreprocessExporter(buildRoot).retrievePreprocessResultFromCsv()
+
+
 }

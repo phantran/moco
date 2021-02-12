@@ -1,14 +1,15 @@
 package io.moco.engine.tracker
 
 import io.moco.engine.ClassInfo
-import io.moco.engine.Mutant
-import io.moco.engine.MutatedMethodLocation
+import io.moco.engine.mutation.Mutant
+import io.moco.engine.mutation.MutatedMethodLocation
 import io.moco.engine.operator.Operator
 import java.util.*
 
 class MutatedMethodTracker (
     val mutatedClassTracker: MutatedClassTracker,
-    val mutatedMethodLocation: MutatedMethodLocation) {
+    val mutatedMethodLocation: MutatedMethodLocation
+) {
 
     private var instructionIndex = 0
     private var currMutatedLineNumber = 0

@@ -1,9 +1,7 @@
-package io.moco.engine
+package io.moco.engine.mutation
 
-
-import io.moco.engine.operator.Operator
+import io.moco.engine.TestCaseInfo
 import java.util.*
-
 
 data class Mutant(
     val id: String = UUID.randomUUID().toString(),

@@ -7,7 +7,7 @@ import org.objectweb.asm.MethodVisitor
 
 
 class ReplacementOperator: Operator {
-    val operatorName = "AOR"
+    private val operatorName = "AOR"
 
     override fun generateVisitor(
         tracker: MutatedMethodTracker,

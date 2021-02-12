@@ -1,15 +1,16 @@
-package io.moco.engine
+package io.moco.engine.mutation
 
-
+import io.moco.engine.ClassInfo
+import io.moco.engine.ClassName
+import io.moco.engine.MethodInfo
+import io.moco.engine.MethodName
 import io.moco.engine.operator.Operator
 import io.moco.engine.tracker.MutatedClassTracker
 import io.moco.engine.tracker.MutatedMethodTracker
 import io.moco.utils.ASMInfoUtil
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
-
 import java.util.HashSet
-
 
 class MutatedClassVisitor(
     delegateClassVisitor: ClassVisitor?, val tracker: MutatedClassTracker,
@@ -27,10 +28,12 @@ class MutatedClassVisitor(
         signature: String, superName: String, interfaces: Array<String>
     ) {
         super.visit(version, access, name, signature, superName, interfaces)
-        tracker.setClsInfo(ClassInfo(
-            version, access, name, signature,
-            superName, interfaces
-        ))
+        tracker.setClsInfo(
+            ClassInfo(
+                version, access, name, signature,
+                superName, interfaces
+            )
+        )
     }
 
     override fun visitSource(source: String, debug: String) {
@@ -48,8 +51,9 @@ class MutatedClassVisitor(
         val methodTracker = MutatedMethodTracker(
             tracker, MutatedMethodLocation(
                 clsInfo?.let { ClassName.fromString(it.name) },
-                MethodName(methodName), methodDescriptor)
+                MethodName(methodName), methodDescriptor
             )
+        )
 
         val methodVisitor = cv.visitMethod(
             access, methodName,

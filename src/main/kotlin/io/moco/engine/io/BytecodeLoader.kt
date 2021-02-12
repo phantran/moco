@@ -6,11 +6,15 @@ import java.nio.ByteBuffer
 import java.nio.channels.Channels
 
 
-class BytecodeLoader {
-    val clsPaths: Set<File>
+class BytecodeLoader(cp: String?) {
+    private val clsPaths: Set<File>
 
     init {
-        clsPaths = initClsPath()
+        if (cp == null) {
+            clsPaths = initClsPath()
+        } else {
+            clsPaths = cp.split(",").map { File(it.trim()) }.toSet()
+        }
     }
 
     private fun initClsPath(): Set<File> {
@@ -32,7 +36,6 @@ class BytecodeLoader {
             e.printStackTrace()
             throw IOException("Error handling while initializing classpath of bytecode loader")
         }
-
         return res
     }
 
