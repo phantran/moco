@@ -1,12 +1,11 @@
 package io.moco.engine
 
 import io.moco.engine.io.BytecodeLoader
-import io.moco.engine.mutation.Mutant
+import io.moco.engine.mutation.Mutation
 import io.moco.engine.mutation.MutationFinder
 import io.moco.engine.mutation.MutationGenerator
 import io.moco.engine.operator.Operator
 import io.moco.engine.preprocessing.PreprocessorWorker
-import io.moco.engine.test.TestItemWrapper
 import java.io.File
 import java.net.ServerSocket
 
@@ -46,7 +45,7 @@ class MocoEntryPoint(
         val clsLoader = BytecodeLoader(cp)
         val mutationFinder = MutationFinder(clsLoader, includedMutationOperators)
         val mGen = MutationGenerator(toBeMutatedCodeBase, mutationFinder)
-        val foundMutations: Map<ClassName, List<Mutant>> = mGen.codeBaseMutationAnalyze()
+        val foundMutations: Map<ClassName, List<Mutation>> = mGen.codeBaseMutationAnalyze()
 
 
 

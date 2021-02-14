@@ -1,31 +1,32 @@
 package io.moco.engine.tracker
 
 import io.moco.engine.ClassInfo
-import io.moco.engine.mutation.Mutant
+import io.moco.engine.mutation.Mutation
+import io.moco.engine.mutation.MutationID
 
 
 class MutatedClassTracker {
     private var consideredMutantID: String? = null
-    private var mutations: MutableList<Mutant> = mutableListOf()
+    private var mutations: MutableList<Mutation> = mutableListOf()
     private var clsInfo: ClassInfo? = null
     private var fileName: String? = null
 
     val javaClsName: String?
         get() = clsInfo?.name?.replace("/", ".")
 
-    fun getMutation(mutantID: String): List<Mutant> {
-        return mutations.filter{ it.id == mutantID }
+    fun getMutation(mutationID: MutationID): List<Mutation> {
+        return mutations.filter{ it.mutationID == mutationID }
     }
 
-    fun contextHasMutation(newMutantID: String): Boolean {
-        return mutations.any{ it.id == newMutantID }
+    fun contextHasMutation(newMutationID: MutationID): Boolean {
+        return mutations.any{ it.mutationID == newMutationID }
     }
 
-    fun addMutation(mutation: Mutant) {
+    fun addMutation(mutation: Mutation) {
         mutations.add(mutation)
     }
 
-    fun getCollectedMutations(): List<Mutant> {
+    fun getCollectedMutations(): List<Mutation> {
         return mutations
     }
 

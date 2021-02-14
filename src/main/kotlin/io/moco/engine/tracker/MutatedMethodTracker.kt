@@ -1,8 +1,9 @@
 package io.moco.engine.tracker
 
 import io.moco.engine.ClassInfo
-import io.moco.engine.mutation.Mutant
+import io.moco.engine.mutation.Mutation
 import io.moco.engine.mutation.MutatedMethodLocation
+import io.moco.engine.mutation.MutationID
 import io.moco.engine.operator.Operator
 import java.util.*
 
@@ -17,28 +18,24 @@ class MutatedMethodTracker (
 
     fun registerMutant(
         operator: Operator, description: String
-    ): String {
-        val newMutantID = UUID.randomUUID().toString()
-        val newMutant = Mutant(
-            newMutantID,
+    ): MutationID {
+        val newMutationID = MutationID(mutatedMethodLocation, mutableListOf(instructionIndex), operator.getName())
+        val newMutant = Mutation(
+            newMutationID,
             mutatedClassTracker.getFileName(),
             currMutatedLineNumber,
             description,
-            mutatedMethodLocation,
-            mutableListOf(instructionIndex),
-            operator.getName(),
-//            mutatedClassTracker.block,
             )
         this.mutatedClassTracker.addMutation(newMutant)
-        return newMutantID
+        return newMutationID
     }
 
 
     val classInfo: ClassInfo?
         get() = mutatedClassTracker.getClsInfo()
 
-    fun mutantExists(newMutantId: String): Boolean {
-        return mutatedClassTracker.contextHasMutation(newMutantId)
+    fun mutantExists(newMutationID: MutationID): Boolean {
+        return mutatedClassTracker.contextHasMutation(newMutationID)
     }
 
     fun disableMutations(reason: String) {

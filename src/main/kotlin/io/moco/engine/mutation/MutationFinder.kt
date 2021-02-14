@@ -28,7 +28,7 @@ class MutationFinder(
      *///TODO: add filter as a property of this class to excluded classes and functions specify by users
     fun findPossibleMutationsOfClass(
         clsToMutate: ClassName
-    ): List<Mutant> {
+    ): List<Mutation> {
         val tracker = MutatedClassTracker()
         val byteArray: ByteArray? = bytecodeLoader.getByteCodeArray(
             clsToMutate.getInternalName()
@@ -42,7 +42,7 @@ class MutationFinder(
 
     private fun visitAndCollectMutations(
         tracker: MutatedClassTracker, clsToMutate: ByteArray
-    ): List<Mutant> {
+    ): List<Mutation> {
         val cr = ClassReader(clsToMutate)
         val filter = listOf<String>()
         val mcv = MutatedClassVisitor(DefaultClassVisitor(), tracker, filter, operators)
@@ -57,21 +57,21 @@ class MutationFinder(
      * @param mutation
      * @return
      */
-    fun retrieveMutant(mutation: Mutant): Mutant {
+    fun retrieveMutant(mutation: Mutation): Mutation {
         val tracker = MutatedClassTracker()
-        val clsJavaName = mutation.mutatedMethodLocation.className?.getJavaName()
+        val clsJavaName = mutation.mutationID.location.className?.getJavaName()
         val byteArray: ByteArray? = bytecodeLoader.getByteCodeArray(clsJavaName)
         val cr = ClassReader(byteArray)
         val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
 
         val filter = listOf<String>()
         val mcv = MutatedClassVisitor(
-            cw, tracker, filter, operators?.filter { it.getName() == mutation.operatorName }
+            cw, tracker, filter, operators?.filter { it.getName() == mutation.mutationID.operatorName }
         )
 
         cr.accept(mcv, ClassReader.EXPAND_FRAMES)
 
-        val mutantsList: List<Mutant> = tracker.getMutation(mutation.id)
+        val mutantsList: List<Mutation> = tracker.getMutation(mutation.mutationID)
         mutantsList[0].setByteCode(cw.toByteArray())
         return mutantsList[0]
     }

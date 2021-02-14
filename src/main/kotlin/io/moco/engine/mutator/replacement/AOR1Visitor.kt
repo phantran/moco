@@ -1,6 +1,7 @@
 package io.moco.engine.mutator.replacement
 
 import io.moco.engine.MethodInfo
+import io.moco.engine.mutation.MutationID
 import io.moco.engine.operator.ReplacementOperator
 import io.moco.engine.tracker.MutatedMethodTracker
 import io.moco.utils.ASMInfoUtil
@@ -113,12 +114,12 @@ class AOR1Visitor(
         if (opcodeToMutator.containsKey(opcode)) {
             val mutator: ReplaceOperation? = opcodeToMutator[opcode]
 
-            val newId: String? = mutator?.let {
+            val newMutationId: MutationID? = mutator?.let {
                 tracker.registerMutant(
                     operator, it.message
                 )
             }
-            if (newId?.let { tracker.mutantExists(it) } == true) {
+            if (newMutationId?.let { tracker.mutantExists(it) } == true) {
                 mutator.accept(mv)
             } else {
                 mv.visitInsn(opcode)
