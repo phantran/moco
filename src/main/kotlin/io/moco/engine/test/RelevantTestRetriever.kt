@@ -1,5 +1,10 @@
 package io.moco.engine.test
 
+import io.moco.engine.ClassName
+import io.moco.engine.preprocessing.PreprocessClassResult
+import io.moco.engine.preprocessing.PreprocessConverter
+import io.moco.engine.preprocessing.PreprocessStorage
+import io.moco.engine.preprocessing.PreprocessorTracker
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.internal.runners.ErrorReportingRunner
@@ -16,6 +21,23 @@ import java.util.stream.Collectors
 
 
 class RelevantTestRetriever {
+
+    companion object {
+        fun retrieveRelatedTest(buildRoot: String, cut: String): Pair<List<TestItemWrapper>, List<TestResultAggregator>> {
+            val store: PreprocessStorage = PreprocessStorage.getStoredPreprocessStorage(buildRoot)
+            for (item: PreprocessClassResult in store.classRecord) {
+                if (cut == item.classUnderTestName) {
+                    val temp =
+                        TestItem.testClassesToTestItems(
+                            item.testClasses.map { ClassName(it.replace(".", "/")) }
+                        )
+                    return TestItemWrapper.wrapTestItem(temp)
+                }
+            }
+            return Pair(listOf(), listOf())
+        }
+    }
+
 
     fun retrieveTestsOfClasses(clsList: List<Class<*>>): List<TestItem?> {
         val testItems: MutableList<TestItem?> = mutableListOf()
@@ -59,7 +81,7 @@ class RelevantTestRetriever {
         }
     }
 
-     private fun hasSuitableRunner(cls: Class<*>): Boolean {
+    private fun hasSuitableRunner(cls: Class<*>): Boolean {
         val runWith = cls.getAnnotation(RunWith::class.java)
         return if (runWith != null) {
             runWith.value == Suite::class.java
@@ -68,7 +90,6 @@ class RelevantTestRetriever {
 
 
     fun findTestItems(cls: Class<*>): List<TestItem?> {
-
         return emptyList()
     }
 
@@ -81,7 +102,9 @@ class RelevantTestRetriever {
             (runner == null
                     || runner.javaClass.isAssignableFrom(ErrorReportingRunner::class.java)
                     || Parameterized::class.java.isAssignableFrom(runner.javaClass)
-                    || ((runner.description.children.isNotEmpty() && runner.description.children[0].className.startsWith("junit.framework.TestSuite")))
+                    || ((runner.description.children.isNotEmpty() && runner.description.children[0].className.startsWith(
+                "junit.framework.TestSuite"
+            )))
                     || ((runner.javaClass.name == "org.junit.internal.runners.SuiteMethod") && runner.description.className != className)
                     )
         } catch (ex: RuntimeException) {

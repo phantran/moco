@@ -7,7 +7,7 @@ import io.moco.engine.tracker.Block
  * An instant of this class contains information that is collected during preprocessing of codebase of a specific class
  * Collected information are mapping of test classes and class under test and the information of blocks
  * Block information is needed in mutation process since finally block are not considered for mutation
- * @property testClassName
+ * @property testClasses
  * @property classUnderTestName
  * @property blockLists
  * @constructor Create empty Preprocess result

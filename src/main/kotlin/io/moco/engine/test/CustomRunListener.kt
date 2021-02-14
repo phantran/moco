@@ -8,8 +8,8 @@ import java.lang.Exception
 
 
 internal class CustomRunListener(
-    val desc: io.moco.engine.test.Description,
-    val tra: TestResultAggregator
+    private val desc: io.moco.engine.test.Description,
+    private val tra: TestResultAggregator
 ) : RunListener() {
 
     private var failed = false

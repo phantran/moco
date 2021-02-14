@@ -1,6 +1,7 @@
 package io.moco.engine.preprocessing
 
 import io.moco.engine.Codebase
+import io.moco.engine.MocoAgent
 import java.net.Socket
 
 
@@ -16,13 +17,13 @@ object PreprocessorWorker {
             val excludedClasses = args[3]  // classes to be excluded, regex or string
             buildRoot  = args[4]
             val analysedCodeBase = Codebase(codeRoot, testRoot, excludedClasses)
-            PreprocessorAgent.addTransformer(PreprocessorTransformer(analysedCodeBase.sourceClassNames))
+            MocoAgent.addTransformer(PreprocessorTransformer(analysedCodeBase.sourceClassNames))
             val worker = Preprocessor(analysedCodeBase)
             worker.preprocessing()
         } catch (ex: Exception) {
             ex.printStackTrace(System.out)
         } finally {
-            PreprocessExporter(buildRoot).savePreprocessResult(PreprocessorTracker.getPreprocessResults())
+            PreprocessConverter(buildRoot).savePreprocessResult(PreprocessorTracker.getPreprocessResults())
             println("------------------Complete preprocessing step------------------")
             socket?.close()
         }

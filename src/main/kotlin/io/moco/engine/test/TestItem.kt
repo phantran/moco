@@ -1,6 +1,8 @@
 package io.moco.engine.test
 
 //import mu.KotlinLogging
+import io.moco.engine.ClassName
+import io.moco.engine.Codebase
 import io.moco.engine.preprocessing.PreprocessorTracker
 import org.junit.internal.builders.AllDefaultPossibilitiesBuilder
 import org.junit.internal.runners.ErrorReportingRunner
@@ -8,6 +10,8 @@ import org.junit.runner.Runner
 import org.junit.runner.notification.RunListener
 import java.lang.Exception
 import org.junit.runner.notification.RunNotifier
+import org.junit.runners.Suite
+
 //import org.junit.runners.BlockJUnit4ClassRunner
 
 
@@ -42,6 +46,23 @@ class TestItem(
 //                logger.error(ex) { "Error while creating runner for $cls"}
                 throw RuntimeException(ex)
             }
+        }
+
+         fun testClassesToTestItems(testClassNames: List<ClassName>): List<TestItem> {
+            // convert from test classes to test items so it can be executed
+            var testClsNames = testClassNames.mapNotNull { ClassName.clsNameToClass(it)}
+            testClsNames = testClsNames.filter { isNotTestSuite(it) }
+            return testClsNames.map {
+                TestItem(it)
+            }
+        }
+
+        private fun isNotTestSuite(cls: Class<*>) : Boolean {
+            // Ignore test suite class since all normal test classes are recorded.
+            if (cls.getAnnotation(Suite.SuiteClasses::class.java) == null) {
+                return true
+            }
+            return false
         }
     }
 

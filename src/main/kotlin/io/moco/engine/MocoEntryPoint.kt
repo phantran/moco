@@ -6,6 +6,7 @@ import io.moco.engine.mutation.MutationFinder
 import io.moco.engine.mutation.MutationGenerator
 import io.moco.engine.operator.Operator
 import io.moco.engine.preprocessing.PreprocessorWorker
+import io.moco.engine.test.TestItemWrapper
 import java.io.File
 import java.net.ServerSocket
 
@@ -29,7 +30,7 @@ class MocoEntryPoint(
             "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
         val cp = "$classpath:$temp0:$temp1:$temp2"
         //TODO: replace included operators by params from mojo configuration
-        val temp = listOf<String>("AOR", "LCR", "ROR", "UOI")
+        val temp = listOf("AOR", "LCR", "ROR", "UOI")
 
 
         // Preprocessing step
@@ -47,7 +48,10 @@ class MocoEntryPoint(
         val mGen = MutationGenerator(toBeMutatedCodeBase, mutationFinder)
         val foundMutations: Map<ClassName, List<Mutant>> = mGen.codeBaseMutationAnalyze()
 
+
+
         // Mutation test generating and executing
+//        val relatedTests: List<TestItemWrapper> = MutationFinder.retriveRelatedTest()
 
 
     }

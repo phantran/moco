@@ -1,12 +1,11 @@
 package io.moco.engine.preprocessing
 
-import io.moco.engine.ClassName
 import io.moco.engine.Codebase
 import io.moco.engine.test.TestItem
 import io.moco.engine.test.TestItemWrapper
-import io.moco.engine.test.TestResultAggregator
 import java.io.IOException
 import java.util.concurrent.ExecutionException
+
 
 
 class Preprocessor(
@@ -20,8 +19,9 @@ class Preprocessor(
 
     fun preprocessing() {
         // Codebase is already available
-        val testItems = testClassesToTestItems()
-        collectInfo(wrapTestItem(testItems))
+        val testItems = TestItem.testClassesToTestItems(codeBase.testClassesNames)
+        val wrapped = TestItemWrapper.wrapTestItem(testItems)
+        collectInfo(wrapped.first)
     }
 
     @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
@@ -40,17 +40,5 @@ class Preprocessor(
             } finally {
             }
         }
-    }
-
-    private fun testClassesToTestItems(): List<TestItem?> {
-        // convert from test classes to test items so it can be executed
-        return codeBase.testClassesNames.map { it?.let { ClassName.clsNameToClass(it)?.let { it1 -> TestItem(it1) } } }
-            .toList()
-    }
-
-    private fun wrapTestItem(testItems: List<TestItem?>): List<TestItemWrapper?> {
-        // Put test items into callable object so it can be submitted by thread executor service
-        return testItems.map { it?.let { TestItemWrapper(it, TestResultAggregator(mutableListOf())) } }.toList()
-
     }
 }

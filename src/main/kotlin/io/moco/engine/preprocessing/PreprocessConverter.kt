@@ -7,14 +7,15 @@ import java.io.File
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 
 /**
- * Preprocess Exporter
- * This class is responsible for exporting the map of class names to test class names to an XML file
- * The exported XML file will be read in each execution to retrieve this mapping information
+ * Preprocess Converter
+ * This class is responsible for exporting the map of class names to test class names to an JSON file
+ * The exported JSON file will be read in each execution to retrieve this mapping information
+ * It is also responsible for importing json file to create object of the PreprocessStorage class
  * @constructor Create empty Mapping exporter
  *
  * @param dir
  */
-class PreprocessExporter(dir: String) {
+class PreprocessConverter(dir: String) {
 
     private var storePath: File? = null
     private val mapper = jacksonObjectMapper()
@@ -25,7 +26,7 @@ class PreprocessExporter(dir: String) {
             temp.mkdirs()
         }
         this.storePath = File("$dir/moco/preprocess/coverage.json")
-        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        mapper.enable(SerializationFeature.INDENT_OUTPUT)
     }
 
     /**
@@ -42,7 +43,7 @@ class PreprocessExporter(dir: String) {
         }
     }
 
-    fun retrievePreprocessResultFromCsv(): PreprocessStorage {
+    fun retrievePreprocessResultFromJson(): PreprocessStorage {
         try {
             return mapper.readValue(storePath, PreprocessStorage::class.java)
         } catch (e: Exception) {

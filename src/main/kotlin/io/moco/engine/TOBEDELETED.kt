@@ -65,7 +65,7 @@ object ABC {
             "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
 
         val temp = Codebase(root, testRoot, "")
-        PreprocessorAgent.addTransformer(PreprocessorTransformer(temp.sourceClassNames))
+        MocoAgent.addTransformer(PreprocessorTransformer(temp.sourceClassNames))
 
 
         val beanClass = Class.forName("io.moco.TestTest1")
@@ -103,7 +103,7 @@ fun main() {
         "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
 
     MocoEntryPoint(codeRoot, testRoot, "", buildRoot).execute()
-    val abc = PreprocessExporter(buildRoot).retrievePreprocessResultFromCsv()
+    val abc = PreprocessConverter(buildRoot).retrievePreprocessResultFromJson()
 
 
 }
