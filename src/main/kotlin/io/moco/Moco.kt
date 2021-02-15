@@ -13,7 +13,7 @@ import org.apache.maven.project.MavenProject
 /**
  * Goal which touches a timestamp file.
  */
-@Mojo(name = "touch",
+@Mojo(name = "moco",
     defaultPhase = LifecyclePhase.PROCESS_SOURCES,
     requiresDependencyResolution = ResolutionScope.COMPILE)
 class Moco : AbstractMojo() {
@@ -36,7 +36,7 @@ class Moco : AbstractMojo() {
 
     @Throws(MojoExecutionException::class)
     override fun execute() {
-        log.info( "Hello, world." )
+        log.info( "Hello, world. Tran Phan" )
 //        val f = outputDirectory
 //        if (!f!!.exists()) {
 //            f.mkdirs()

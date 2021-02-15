@@ -63,7 +63,7 @@ class MocoEntryPoint(
                 File.separator + "java"
         preprocessWorkerArgs["javaExecutable"] = javaBin
 //        val agentArg = "-javaagent:MyJar.jar"
-        val agentArg = "-javaagent:m0c0-maven-plugin-1.0-SNAPSHOT.jar"
+        val agentArg = "-javaagent:target/m0c0-maven-plugin-1.0-SNAPSHOT.jar"
         preprocessWorkerArgs["javaAgentJarPath"] = agentArg
         preprocessWorkerArgs["classPath"] = cp
         return preprocessWorkerArgs
