@@ -52,12 +52,12 @@ class MutationFinder(
 
 
     /**
-     * Retrieve mutant
+     * Create actual mutant
      *
      * @param mutation
      * @return
      */
-    fun retrieveMutant(mutation: Mutation): Mutation {
+    fun createMutant(mutation: Mutation): Mutation {
         val tracker = MutatedClassTracker()
         val clsJavaName = mutation.mutationID.location.className?.getJavaName()
         val byteArray: ByteArray? = bytecodeLoader.getByteCodeArray(clsJavaName)

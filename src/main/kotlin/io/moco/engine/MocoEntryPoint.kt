@@ -47,8 +47,6 @@ class MocoEntryPoint(
         val mGen = MutationGenerator(toBeMutatedCodeBase, mutationFinder)
         val foundMutations: Map<ClassName, List<Mutation>> = mGen.codeBaseMutationAnalyze()
 
-
-
         // Mutation test generating and executing
 //        val relatedTests: List<TestItemWrapper> = MutationFinder.retriveRelatedTest()
 
@@ -64,7 +62,8 @@ class MocoEntryPoint(
                 File.separator + "bin" +
                 File.separator + "java"
         preprocessWorkerArgs["javaExecutable"] = javaBin
-        val agentArg = "-javaagent:MyJar.jar"
+//        val agentArg = "-javaagent:MyJar.jar"
+        val agentArg = "-javaagent:m0c0-maven-plugin-1.0-SNAPSHOT.jar"
         preprocessWorkerArgs["javaAgentJarPath"] = agentArg
         preprocessWorkerArgs["classPath"] = cp
         return preprocessWorkerArgs

@@ -33,8 +33,8 @@ object JavaProcess {
         val className = klass.name
         val command: MutableList<String> = LinkedList()
 
-        val abcd = "-javaagent:MyJar.jar"
-
+//        val abcd = "-javaagent:MyJar.jar"
+        val abcd = "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/m0c0-maven-plugin-1.0-SNAPSHOT.jar"
         command.add(javaBin)
         command.add(abcd)
 

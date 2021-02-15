@@ -10,11 +10,7 @@ class BytecodeLoader(cp: String?) {
     private val clsPaths: Set<File>
 
     init {
-        if (cp == null) {
-            clsPaths = initClsPath()
-        } else {
-            clsPaths = cp.split(",").map { File(it.trim()) }.toSet()
-        }
+        clsPaths = cp?.split(",")?.map { File(it.trim()) }?.toSet() ?: initClsPath()
     }
 
     private fun initClsPath(): Set<File> {
@@ -25,11 +21,9 @@ class BytecodeLoader(cp: String?) {
         if (classPath != null) {
             temp = classPath.split(separator.toRegex()).toSet()
         }
-
         for (item in temp) {
             res.add(getCanonicalPath(item))
         }
-
         try {
             res.filter{ it.exists() && it.canRead() && it.isDirectory }
         } catch (e: IOException) {
@@ -57,7 +51,7 @@ class BytecodeLoader(cp: String?) {
             val fn = classname?.replace('.', File.separatorChar) + ".class"
             val f = File(root, fn)
             if (f.exists() && f.canRead()) {
-                return streamToByteArray(FileInputStream(f))
+                return streamToByteArr(FileInputStream(f))
             }
             //TODO: Add support for jar file later and logging action here
         }
@@ -66,23 +60,23 @@ class BytecodeLoader(cp: String?) {
 
 
     @Throws(IOException::class)
-    fun streamToByteArray(inp: InputStream?): ByteArray? {
-        ByteArrayOutputStream().use { result ->
+    fun streamToByteArr(inp: InputStream?): ByteArray? {
+        ByteArrayOutputStream().use { output ->
             if (inp != null) {
-                val src = Channels.newChannel(inp)
-                val dst = Channels.newChannel(result)
+                val inputChannel = Channels.newChannel(inp)
+                val outputChannel = Channels.newChannel(output)
                 val buffer = ByteBuffer.allocateDirect(16 * 1024)
-                while (src.read(buffer) != -1) {
+                while (inputChannel.read(buffer) != -1) {
                     buffer.flip()
-                    dst.write(buffer)
+                    outputChannel.write(buffer)
                     buffer.compact()
                 }
                 buffer.flip()
                 while (buffer.hasRemaining()) {
-                    dst.write(buffer)
+                    outputChannel.write(buffer)
                 }
             }
-            return result.toByteArray()
+            return output.toByteArray()
         }
     }
 }

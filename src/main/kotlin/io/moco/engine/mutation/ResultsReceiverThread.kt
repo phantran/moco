@@ -1,5 +1,6 @@
 package io.moco.engine.mutation
 
+import io.moco.engine.ClassName
 import io.moco.utils.DataStreamUtils
 import java.io.*
 import java.net.ServerSocket
@@ -11,7 +12,7 @@ import java.util.concurrent.Callable
 
 class ResultsReceiverThread(
     private val socket: ServerSocket,
-    private val workerArgs: HashMap<String, Any>,
+    private val workerArguments: WorkerArguments,
     val resultMapping: MutableMap<MutationID, MutationTestResult> = mutableMapOf()
 ) {
 
@@ -21,7 +22,7 @@ class ResultsReceiverThread(
     private var future: FutureTask<Int>? = null
 
     private val sendArgumentsToWorker = Consumer {
-        outputStream: DataOutputStream -> DataStreamUtils.writeObject(outputStream, workerArgs)
+        outputStream: DataOutputStream -> DataStreamUtils.writeObject(outputStream, workerArguments)
     }
 
     @Throws(IOException::class, InterruptedException::class)
@@ -89,4 +90,10 @@ class ResultsReceiverThread(
             }
         }
     }
+
+    class WorkerArguments(
+        private val mutations: Collection<Mutation>,
+        private val tests: Collection<ClassName>,
+        private val filter: String,
+    ) : Serializable
 }
