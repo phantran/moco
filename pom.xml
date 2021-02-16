@@ -208,11 +208,6 @@
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
           <version>3.0.2</version>
-          <configuration>
-            <archive>
-              <manifestFile>src/main/resources/META-INF/MANIFEST.MF</manifestFile>
-            </archive>
-          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-install-plugin</artifactId>
@@ -291,6 +286,7 @@
           </execution>
         </executions>
       </plugin>
+
     </plugins>
   </build>
 

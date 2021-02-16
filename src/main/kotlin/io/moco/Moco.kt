@@ -1,5 +1,7 @@
 package io.moco
 
+import io.moco.engine.MocoEntryPoint
+import io.moco.engine.preprocessing.PreprocessConverter
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugin.MojoExecutionException
 import org.apache.maven.plugins.annotations.LifecyclePhase
@@ -8,18 +10,21 @@ import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.plugins.annotations.ResolutionScope
 import java.io.File
 import org.apache.maven.project.MavenProject
+import java.lang.Exception
 
 
 /**
  * Goal which touches a timestamp file.
  */
-@Mojo(name = "moco",
+@Mojo(
+    name = "moco",
     defaultPhase = LifecyclePhase.PROCESS_SOURCES,
-    requiresDependencyResolution = ResolutionScope.COMPILE)
+    requiresDependencyResolution = ResolutionScope.COMPILE
+)
 class Moco : AbstractMojo() {
 
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
-     var project: MavenProject? = null
+    var project: MavenProject? = null
 
 
     /**
@@ -36,26 +41,31 @@ class Moco : AbstractMojo() {
 
     @Throws(MojoExecutionException::class)
     override fun execute() {
-        log.info( "Hello, world. Tran Phan" )
-//        val f = outputDirectory
-//        if (!f!!.exists()) {
-//            f.mkdirs()
-//        }
-//        val touch = File(f, "touch.txt")
-//        var w: FileWriter? = null
-//        try {
-//            w = FileWriter(touch)
-//            w.write("touch.txt")
-//        } catch (e: IOException) {
-//            throw MojoExecutionException("Error creating file $touch", e)
-//        } finally {
-//            if (w != null) {
-//                try {
-//                    w.close()
-//                } catch (e: IOException) {
-//                    // ignore
-//                }
-//            }
-//        }
+        try {
+            val buildRoot =
+                project?.build?.directory.toString()
+            val codeRoot =
+                project?.build?.outputDirectory.toString()
+            val testRoot =
+                project?.build?.testOutputDirectory.toString()
+            val runtimeClassPath =
+                project?.runtimeClasspathElements
+            val compileClassPath =
+                project?.compileClasspathElements
+
+            if (runtimeClassPath != null) {
+                if (compileClassPath != null) {
+                    MocoEntryPoint(
+                        codeRoot, testRoot, "", buildRoot,
+                        runtimeClassPath, compileClassPath
+                    ).execute()
+                }
+            }
+            val abc = PreprocessConverter(buildRoot).retrievePreprocessResultFromJson()
+        } catch (e: Exception) {
+            log.info(e.printStackTrace().toString())
+        }
+
+
     }
 }

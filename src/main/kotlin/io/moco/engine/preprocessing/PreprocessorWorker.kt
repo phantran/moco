@@ -9,7 +9,7 @@ object PreprocessorWorker {
     @JvmStatic
     fun main(args: Array<String>) {
         var socket: Socket? = null
-        var buildRoot: String = ""  // path to build or target folder of project
+        var buildRoot = ""  // path to build or target folder of project
         try {
             socket = Socket("localhost", args[0].toInt())
             val codeRoot = args[1]  // root of the classes under test folder

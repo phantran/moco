@@ -1,4 +1,0 @@
-Agent-Class: io.moco.engine.MocoAgent
-Can-Redefine-Classes: true
-Can-Retransform-Classes: true
-Premain-Class: io.moco.engine.MocoAgent

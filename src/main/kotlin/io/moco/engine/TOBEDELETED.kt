@@ -101,9 +101,11 @@ fun main() {
         "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
     val testRoot =
         "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
+    val classpath = System.getProperty("java.class.path").split(File.pathSeparatorChar.toString()).toMutableList()
+//    MocoEntryPoint(codeRoot, testRoot, "", buildRoot, classpath, classpath).createJar()
+    MocoEntryPoint(codeRoot, testRoot, "", buildRoot, classpath, classpath).execute()
 
-    MocoEntryPoint(codeRoot, testRoot, "", buildRoot).execute()
-    val abc = PreprocessConverter(buildRoot).retrievePreprocessResultFromJson()
+//    val abc = PreprocessConverter(buildRoot).retrievePreprocessResultFromJson()
 
 
 }

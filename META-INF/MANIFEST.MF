@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Boot-Class-Path: /var/folders/zk/tsb1d_9n58156bx0k6zl6ys40000gn/T/161349
+ 955500202281799185454170818319923907886897028.jar
+Agent-Class: io.moco.engine.MocoAgent
+Can-Redefine-Classes: true
+Can-Retransform-Classes: true
+Premain-Class: io.moco.engine.MocoAgent
+Can-Set-Native-Method-Prefix: true
+
