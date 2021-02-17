@@ -3,8 +3,11 @@ package io.moco.engine
 import io.moco.engine.io.ByteArrayLoader
 import io.moco.engine.mutation.Mutation
 import io.moco.engine.mutation.MutationGenerator
+import io.moco.engine.mutation.MutationTestWorker
+import io.moco.engine.mutation.ResultsReceiverThread
 import io.moco.engine.operator.Operator
 import io.moco.engine.preprocessing.PreprocessorWorker
+import io.moco.engine.test.RelatedTestRetriever
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -22,62 +25,101 @@ class MocoEntryPoint(
     private val buildRoot: String,
     runtimeClassPath: MutableList<String>,
     private val compileClassPath: MutableList<String>,
-    private val jvm: String
+    private val jvm: String,
+    includedOperatorsName: List<String>
 
 ) {
     // Preprocessing step: Parse the targets source code and tests to collect information
     // about code blocks and mapping from classes under test to test classes
     // (which test classes are responsible for which classes under test)
-
     private var classPath: String
     private var byteArrLoader: ByteArrayLoader
+    private var createdAgentLocation: String?
+    private val includedMutationOperators: List<Operator>
 
     init {
         val cp = runtimeClassPath.joinToString(separator = File.pathSeparatorChar.toString())
         classPath = "$cp:$codeRoot:$testRoot:$buildRoot"
         byteArrLoader = ByteArrayLoader(cp)
+        createdAgentLocation = createTemporaryAgentJar()
+        includedMutationOperators = includedOperatorsName.mapNotNull { Operator.nameToOperator(it) }
+
     }
 
     fun execute() {
-        //TODO: replace later
-        val createdAgent: String = createTemporaryAgentJar() ?: return
-
-        //TODO: replace included operators by params from mojo configuration
-        val temp = listOf("AOR", "LCR", "ROR", "UOI")
-
+        if (createdAgentLocation == null) {
+            return
+        }
 
         // Preprocessing step
         val workerArgs = mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot)
-        val workerProcess = WorkerProcess(
+        val preprocessWorkerProcess = WorkerProcess(
             PreprocessorWorker.javaClass,
-            getPreprocessWorkerArgs(createdAgent), workerArgs
+            getPreprocessWorkerArgs(),
+            workerArgs
         )
-        workerProcess.start()
+        preprocessWorkerProcess.start()
+
+
         // Mutation step
         // Mutations collecting
         val toBeMutatedCodeBase = Codebase(codeRoot, testRoot, excludedClasses)
-        val includedMutationOperators: List<Operator> = temp.mapNotNull { Operator.nameToOperator(it) }
         val mGen = MutationGenerator(byteArrLoader, includedMutationOperators)
         val foundMutations: Map<ClassName, List<Mutation>> =
             toBeMutatedCodeBase.sourceClassNames.associateWith { mGen.findPossibleMutationsOfClass(it) }
-
-
         // Mutation test generating and executing
-//        val relatedTests: List<TestItemWrapper> = MutationFinder.retriveRelatedTest()
+        val testRetriever = RelatedTestRetriever(buildRoot)
 
-
+        val processArgs = getMutationPreprocessArgs()
+        foundMutations.forEach { (className, mutationList) ->
+            println("Starting executing tests for mutants of class $className")
+            val relatedTests: List<ClassName> = testRetriever.retrieveRelatedTest(className)
+            val mutationTestWorkerProcess = createMutationTestWorkerProcess(mutationList, relatedTests, processArgs)
+            executeMutationTestingProcess(mutationTestWorkerProcess)
+        }
         // Remove generated agent after finishing
-
-        removeTemporaryAgentJar(createdAgent)
+        removeTemporaryAgentJar(createdAgentLocation)
     }
 
-    private fun getPreprocessWorkerArgs(createdAgent: String): MutableMap<String, Any> {
-        // TODO: will be replaced by configuration from Maven configuration parameters
+    private fun executeMutationTestingProcess(p: Pair<WorkerProcess, ResultsReceiverThread>) {
+        val process = p.first
+        val comThread = p.second
+        process.start()
+        comThread.start()
+        try {
+            comThread.waitUntilFinish()
+        } finally {
+            process.destroyProcess()
+        }
+    }
+
+    private fun createMutationTestWorkerProcess(
+        mutations: List<Mutation>,
+        tests: List<ClassName>,
+        processArgs: MutableMap<String, Any>
+    ): Pair<WorkerProcess, ResultsReceiverThread> {
+
+        val mutationWorkerArgs =
+            ResultsReceiverThread.MutationWorkerArguments(mutations, tests, classPath, includedMutationOperators, "")
+        val mutationTestWorkerProcess = WorkerProcess(
+            MutationTestWorker::class.java,
+            processArgs,
+            listOf((processArgs["port"] as ServerSocket).localPort.toString())
+        )
+        val comThread = ResultsReceiverThread(processArgs["port"] as ServerSocket, mutationWorkerArgs)
+        return Pair(mutationTestWorkerProcess, comThread)
+    }
+
+    private fun getMutationPreprocessArgs(): MutableMap<String, Any> {
+        return getPreprocessWorkerArgs()
+    }
+
+    private fun getPreprocessWorkerArgs(): MutableMap<String, Any> {
         val preprocessWorkerArgs: MutableMap<String, Any> = mutableMapOf()
         preprocessWorkerArgs["port"] = ServerSocket(0)
         val javaBin = jvm
         preprocessWorkerArgs["javaExecutable"] = javaBin
-        preprocessWorkerArgs["javaAgentJarPath"] = "-javaagent:$createdAgent"
+        preprocessWorkerArgs["javaAgentJarPath"] = "-javaagent:$createdAgentLocation"
         preprocessWorkerArgs["classPath"] = classPath
         return preprocessWorkerArgs
     }

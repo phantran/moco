@@ -18,14 +18,15 @@ class ResultsReceiverThread(
 ) {
 
     companion object {
-       const val register: Byte = 1
-       const val report: Byte = 2
-       const val finished: Byte = 4
+        const val register: Byte = 1
+        const val report: Byte = 2
+        const val finished: Byte = 4
     }
+
     var future: FutureTask<Int>? = null
 
-    private val sendArgumentsToWorker = Consumer {
-        outputStream: DataOutputStream -> DataStreamUtils.writeObject(outputStream, workerArguments)
+    private val sendArgumentsToWorker = Consumer { outputStream: DataOutputStream ->
+        DataStreamUtils.writeObject(outputStream, workerArguments)
     }
 
     @Throws(IOException::class, InterruptedException::class)
@@ -37,7 +38,7 @@ class ResultsReceiverThread(
         thread.start()
     }
 
-    fun waitToFinish(): Int {
+    fun waitUntilFinish(): Int {
         return try {
             future!!.get()
         } catch (e: ExecutionException) {
@@ -96,7 +97,8 @@ class ResultsReceiverThread(
     class MutationWorkerArguments(
         val mutations: List<Mutation>,
         val tests: List<ClassName>,
+        val classPath: String,
+        val includedOperators: List<Operator>,
         val filter: String,
-        val includedOperators: List<Operator>
     ) : Serializable
 }

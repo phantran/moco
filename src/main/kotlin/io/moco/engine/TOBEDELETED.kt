@@ -105,7 +105,7 @@ fun main() {
 //    MocoEntryPoint(codeRoot, testRoot, "", buildRoot, classpath, classpath).createJar()
     val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
 
-    MocoEntryPoint(codeRoot, testRoot, "", buildRoot, classpath, classpath, jvm).execute()
+    MocoEntryPoint(codeRoot, testRoot, "", buildRoot, classpath, classpath, jvm, listOf()).execute()
 
     val abc = PreprocessConverter(buildRoot).retrievePreprocessResultFromJson()
     print(abc)

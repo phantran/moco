@@ -15,9 +15,9 @@ import java.net.Socket
 
 class MutationTestWorker(
     private val socket: Socket,
-    private val classPath: String,
 ) {
     private lateinit var outputStream: DataOutputStream
+    private lateinit var classPath: String
     private lateinit var mGen: MutationGenerator
     private lateinit var mutantIntroducer: MutantIntroducer
     private val clsLoader = ClassLoaderUtil.contextClsLoader
@@ -26,11 +26,10 @@ class MutationTestWorker(
         @JvmStatic
         fun main(args: Array<String>) {
             val port = Integer.valueOf(args[0])
-            val classPath: String = args[1]
             var socket: Socket? = null
             try {
                 socket = Socket("localhost", port)
-                val instance = MutationTestWorker(socket, classPath)
+                val instance = MutationTestWorker(socket)
                 instance.run()
             } catch (e: Throwable) {
                 e.printStackTrace(System.out)
@@ -44,12 +43,14 @@ class MutationTestWorker(
         try {
             val givenWorkerArgs: ResultsReceiverThread.MutationWorkerArguments =
                 DataStreamUtils.readObject(DataInputStream(socket.getInputStream()))
+            classPath = givenWorkerArgs.classPath
             val byteArrLoader = ByteArrayLoader(classPath)
             mutantIntroducer = MutantIntroducer(byteArrLoader)
             outputStream = DataOutputStream(socket.getOutputStream())
             mGen = MutationGenerator(byteArrLoader, givenWorkerArgs.includedOperators)
-            val testItems = TestItem.testClassesToTestItems(givenWorkerArgs.tests)
-            val wrappedTest = TestItemWrapper.wrapTestItem(testItems)
+            val testItems: List<TestItem> = TestItem.testClassesToTestItems(givenWorkerArgs.tests)
+            val wrappedTest: Pair<List<TestItemWrapper>, List<TestResultAggregator>> =
+                TestItemWrapper.wrapTestItem(testItems)
             runMutationTests(givenWorkerArgs.mutations, wrappedTest.first)
             finished(0)
         } catch (ex: Throwable) {

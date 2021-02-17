@@ -38,7 +38,7 @@ class WorkerProcess(
 
     }
 
-    fun getProcess(): Process? {
-        return process
+    fun destroyProcess() {
+        process?.destroy()
     }
 }

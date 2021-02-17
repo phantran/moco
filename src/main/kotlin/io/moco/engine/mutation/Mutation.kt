@@ -15,7 +15,7 @@ data class Mutation(
 ) {
     private val coveredByTests: MutableList<TestCaseInfo> = mutableListOf()  // Test cases that will be executed for this mutant
 
-    fun addTestCases(tcNames: Collection<TestCaseInfo>) {
+    fun addTest(tcNames: Collection<TestCaseInfo>) {
         coveredByTests.addAll(tcNames)
     }
 }

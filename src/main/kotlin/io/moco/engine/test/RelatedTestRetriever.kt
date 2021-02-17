@@ -20,22 +20,17 @@ import java.util.*
 import java.util.stream.Collectors
 
 
-class RelevantTestRetriever {
+class RelatedTestRetriever(buildRoot: String) {
 
-    companion object {
-        fun retrieveRelatedTest(buildRoot: String, cut: String): Pair<List<TestItemWrapper>, List<TestResultAggregator>> {
-            val store: PreprocessStorage = PreprocessStorage.getStoredPreprocessStorage(buildRoot)
-            for (item: PreprocessClassResult in store.classRecord) {
-                if (cut == item.classUnderTestName) {
-                    val temp =
-                        TestItem.testClassesToTestItems(
-                            item.testClasses.map { ClassName(it.first.replace(".", "/")) }
-                        )
-                    return TestItemWrapper.wrapTestItem(temp)
-                }
+    private val store: PreprocessStorage = PreprocessStorage.getStoredPreprocessStorage(buildRoot)
+
+    fun retrieveRelatedTest(cut: ClassName): List<ClassName> {
+        for (item: PreprocessClassResult in store.classRecord) {
+            if (cut.getJavaName() == item.classUnderTestName) {
+                return item.testClasses.map { ClassName(it.first.replace(".", "/")) }
             }
-            return Pair(listOf(), listOf())
         }
+        return listOf()
     }
 
 
