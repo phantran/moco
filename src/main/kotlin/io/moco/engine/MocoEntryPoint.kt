@@ -1,11 +1,10 @@
 package io.moco.engine
 
 import io.moco.engine.io.ByteArrayLoader
-import io.moco.engine.mutation.Mutation
-import io.moco.engine.mutation.MutationGenerator
-import io.moco.engine.mutation.MutationTestWorker
-import io.moco.engine.mutation.ResultsReceiverThread
+import io.moco.engine.mutation.*
 import io.moco.engine.operator.Operator
+import io.moco.engine.preprocessing.PreprocessConverter
+import io.moco.engine.preprocessing.PreprocessorTracker
 import io.moco.engine.preprocessing.PreprocessorWorker
 import io.moco.engine.test.RelatedTestRetriever
 import java.io.File
@@ -26,7 +25,7 @@ class MocoEntryPoint(
     runtimeClassPath: MutableList<String>,
     private val compileClassPath: MutableList<String>,
     private val jvm: String,
-    includedOperatorsName: List<String>
+    includedOperatorsName: List<String>,
 
 ) {
     // Preprocessing step: Parse the targets source code and tests to collect information
@@ -36,6 +35,7 @@ class MocoEntryPoint(
     private var byteArrLoader: ByteArrayLoader
     private var createdAgentLocation: String?
     private val includedMutationOperators: List<Operator>
+    private val mutationStorage: MutationStorage = MutationStorage(mutableMapOf())
 
     init {
         val cp = runtimeClassPath.joinToString(separator = File.pathSeparatorChar.toString())
@@ -43,7 +43,9 @@ class MocoEntryPoint(
         byteArrLoader = ByteArrayLoader(cp)
         createdAgentLocation = createTemporaryAgentJar()
         includedMutationOperators = includedOperatorsName.mapNotNull { Operator.nameToOperator(it) }
+    }
 
+    companion object {
     }
 
     fun execute() {
@@ -83,6 +85,7 @@ class MocoEntryPoint(
             val mutationTestWorkerProcess = createMutationTestWorkerProcess(mutationList, relatedTests, processArgs)
             executeMutationTestingProcess(mutationTestWorkerProcess)
         }
+        PreprocessConverter(buildRoot).savePreprocessResult(mutationStorage)
     }
 
 
@@ -111,7 +114,7 @@ class MocoEntryPoint(
             processArgs,
             listOf((processArgs["port"] as ServerSocket).localPort.toString())
         )
-        val comThread = ResultsReceiverThread(processArgs["port"] as ServerSocket, mutationWorkerArgs)
+        val comThread = ResultsReceiverThread(processArgs["port"] as ServerSocket, mutationWorkerArgs, mutationStorage)
         return Pair(mutationTestWorkerProcess, comThread)
     }
 
@@ -120,13 +123,10 @@ class MocoEntryPoint(
     }
 
     private fun getPreprocessWorkerArgs(): MutableMap<String, Any> {
-        val preprocessWorkerArgs: MutableMap<String, Any> = mutableMapOf()
-        preprocessWorkerArgs["port"] = ServerSocket(0)
-        val javaBin = jvm
-        preprocessWorkerArgs["javaExecutable"] = javaBin
-        preprocessWorkerArgs["javaAgentJarPath"] = "-javaagent:$createdAgentLocation"
-        preprocessWorkerArgs["classPath"] = classPath
-        return preprocessWorkerArgs
+        return mutableMapOf(
+            "port" to ServerSocket(0), "javaExecutable" to jvm,
+            "javaAgentJarPath" to "-javaagent:$createdAgentLocation", "classPath" to classPath
+        )
     }
 
     @Throws(IOException::class)

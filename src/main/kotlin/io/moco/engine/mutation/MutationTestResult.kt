@@ -1,11 +1,9 @@
 package io.moco.engine.mutation
 
 import java.io.Serializable
-import java.util.*
 
-
-class MutationTestResult(
-    numberOfTestsRun: Int,
-    mutationTestStatus: MutationTestStatus
+data class MutationTestResult(
+    val numberOfTestsRun: Int,
+    val mutationTestStatus: MutationTestStatus
 ) : Serializable {
 }

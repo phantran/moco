@@ -34,7 +34,7 @@ class PreprocessConverter(dir: String) {
      *
      * @param results
      */
-    fun savePreprocessResult(results: PreprocessStorage) {
+    fun savePreprocessResult(results: Any) {
         try {
             mapper.writeValue(this.storePath, results)
         } catch (e: IOException) {

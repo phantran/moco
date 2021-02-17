@@ -14,7 +14,8 @@ import java.util.concurrent.Callable
 class ResultsReceiverThread(
     private val socket: ServerSocket,
     private val workerArguments: MutationWorkerArguments,
-    val resultMapping: MutableMap<MutationID, MutationTestResult> = mutableMapOf()
+    private val mutationStorage: MutationStorage,
+    private val resultMapping: MutableMap<MutationID, MutationTestResult> = mutableMapOf(),
 ) {
 
     companion object {
@@ -79,6 +80,9 @@ class ResultsReceiverThread(
                             }
                             signal = inputStream.readByte()
                         }
+                        if (signal == finished) {
+                            updateMutationStorage()
+                        }
                         return@Callable inputStream.readInt()
                     }
                 } catch (e: IOException) {
@@ -93,6 +97,29 @@ class ResultsReceiverThread(
             }
         }
     }
+
+    @Synchronized
+    private fun updateMutationStorage() {
+        for (mutation: Mutation in workerArguments.mutations) {
+            if (resultMapping.containsKey(mutation.mutationID)) {
+                val clsName = mutation.mutationID.location.className?.getJavaName()
+                if (clsName != null) {
+                    val status = when (resultMapping[mutation.mutationID]?.mutationTestStatus) {
+                        MutationTestStatus.KILLED -> "killed"
+                        MutationTestStatus.SURVIVED -> "survived"
+                        else -> "unknown"
+                    }
+                    if (mutationStorage.entry.containsKey(clsName)) {
+                        mutationStorage.entry[clsName]?.add(Pair(mutation, status))
+                    } else {
+                        mutationStorage.entry[clsName] = mutableListOf(Pair(mutation, status))
+                    }
+                }
+
+            }
+        }
+    }
+
 
     class MutationWorkerArguments(
         val mutations: List<Mutation>,
