@@ -50,8 +50,14 @@ class MocoEntryPoint(
         if (createdAgentLocation == null) {
             return
         }
-
         // Preprocessing step
+        preprocessing()
+//        mutationTest()
+        // Remove generated agent after finishing
+        removeTemporaryAgentJar(createdAgentLocation)
+    }
+
+    private fun preprocessing() {
         val workerArgs = mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot)
         val preprocessWorkerProcess = WorkerProcess(
             PreprocessorWorker.javaClass,
@@ -59,17 +65,17 @@ class MocoEntryPoint(
             workerArgs
         )
         preprocessWorkerProcess.start()
+    }
 
-
-        // Mutation step
+    private fun mutationTest() {
         // Mutations collecting
         val toBeMutatedCodeBase = Codebase(codeRoot, testRoot, excludedClasses)
         val mGen = MutationGenerator(byteArrLoader, includedMutationOperators)
         val foundMutations: Map<ClassName, List<Mutation>> =
             toBeMutatedCodeBase.sourceClassNames.associateWith { mGen.findPossibleMutationsOfClass(it) }
-        // Mutation test generating and executing
-        val testRetriever = RelatedTestRetriever(buildRoot)
 
+        // Mutants generation and tests execution
+        val testRetriever = RelatedTestRetriever(buildRoot)
         val processArgs = getMutationPreprocessArgs()
         foundMutations.forEach { (className, mutationList) ->
             println("Starting executing tests for mutants of class $className")
@@ -77,9 +83,8 @@ class MocoEntryPoint(
             val mutationTestWorkerProcess = createMutationTestWorkerProcess(mutationList, relatedTests, processArgs)
             executeMutationTestingProcess(mutationTestWorkerProcess)
         }
-        // Remove generated agent after finishing
-        removeTemporaryAgentJar(createdAgentLocation)
     }
+
 
     private fun executeMutationTestingProcess(p: Pair<WorkerProcess, ResultsReceiverThread>) {
         val process = p.first
