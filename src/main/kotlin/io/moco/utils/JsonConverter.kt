@@ -34,7 +34,7 @@ class JsonConverter(private val dir: String, private val fileName: String) {
      */
     fun saveObjectToJson(results: Any) {
         try {
-            mapper.writeValue(File("$dir$fileName"), results)
+            mapper.writeValue(File("$dir$fileName.json"), results)
         } catch (e: IOException) {
             println(e.printStackTrace())
             throw RuntimeException("Error while saving result to preprocessing file")
@@ -43,7 +43,7 @@ class JsonConverter(private val dir: String, private val fileName: String) {
 
     fun retrieveObjectFromJson(): PreprocessStorage {
         try {
-            return mapper.readValue(File("$dir$fileName"), PreprocessStorage::class.java)
+            return mapper.readValue(File("$dir$fileName.json"), PreprocessStorage::class.java)
         } catch (e: Exception) {
             println(e.printStackTrace())
             throw RuntimeException("Error while reading preprocess csv store")

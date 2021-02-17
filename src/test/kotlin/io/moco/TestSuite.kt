@@ -15,7 +15,6 @@ class TestSuite  {
     @Test
     fun aasdasdas() {
         val t = DummyForTesting()
-        val x = MethodName("abc")
         t.dummy()
         val a = 1
         val b = 2

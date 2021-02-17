@@ -13,7 +13,8 @@ data class PreprocessStorage(
         fun getStoredPreprocessStorage(buildRoot: String): PreprocessStorage {
             return if (storedStorage == null) {
                 storedStorage = JsonConverter("$buildRoot/moco/preprocess/",
-                    "${Configuration.preprocessFilename}.json").retrieveObjectFromJson()
+                    Configuration.preprocessFilename
+                ).retrieveObjectFromJson()
                 storedStorage as PreprocessStorage
             } else {
                 storedStorage as PreprocessStorage

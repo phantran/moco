@@ -8,34 +8,34 @@ import org.objectweb.asm.MethodVisitor
 
 class InstructionVisitor(
     mv: MethodVisitor?,
-    private val count: InstructionTracker
+    private val mutatedMethodTracker: MutatedMethodTracker
 ) : MethodVisitor(ASMInfoUtil.ASM_VERSION, mv) {
 
     override fun visitFrame(
         type: Int, nLocal: Int,
         local: Array<Any>, nStack: Int, stack: Array<Any>
     ) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitFrame(type, nLocal, local, nStack, stack)
     }
 
     override fun visitInsn(opcode: Int) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitInsn(opcode)
     }
 
     override fun visitIntInsn(opcode: Int, operand: Int) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitIntInsn(opcode, operand)
     }
 
     override fun visitVarInsn(opcode: Int, `var`: Int) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitVarInsn(opcode, `var`)
     }
 
     override fun visitTypeInsn(opcode: Int, type: String) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitTypeInsn(opcode, type)
     }
 
@@ -43,7 +43,7 @@ class InstructionVisitor(
         opcode: Int, owner: String,
         name: String, desc: String
     ) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitFieldInsn(opcode, owner, name, desc)
     }
 
@@ -51,7 +51,7 @@ class InstructionVisitor(
         opcode: Int, owner: String,
         name: String, desc: String, itf: Boolean
     ) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitMethodInsn(opcode, owner, name, desc, itf)
     }
 
@@ -59,27 +59,27 @@ class InstructionVisitor(
         name: String, desc: String,
         bsm: Handle, vararg bsmArgs: Any
     ) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitInvokeDynamicInsn(name, desc, bsm, *bsmArgs)
     }
 
     override fun visitJumpInsn(opcode: Int, label: Label) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitJumpInsn(opcode, label)
     }
 
     override fun visitLabel(label: Label) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitLabel(label)
     }
 
     override fun visitLdcInsn(cst: Any) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitLdcInsn(cst)
     }
 
     override fun visitIincInsn(`var`: Int, increment: Int) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitIincInsn(`var`, increment)
     }
 
@@ -87,7 +87,7 @@ class InstructionVisitor(
         min: Int, max: Int,
         dflt: Label, vararg labels: Label
     ) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitTableSwitchInsn(min, max, dflt, *labels)
     }
 
@@ -95,17 +95,17 @@ class InstructionVisitor(
         dflt: Label, keys: IntArray,
         labels: Array<Label>
     ) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitLookupSwitchInsn(dflt, keys, labels)
     }
 
     override fun visitMultiANewArrayInsn(desc: String, dims: Int) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitMultiANewArrayInsn(desc, dims)
     }
 
     override fun visitLineNumber(line: Int, start: Label) {
-        count.increment()
+        mutatedMethodTracker.instructionIndex++
         super.visitLineNumber(line, start)
     }
 

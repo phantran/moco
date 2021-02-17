@@ -3,6 +3,7 @@ package io.moco.engine
 import io.moco.engine.io.ByteArrayLoader
 import io.moco.engine.mutation.*
 import io.moco.engine.operator.Operator
+import io.moco.engine.preprocessing.PreprocessStorage
 import io.moco.utils.JsonConverter
 import io.moco.engine.preprocessing.PreprocessorWorker
 import io.moco.engine.test.RelatedTestRetriever
@@ -10,6 +11,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.ServerSocket
+import java.util.concurrent.ThreadPoolExecutor
 
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
@@ -46,9 +48,17 @@ class MocoEntryPoint {
         if (createdAgentLocation == null) {
             return
         }
+//        val executor = ThreadPoolExecutor(
+//            1, 2,
+//            10, TimeUnit.SECONDS, LinkedBlockingQueue(),
+//            Executors.defaultThreadFactory()
+//        )
+
         // Preprocessing step
         preprocessing()
-//        mutationTest()
+        mutationTest()
+
+
         // Remove generated agent after finishing
         removeTemporaryAgentJar(createdAgentLocation)
     }
@@ -65,23 +75,28 @@ class MocoEntryPoint {
 
     private fun mutationTest() {
         // Mutations collecting
-        val toBeMutatedCodeBase = Codebase(codeRoot, testRoot, excludedClasses)
+        val preprocessedStorage = PreprocessStorage.getStoredPreprocessStorage(buildRoot)
+        val toBeMutatedClasses: List<ClassName> = preprocessedStorage.classRecord.map { ClassName(it.classUnderTestName) }
         val mGen = MutationGenerator(byteArrLoader, filteredMutationOperator)
-        val foundMutations: Map<ClassName, List<Mutation>> =
-            toBeMutatedCodeBase.sourceClassNames.associateWith { mGen.findPossibleMutationsOfClass(it) }
+        var foundMutations: Map<ClassName, List<Mutation>> =
+            toBeMutatedClasses.associateWith { mGen.findPossibleMutationsOfClass(it) }
+        foundMutations = foundMutations.filter { it.value.isNotEmpty() }
 
         // Mutants generation and tests execution
         val testRetriever = RelatedTestRetriever(buildRoot)
         val processArgs = getMutationPreprocessArgs()
-        foundMutations.forEach { (className, mutationList) ->
+        foundMutations.forEach label@{ (className, mutationList) ->
             println("Starting executing tests for mutants of class $className")
             val relatedTests: List<ClassName> = testRetriever.retrieveRelatedTest(className)
+            if (relatedTests.isEmpty()) {
+                return@label
+            }
             val mutationTestWorkerProcess = createMutationTestWorkerProcess(mutationList, relatedTests, processArgs)
             executeMutationTestingProcess(mutationTestWorkerProcess)
         }
         JsonConverter(
             "$buildRoot/moco/mutation/",
-            "${Configuration.mutationResultsFilename}.json"
+            Configuration.mutationResultsFilename
         ).saveObjectToJson(mutationStorage)
     }
 

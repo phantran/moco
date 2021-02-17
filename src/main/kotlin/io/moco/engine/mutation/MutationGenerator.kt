@@ -54,7 +54,7 @@ class MutationGenerator(
     /**
      * Create actual mutant`
      *
-     * @param mutation
+     * @param mutationID
      * @return
      */
     fun createMutant(mutationID: MutationID): Mutant {

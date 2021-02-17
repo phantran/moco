@@ -10,7 +10,10 @@ import org.objectweb.asm.Opcodes
 
 
 class AOR1Visitor(
-    val operator: ReplacementOperator, val tracker: MutatedMethodTracker, val methodInfo: MethodInfo, val delegateMethodVisitor: MethodVisitor
+    val operator: ReplacementOperator,
+    val tracker: MutatedMethodTracker,
+    val methodInfo: MethodInfo,
+    delegateMethodVisitor: MethodVisitor
 ) : MethodVisitor(ASMInfoUtil.ASM_VERSION, delegateMethodVisitor) {
 
     companion object {

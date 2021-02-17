@@ -10,7 +10,7 @@ class ByteArrayLoader(cp: String?) {
     private val clsPaths: Set<File>
 
     init {
-        clsPaths = cp?.split(",")?.map { File(it.trim()) }?.toSet() ?: initClsPath()
+        clsPaths = cp?.split(File.pathSeparatorChar.toString())?.map { File(it.trim()) }?.toSet() ?: initClsPath()
     }
 
     private fun initClsPath(): Set<File> {
@@ -25,7 +25,7 @@ class ByteArrayLoader(cp: String?) {
             res.add(getCanonicalPath(item))
         }
         try {
-            res.filter{ it.exists() && it.canRead() && it.isDirectory }
+            res.filter { it.exists() && it.canRead() && it.isDirectory }
         } catch (e: IOException) {
             e.printStackTrace()
             throw IOException("Error handling while initializing classpath of bytecode loader")

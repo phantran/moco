@@ -7,7 +7,7 @@ import org.objectweb.asm.*
 
 class DefaultClassVisitor : ClassVisitor(ASMInfoUtil.ASM_VERSION) {
     class DefaultAnnotationVisitor internal constructor() : AnnotationVisitor(ASMInfoUtil.ASM_VERSION) {
-        override fun visit(arg0: String, arg1: Any) {}
+        override fun visit(arg0: String?, arg1: Any) {}
         override fun visitAnnotation(
             arg0: String, arg1: String
         ): AnnotationVisitor {
@@ -62,7 +62,7 @@ class DefaultClassVisitor : ClassVisitor(ASMInfoUtil.ASM_VERSION) {
         override fun visitLineNumber(arg0: Int, arg1: Label) {}
         override fun visitLocalVariable(
             arg0: String, arg1: String,
-            arg2: String, arg3: Label, arg4: Label, arg5: Int
+            arg2: String?, arg3: Label, arg4: Label, arg5: Int
         ) {
         }
 
@@ -105,7 +105,7 @@ class DefaultClassVisitor : ClassVisitor(ASMInfoUtil.ASM_VERSION) {
 
     override fun visit(
         arg0: Int, arg1: Int, arg2: String,
-        arg3: String, arg4: String, arg5: Array<String>
+        arg3: String?, arg4: String, arg5: Array<String>
     ) {
     }
 
@@ -140,7 +140,7 @@ class DefaultClassVisitor : ClassVisitor(ASMInfoUtil.ASM_VERSION) {
 
     override fun visitMethod(
         arg0: Int, arg1: String,
-        arg2: String, arg3: String, arg4: Array<String>
+        arg2: String, arg3: String?, arg4: Array<String>?
     ): MethodVisitor {
         return DefaultMethodVisitor()
     }
@@ -151,5 +151,5 @@ class DefaultClassVisitor : ClassVisitor(ASMInfoUtil.ASM_VERSION) {
     ) {
     }
 
-    override fun visitSource(arg0: String, arg1: String) {}
+    override fun visitSource(arg0: String, arg1: String?) {}
 }

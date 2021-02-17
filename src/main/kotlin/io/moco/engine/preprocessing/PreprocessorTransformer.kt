@@ -48,7 +48,8 @@ class PreprocessorTransformer(private val includedTargets: MutableList<ClassName
     private fun isCUT(className: String): Boolean {
         if (includedTargets.any { it.getInternalName() == className })  {
             if (className.contains("io/moco/engine/preprocessing/") ||
-                className.contains("io/moco/engine/test/") ||className.contains("io/moco/utils/JsonConverter") ||
+                className.contains("io/moco/engine/test/") ||
+                className.contains("io/moco/utils/") ||
                 className.contains("io/moco/engine/tracker/")) {
                 return false
             }

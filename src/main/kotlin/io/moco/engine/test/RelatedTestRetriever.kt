@@ -17,7 +17,7 @@ class RelatedTestRetriever(buildRoot: String) {
 
     fun retrieveRelatedTest(cut: ClassName): List<ClassName> {
         for (item: PreprocessClassResult in store.classRecord) {
-            if (cut.getJavaName() == item.classUnderTestName) {
+            if (cut.name == item.classUnderTestName) {
                 return item.testClasses.map { ClassName(it.first.replace(".", "/")) }
             }
         }

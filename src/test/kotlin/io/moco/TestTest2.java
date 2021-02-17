@@ -10,7 +10,6 @@ public class TestTest2 {
 
     @Test
     public void test_hihi() {
-        BlockTracker t = new BlockTracker();
         DummyForTesting t1 = new DummyForTesting();
         t1.dummy();
         int a = 1;

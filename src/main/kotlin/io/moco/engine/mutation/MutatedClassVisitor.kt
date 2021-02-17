@@ -5,6 +5,8 @@ import io.moco.engine.ClassName
 import io.moco.engine.MethodInfo
 import io.moco.engine.MethodName
 import io.moco.engine.operator.Operator
+import io.moco.engine.tracker.InstructionVisitor
+import io.moco.engine.tracker.LineVisitor
 import io.moco.engine.tracker.MutatedClassTracker
 import io.moco.engine.tracker.MutatedMethodTracker
 import io.moco.utils.ASMInfoUtil
@@ -25,7 +27,7 @@ class MutatedClassVisitor(
 
     override fun visit(
         version: Int, access: Int, name: String,
-        signature: String, superName: String, interfaces: Array<String>
+        signature: String?, superName: String, interfaces: Array<String>
     ) {
         super.visit(version, access, name, signature, superName, interfaces)
         tracker.setClsInfo(
@@ -36,15 +38,15 @@ class MutatedClassVisitor(
         )
     }
 
-    override fun visitSource(source: String, debug: String) {
+    override fun visitSource(source: String, debug: String?) {
         super.visitSource(source, debug)
         tracker.setFileName(source)
     }
 
     override fun visitMethod(
         access: Int, methodName: String,
-        methodDescriptor: String, signature: String,
-        exceptions: Array<String>
+        methodDescriptor: String, signature: String?,
+        exceptions: Array<String>?
     ): MethodVisitor {
 
         val clsInfo = tracker.getClsInfo()
@@ -67,8 +69,9 @@ class MutatedClassVisitor(
             for (each in chosenOperators) {
                 chain = each.generateVisitor(methodTracker, info, chain)
             }
-            chain
-        }else {
+            val wrapped = LineVisitor(chain, methodTracker)
+            InstructionVisitor(wrapped, methodTracker)
+        } else {
             methodVisitor
         }
     }
