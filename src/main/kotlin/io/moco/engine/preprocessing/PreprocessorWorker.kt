@@ -23,7 +23,7 @@ object PreprocessorWorker {
         } catch (ex: Exception) {
             ex.printStackTrace(System.out)
         } finally {
-            PreprocessConverter(buildRoot).savePreprocessResult(PreprocessorTracker.getPreprocessResults())
+            PreprocessConverter(buildRoot).saveObjectToJson(PreprocessorTracker.getPreprocessResults())
             println("------------------Complete preprocessing step------------------")
             socket?.close()
         }

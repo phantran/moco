@@ -63,7 +63,7 @@ class Moco : AbstractMojo() {
                     ).execute()
                 }
             }
-            val abc = PreprocessConverter(buildRoot).retrievePreprocessResultFromJson()
+
         } catch (e: Exception) {
             log.info(e.printStackTrace().toString())
         }

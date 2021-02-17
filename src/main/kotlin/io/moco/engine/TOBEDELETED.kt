@@ -106,7 +106,7 @@ fun main() {
 
     MocoEntryPoint(codeRoot, testRoot, "", buildRoot, classpath, classpath, jvm, listOf()).execute()
 
-    val abc = PreprocessConverter(buildRoot).retrievePreprocessResultFromJson()
+    val abc = PreprocessConverter(buildRoot).retrieveObjectFromJson()
 //    print(abc)
 
 

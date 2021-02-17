@@ -34,7 +34,7 @@ class PreprocessConverter(dir: String) {
      *
      * @param results
      */
-    fun savePreprocessResult(results: Any) {
+    fun saveObjectToJson(results: Any) {
         try {
             mapper.writeValue(this.storePath, results)
         } catch (e: IOException) {
@@ -43,7 +43,7 @@ class PreprocessConverter(dir: String) {
         }
     }
 
-    fun retrievePreprocessResultFromJson(): PreprocessStorage {
+    fun retrieveObjectFromJson(): PreprocessStorage {
         try {
             return mapper.readValue(storePath, PreprocessStorage::class.java)
         } catch (e: Exception) {

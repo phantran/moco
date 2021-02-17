@@ -4,7 +4,6 @@ import io.moco.engine.io.ByteArrayLoader
 import io.moco.engine.mutation.*
 import io.moco.engine.operator.Operator
 import io.moco.engine.preprocessing.PreprocessConverter
-import io.moco.engine.preprocessing.PreprocessorTracker
 import io.moco.engine.preprocessing.PreprocessorWorker
 import io.moco.engine.test.RelatedTestRetriever
 import java.io.File
@@ -85,7 +84,7 @@ class MocoEntryPoint(
             val mutationTestWorkerProcess = createMutationTestWorkerProcess(mutationList, relatedTests, processArgs)
             executeMutationTestingProcess(mutationTestWorkerProcess)
         }
-        PreprocessConverter(buildRoot).savePreprocessResult(mutationStorage)
+        PreprocessConverter(buildRoot).saveObjectToJson(mutationStorage)
     }
 
 

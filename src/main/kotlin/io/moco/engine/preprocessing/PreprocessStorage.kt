@@ -9,7 +9,7 @@ data class PreprocessStorage(
 
         fun getStoredPreprocessStorage(buildRoot: String): PreprocessStorage {
             return if (storedStorage == null) {
-                storedStorage = PreprocessConverter(buildRoot).retrievePreprocessResultFromJson()
+                storedStorage = PreprocessConverter(buildRoot).retrieveObjectFromJson()
                 storedStorage as PreprocessStorage
             } else {
                 storedStorage as PreprocessStorage
