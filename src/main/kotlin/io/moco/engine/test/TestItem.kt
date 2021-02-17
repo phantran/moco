@@ -12,13 +12,13 @@ import java.lang.Exception
 import org.junit.runner.notification.RunNotifier
 import org.junit.runners.Suite
 
-//import org.junit.runners.BlockJUnit4ClassRunner
-
 
 class TestItem(
     val cls: Class<*>,
 ) {
     val desc: Description = Description(this.cls.name, this.cls.name)
+    var executionTime: Long = -1
+
     fun execute(tra: TestResultAggregator) {
         val runner: Runner = createRunner(cls)
         if (runner is ErrorReportingRunner) {

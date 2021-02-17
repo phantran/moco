@@ -29,7 +29,7 @@ class RelevantTestRetriever {
                 if (cut == item.classUnderTestName) {
                     val temp =
                         TestItem.testClassesToTestItems(
-                            item.testClasses.map { ClassName(it.replace(".", "/")) }
+                            item.testClasses.map { ClassName(it.first.replace(".", "/")) }
                         )
                     return TestItemWrapper.wrapTestItem(temp)
                 }

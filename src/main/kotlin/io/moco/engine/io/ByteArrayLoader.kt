@@ -6,7 +6,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.Channels
 
 
-class BytecodeLoader(cp: String?) {
+class ByteArrayLoader(cp: String?) {
     private val clsPaths: Set<File>
 
     init {
@@ -46,9 +46,9 @@ class BytecodeLoader(cp: String?) {
 
 
     @Throws(IOException::class)
-    fun getByteCodeArray(classname: String?): ByteArray? {
+    fun getByteArray(className: String?): ByteArray? {
         for (root in this.clsPaths) {
-            val fn = classname?.replace('.', File.separatorChar) + ".class"
+            val fn = className?.replace('.', File.separatorChar) + ".class"
             val f = File(root, fn)
             if (f.exists() && f.canRead()) {
                 return streamToByteArr(FileInputStream(f))

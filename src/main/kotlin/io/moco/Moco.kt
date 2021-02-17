@@ -52,12 +52,13 @@ class Moco : AbstractMojo() {
                 project?.runtimeClasspathElements
             val compileClassPath =
                 project?.compileClasspathElements
+            val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
 
             if (runtimeClassPath != null) {
                 if (compileClassPath != null) {
                     MocoEntryPoint(
                         codeRoot, testRoot, "", buildRoot,
-                        runtimeClassPath, compileClassPath
+                        runtimeClassPath, compileClassPath, jvm
                     ).execute()
                 }
             }

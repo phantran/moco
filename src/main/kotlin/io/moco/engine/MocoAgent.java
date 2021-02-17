@@ -11,7 +11,6 @@ public class MocoAgent {
         final ClassDefinition[] definitions = {new ClassDefinition(toBeReplacedCls, bytes)};
         try {
             instrumentation.redefineClasses(definitions);
-
             return true;
         } catch (final ClassNotFoundException | UnmodifiableClassException | VerifyError | InternalError ignored) {
         }

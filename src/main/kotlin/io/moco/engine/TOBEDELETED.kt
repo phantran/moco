@@ -79,7 +79,7 @@ object ABC {
         val result: org.junit.runner.Result = junit.run(beanClass)
         junit.run(beanClass1)
 
-        PreprocessorTracker.registerMappingTestToCUT(beanClass.canonicalName)
+//        PreprocessorTracker.registerMappingTestToCUT(beanClass.canonicalName)
 
         for (failure in result.failures) {
             println("$failure")
@@ -103,9 +103,12 @@ fun main() {
         "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
     val classpath = System.getProperty("java.class.path").split(File.pathSeparatorChar.toString()).toMutableList()
 //    MocoEntryPoint(codeRoot, testRoot, "", buildRoot, classpath, classpath).createJar()
-    MocoEntryPoint(codeRoot, testRoot, "", buildRoot, classpath, classpath).execute()
+    val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
 
-//    val abc = PreprocessConverter(buildRoot).retrievePreprocessResultFromJson()
+    MocoEntryPoint(codeRoot, testRoot, "", buildRoot, classpath, classpath, jvm).execute()
+
+    val abc = PreprocessConverter(buildRoot).retrievePreprocessResultFromJson()
+    print(abc)
 
 
 }

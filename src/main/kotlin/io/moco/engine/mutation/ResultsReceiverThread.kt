@@ -1,6 +1,7 @@
 package io.moco.engine.mutation
 
 import io.moco.engine.ClassName
+import io.moco.engine.operator.Operator
 import io.moco.utils.DataStreamUtils
 import java.io.*
 import java.net.ServerSocket
@@ -12,14 +13,16 @@ import java.util.concurrent.Callable
 
 class ResultsReceiverThread(
     private val socket: ServerSocket,
-    private val workerArguments: WorkerArguments,
+    private val workerArguments: MutationWorkerArguments,
     val resultMapping: MutableMap<MutationID, MutationTestResult> = mutableMapOf()
 ) {
 
-    private val register: Byte = 1
-    private val report: Byte = 2
-    private val done: Byte = 4
-    private var future: FutureTask<Int>? = null
+    companion object {
+       const val register: Byte = 1
+       const val report: Byte = 2
+       const val finished: Byte = 4
+    }
+    var future: FutureTask<Int>? = null
 
     private val sendArgumentsToWorker = Consumer {
         outputStream: DataOutputStream -> DataStreamUtils.writeObject(outputStream, workerArguments)
@@ -33,7 +36,6 @@ class ResultsReceiverThread(
         thread.name = "Moco results receiver thread"
         thread.start()
     }
-
 
     fun waitToFinish(): Int {
         return try {
@@ -69,7 +71,7 @@ class ResultsReceiverThread(
                         val inputStream = DataInputStream(bufferedStream)
                         var signal: Byte = inputStream.readByte()
                         // Polling -> read data sent from mutation process worker thread
-                        while (signal != done) {
+                        while (signal != finished) {
                             when (signal) {
                                 register -> register(inputStream)
                                 report -> report(inputStream)
@@ -91,9 +93,10 @@ class ResultsReceiverThread(
         }
     }
 
-    class WorkerArguments(
-        private val mutations: Collection<Mutation>,
-        private val tests: Collection<ClassName>,
-        private val filter: String,
+    class MutationWorkerArguments(
+        val mutations: List<Mutation>,
+        val tests: List<ClassName>,
+        val filter: String,
+        val includedOperators: List<Operator>
     ) : Serializable
 }

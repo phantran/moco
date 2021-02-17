@@ -13,7 +13,6 @@ internal class CustomRunListener(
 ) : RunListener() {
 
     private var failed = false
-
     override fun testAssumptionFailure(failure: Failure) {
     }
 

@@ -14,7 +14,6 @@ import io.moco.engine.tracker.Block
  */
 data class PreprocessClassResult(
     val classUnderTestName: String,
-    val testClasses: MutableList<String>,
+    val testClasses: MutableList<Pair<String, Long?>>,
     val blockLists: MutableList<Block>?,
-) {
-}
+)

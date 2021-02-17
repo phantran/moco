@@ -32,7 +32,7 @@ class Preprocessor(
             try {
                 if (test != null) {
                     test.call()
-                    PreprocessorTracker.registerMappingTestToCUT(test.testItem.cls.name)
+                    PreprocessorTracker.registerMappingTestToCUT(test.testItem)
                     PreprocessorTracker.clearTracker()
                 }
             } catch (e: Exception) {

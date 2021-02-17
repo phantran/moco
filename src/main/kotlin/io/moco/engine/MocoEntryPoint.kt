@@ -1,24 +1,18 @@
 package io.moco.engine
 
-import io.moco.engine.io.BytecodeLoader
+import io.moco.engine.io.ByteArrayLoader
 import io.moco.engine.mutation.Mutation
-import io.moco.engine.mutation.MutationFinder
 import io.moco.engine.mutation.MutationGenerator
 import io.moco.engine.operator.Operator
-import io.moco.engine.preprocessing.PreprocessorTracker
 import io.moco.engine.preprocessing.PreprocessorWorker
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.ServerSocket
-import java.nio.file.Paths
 
-import java.nio.file.Path
-import java.util.*
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
-import java.util.zip.ZipEntry
 
 
 class MocoEntryPoint(
@@ -27,7 +21,8 @@ class MocoEntryPoint(
     private val excludedClasses: String,
     private val buildRoot: String,
     runtimeClassPath: MutableList<String>,
-    private val compileClassPath: MutableList<String>
+    private val compileClassPath: MutableList<String>,
+    private val jvm: String
 
 ) {
     // Preprocessing step: Parse the targets source code and tests to collect information
@@ -35,18 +30,17 @@ class MocoEntryPoint(
     // (which test classes are responsible for which classes under test)
 
     private var classPath: String
-    private var clsLoader: BytecodeLoader
+    private var byteArrLoader: ByteArrayLoader
 
     init {
         val cp = runtimeClassPath.joinToString(separator = File.pathSeparatorChar.toString())
         classPath = "$cp:$codeRoot:$testRoot:$buildRoot"
-        clsLoader = BytecodeLoader(cp)
-
+        byteArrLoader = ByteArrayLoader(cp)
     }
 
     fun execute() {
         //TODO: replace later
-        val createdAgent: String = createJar() ?: return
+        val createdAgent: String = createTemporaryAgentJar() ?: return
 
         //TODO: replace included operators by params from mojo configuration
         val temp = listOf("AOR", "LCR", "ROR", "UOI")
@@ -56,115 +50,94 @@ class MocoEntryPoint(
         val workerArgs = mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot)
         val workerProcess = WorkerProcess(
             PreprocessorWorker.javaClass,
-            getPreprocessWorkerArgs(classPath, createdAgent), workerArgs
+            getPreprocessWorkerArgs(createdAgent), workerArgs
         )
         workerProcess.start()
-
         // Mutation step
         // Mutations collecting
         val toBeMutatedCodeBase = Codebase(codeRoot, testRoot, excludedClasses)
         val includedMutationOperators: List<Operator> = temp.mapNotNull { Operator.nameToOperator(it) }
-        val mutationFinder = MutationFinder(clsLoader, includedMutationOperators)
-        val mGen = MutationGenerator(toBeMutatedCodeBase, mutationFinder)
-        val foundMutations: Map<ClassName, List<Mutation>> = mGen.codeBaseMutationAnalyze()
+        val mGen = MutationGenerator(byteArrLoader, includedMutationOperators)
+        val foundMutations: Map<ClassName, List<Mutation>> =
+            toBeMutatedCodeBase.sourceClassNames.associateWith { mGen.findPossibleMutationsOfClass(it) }
+
 
         // Mutation test generating and executing
 //        val relatedTests: List<TestItemWrapper> = MutationFinder.retriveRelatedTest()
 
 
-        // Remove generated agent when finish
-        removeAgent(createdAgent)
+        // Remove generated agent after finishing
+
+        removeTemporaryAgentJar(createdAgent)
     }
 
-    private fun getPreprocessWorkerArgs(cp: Any, createdAgent: String): MutableMap<String, Any> {
+    private fun getPreprocessWorkerArgs(createdAgent: String): MutableMap<String, Any> {
         // TODO: will be replaced by configuration from Maven configuration parameters
         val preprocessWorkerArgs: MutableMap<String, Any> = mutableMapOf()
         preprocessWorkerArgs["port"] = ServerSocket(0)
-        val javaHome = System.getProperty("java.home")
-        val javaBin = javaHome +
-                File.separator + "bin" +
-                File.separator + "java"
+        val javaBin = jvm
         preprocessWorkerArgs["javaExecutable"] = javaBin
-        val agentArg = "-javaagent:$createdAgent"
-        preprocessWorkerArgs["javaAgentJarPath"] = agentArg
-        preprocessWorkerArgs["classPath"] = cp
+        preprocessWorkerArgs["javaAgentJarPath"] = "-javaagent:$createdAgent"
+        preprocessWorkerArgs["classPath"] = classPath
         return preprocessWorkerArgs
     }
 
-
-    fun createJar(): String? {
+    @Throws(IOException::class)
+    private fun createTemporaryAgentJar(): String? {
         return try {
-            val randomName = File.createTempFile(
+            val jarName = File.createTempFile(
                 System.currentTimeMillis()
                     .toString() + ("" + Math.random()).replace("\\.".toRegex(), ""),
                 ".jar"
             )
-//    val randomName = File("/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/abc.jar")
-            val fos = FileOutputStream(randomName)
-            createJarFromClassPathResources(fos, randomName.absolutePath)
-            randomName.absolutePath
+
+            val outputStream = FileOutputStream(jarName)
+            val jarFile = File(jarName.absolutePath)
+            val manifest = Manifest()
+            manifest.clear()
+            val temp = manifest.mainAttributes
+            if (temp.getValue(Attributes.Name.MANIFEST_VERSION) == null) {
+                temp[Attributes.Name.MANIFEST_VERSION] = "1.0"
+            }
+            temp.putValue(
+                "Boot-Class-Path",
+                jarFile.absolutePath.replace('\\', '/')
+            )
+            temp.putValue(
+                "Agent-Class",
+                MocoAgent::class.java.name
+            )
+            temp.putValue("Can-Redefine-Classes", "true")
+            temp.putValue("Can-Retransform-Classes", "true")
+            temp.putValue(
+                "Premain-Class",
+                MocoAgent::class.java.name
+            )
+            temp.putValue("Can-Set-Native-Method-Prefix", "true")
+            JarOutputStream(outputStream, manifest).use {}
+
+            jarName.absolutePath
         } catch (e: IOException) {
             throw e
         }
     }
 
-    @Throws(IOException::class)
-    private fun createJarFromClassPathResources(
-        fos: FileOutputStream,
-        location: String
-    ) {
-        val m = Manifest()
-        m.clear()
-        val global = m.mainAttributes
-        if (global.getValue(Attributes.Name.MANIFEST_VERSION) == null) {
-            global[Attributes.Name.MANIFEST_VERSION] = "1.0"
-        }
-        val myLocation = File(location)
-        global.putValue(
-            "Boot-Class-Path",
-            getBootClassPath(myLocation)
-        )
-
-        global.putValue(
-            "Agent-Class",
-            MocoAgent::class.java.name
-        )
-
-        global.putValue("Can-Redefine-Classes", "true")
-        global.putValue("Can-Retransform-Classes", "true")
-
-
-        global.putValue(
-            "Premain-Class",
-            MocoAgent::class.java.name
-        )
-
-        global.putValue("Can-Set-Native-Method-Prefix", "true")
-        JarOutputStream(fos, m).use {}
-    }
-
-
-    @Throws(IOException::class)
-    private fun addClass(clazz: Class<*>, jos: JarOutputStream) {
-        val className = clazz.name
-        val ze = ZipEntry(className.replace(".", "/") + ".class")
-        jos.putNextEntry(ze)
-        val temp = clsLoader.getByteCodeArray(className)
-        if (temp != null) {
-            jos.write(temp)
-        }
-        jos.closeEntry()
-    }
-
-    private fun getBootClassPath(myLocation: File): String {
-        return myLocation.absolutePath.replace('\\', '/')
-    }
-
-
-    private fun removeAgent(location: String?) {
+    private fun removeTemporaryAgentJar(location: String?) {
         if (location != null) {
             val f = File(location)
             f.delete()
         }
     }
+
+//    @Throws(IOException::class)
+//    private fun addClass(clazz: Class<*>, jos: JarOutputStream) {
+//        val className = clazz.name
+//        val ze = ZipEntry(className.replace(".", "/") + ".class")
+//        jos.putNextEntry(ze)
+//        val temp = byteArrLoader.getByteCodeArray(className)
+//        if (temp != null) {
+//            jos.write(temp)
+//        }
+//        jos.closeEntry()
+//    }
 }

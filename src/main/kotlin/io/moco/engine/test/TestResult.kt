@@ -5,5 +5,5 @@ data class TestResult(
     val error: Throwable?,
     val state: TestState
 ) {
-    enum class TestState { RUNNING, FINISHED, NOT_STARTED }
+    enum class TestState { RUNNING, FINISHED, NOT_STARTED, TIMEOUT }
 }
