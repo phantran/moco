@@ -1,6 +1,7 @@
 package io.moco.engine
 
 import io.moco.engine.preprocessing.*
+import io.moco.utils.JsonConverter
 import java.io.File
 import java.util.LinkedList
 import java.io.IOException
@@ -104,9 +105,22 @@ fun main() {
     val classpath = System.getProperty("java.class.path").split(File.pathSeparatorChar.toString()).toMutableList()
     val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
 
-    MocoEntryPoint(codeRoot, testRoot, "", buildRoot, classpath, classpath, jvm, listOf()).execute()
+    Configuration.setConfiguration(
+        buildRoot,
+        codeRoot,
+        testRoot,
+        "",
+        classpath,
+        jvm,
+        "preprocess",
+        "moco",
+        "",
+        "",
+    )
 
-    val abc = PreprocessConverter(buildRoot).retrieveObjectFromJson()
+    MocoEntryPoint().execute()
+
+//    val abc = JsonConverter("$buildRoot/moco/preprocess/", "preprocess.json").retrieveObjectFromJson()
 //    print(abc)
 
 

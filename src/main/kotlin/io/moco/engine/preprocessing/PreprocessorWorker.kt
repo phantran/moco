@@ -1,7 +1,9 @@
 package io.moco.engine.preprocessing
 
 import io.moco.engine.Codebase
+import io.moco.engine.Configuration
 import io.moco.engine.MocoAgent
+import io.moco.utils.JsonConverter
 import java.net.Socket
 
 
@@ -10,6 +12,7 @@ object PreprocessorWorker {
     fun main(args: Array<String>) {
         var socket: Socket? = null
         var buildRoot = ""  // path to build or target folder of project
+        val preprocessFilename  = args[5]
         try {
             socket = Socket("localhost", args[0].toInt())
             val codeRoot = args[1]  // root of the classes under test folder
@@ -23,7 +26,9 @@ object PreprocessorWorker {
         } catch (ex: Exception) {
             ex.printStackTrace(System.out)
         } finally {
-            PreprocessConverter(buildRoot).saveObjectToJson(PreprocessorTracker.getPreprocessResults())
+            JsonConverter("$buildRoot/moco/preprocess/",
+                "$preprocessFilename.json").
+            saveObjectToJson(PreprocessorTracker.getPreprocessResults())
             println("------------------Complete preprocessing step------------------")
             socket?.close()
         }

@@ -46,9 +46,9 @@ class PreprocessorTransformer(private val includedTargets: MutableList<ClassName
 
     // TODO: find a way to choose only source classes -> by using codebase class for instance
     private fun isCUT(className: String): Boolean {
-        if (includedTargets.any { it?.getInternalName() == className })  {
+        if (includedTargets.any { it.getInternalName() == className })  {
             if (className.contains("io/moco/engine/preprocessing/") ||
-                className.contains("io/moco/engine/test/") ||
+                className.contains("io/moco/engine/test/") ||className.contains("io/moco/utils/JsonConverter") ||
                 className.contains("io/moco/engine/tracker/")) {
                 return false
             }

@@ -1,5 +1,8 @@
 package io.moco.engine.preprocessing
 
+import io.moco.engine.Configuration
+import io.moco.utils.JsonConverter
+
 data class PreprocessStorage(
     val classRecord: List<PreprocessClassResult>
 ) {
@@ -9,7 +12,8 @@ data class PreprocessStorage(
 
         fun getStoredPreprocessStorage(buildRoot: String): PreprocessStorage {
             return if (storedStorage == null) {
-                storedStorage = PreprocessConverter(buildRoot).retrieveObjectFromJson()
+                storedStorage = JsonConverter("$buildRoot/moco/preprocess/",
+                    "${Configuration.preprocessFilename}.json").retrieveObjectFromJson()
                 storedStorage as PreprocessStorage
             } else {
                 storedStorage as PreprocessStorage

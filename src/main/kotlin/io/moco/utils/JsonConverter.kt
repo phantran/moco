@@ -1,10 +1,10 @@
-package io.moco.engine.preprocessing
+package io.moco.utils
 
 import com.fasterxml.jackson.databind.SerializationFeature
-import java.io.*
-import java.io.File
-
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.moco.engine.preprocessing.PreprocessStorage
+import java.io.File
+import java.io.IOException
 
 /**
  * Preprocess Converter
@@ -15,17 +15,15 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
  *
  * @param dir
  */
-class PreprocessConverter(dir: String) {
+class JsonConverter(private val dir: String, private val fileName: String) {
 
-    private var storePath: File? = null
     private val mapper = jacksonObjectMapper()
 
     init {
-        val temp = File("$dir/moco/preprocess/")
+        val temp = File(dir)
         if (!temp.exists()) {
             temp.mkdirs()
         }
-        this.storePath = File("$dir/moco/preprocess/coverage.json")
         mapper.enable(SerializationFeature.INDENT_OUTPUT)
     }
 
@@ -36,7 +34,7 @@ class PreprocessConverter(dir: String) {
      */
     fun saveObjectToJson(results: Any) {
         try {
-            mapper.writeValue(this.storePath, results)
+            mapper.writeValue(File("$dir$fileName"), results)
         } catch (e: IOException) {
             println(e.printStackTrace())
             throw RuntimeException("Error while saving result to preprocessing file")
@@ -45,7 +43,7 @@ class PreprocessConverter(dir: String) {
 
     fun retrieveObjectFromJson(): PreprocessStorage {
         try {
-            return mapper.readValue(storePath, PreprocessStorage::class.java)
+            return mapper.readValue(File("$dir$fileName"), PreprocessStorage::class.java)
         } catch (e: Exception) {
             println(e.printStackTrace())
             throw RuntimeException("Error while reading preprocess csv store")

@@ -3,7 +3,7 @@ package io.moco.engine
 import io.moco.engine.io.ByteArrayLoader
 import io.moco.engine.mutation.*
 import io.moco.engine.operator.Operator
-import io.moco.engine.preprocessing.PreprocessConverter
+import io.moco.utils.JsonConverter
 import io.moco.engine.preprocessing.PreprocessorWorker
 import io.moco.engine.test.RelatedTestRetriever
 import java.io.File
@@ -16,35 +16,30 @@ import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 
 
-class MocoEntryPoint(
-    private val codeRoot: String,
-    private val testRoot: String,
-    private val excludedClasses: String,
-    private val buildRoot: String,
-    runtimeClassPath: MutableList<String>,
-    private val compileClassPath: MutableList<String>,
-    private val jvm: String,
-    includedOperatorsName: List<String>,
-
-) {
+class MocoEntryPoint {
     // Preprocessing step: Parse the targets source code and tests to collect information
     // about code blocks and mapping from classes under test to test classes
     // (which test classes are responsible for which classes under test)
-    private var classPath: String
+    private val codeRoot: String = Configuration.codeRoot
+    private val testRoot: String = Configuration.testRoot
+    private val buildRoot = Configuration.buildRoot
+    private val jvm: String = Configuration.jvm
+
+    private val excludedClasses: String = Configuration.excludedClasses
+    private val classPath: String
     private var byteArrLoader: ByteArrayLoader
     private var createdAgentLocation: String?
-    private val includedMutationOperators: List<Operator>
+    private val filteredMutationOperator: List<Operator>
     private val mutationStorage: MutationStorage = MutationStorage(mutableMapOf())
 
     init {
-        val cp = runtimeClassPath.joinToString(separator = File.pathSeparatorChar.toString())
+        val cp = Configuration.classPath.joinToString(separator = File.pathSeparatorChar.toString())
         classPath = "$cp:$codeRoot:$testRoot:$buildRoot"
         byteArrLoader = ByteArrayLoader(cp)
         createdAgentLocation = createTemporaryAgentJar()
-        includedMutationOperators = includedOperatorsName.mapNotNull { Operator.nameToOperator(it) }
-    }
-
-    companion object {
+        filteredMutationOperator =
+            Operator.supportedOperatorNames.filter { !Configuration.excludedMutationOperatorNames.contains(it) }
+                .mapNotNull { Operator.nameToOperator(it) }
     }
 
     fun execute() {
@@ -59,7 +54,7 @@ class MocoEntryPoint(
     }
 
     private fun preprocessing() {
-        val workerArgs = mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot)
+        val workerArgs = mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot, Configuration.preprocessFilename)
         val preprocessWorkerProcess = WorkerProcess(
             PreprocessorWorker.javaClass,
             getPreprocessWorkerArgs(),
@@ -71,7 +66,7 @@ class MocoEntryPoint(
     private fun mutationTest() {
         // Mutations collecting
         val toBeMutatedCodeBase = Codebase(codeRoot, testRoot, excludedClasses)
-        val mGen = MutationGenerator(byteArrLoader, includedMutationOperators)
+        val mGen = MutationGenerator(byteArrLoader, filteredMutationOperator)
         val foundMutations: Map<ClassName, List<Mutation>> =
             toBeMutatedCodeBase.sourceClassNames.associateWith { mGen.findPossibleMutationsOfClass(it) }
 
@@ -84,7 +79,10 @@ class MocoEntryPoint(
             val mutationTestWorkerProcess = createMutationTestWorkerProcess(mutationList, relatedTests, processArgs)
             executeMutationTestingProcess(mutationTestWorkerProcess)
         }
-        PreprocessConverter(buildRoot).saveObjectToJson(mutationStorage)
+        JsonConverter(
+            "$buildRoot/moco/mutation/",
+            "${Configuration.mutationResultsFilename}.json"
+        ).saveObjectToJson(mutationStorage)
     }
 
 
@@ -107,7 +105,7 @@ class MocoEntryPoint(
     ): Pair<WorkerProcess, ResultsReceiverThread> {
 
         val mutationWorkerArgs =
-            ResultsReceiverThread.MutationWorkerArguments(mutations, tests, classPath, includedMutationOperators, "")
+            ResultsReceiverThread.MutationWorkerArguments(mutations, tests, classPath, filteredMutationOperator, "")
         val mutationTestWorkerProcess = WorkerProcess(
             MutationTestWorker::class.java,
             processArgs,

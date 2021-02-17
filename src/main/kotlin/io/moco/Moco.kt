@@ -1,7 +1,7 @@
 package io.moco
 
+import io.moco.engine.Configuration
 import io.moco.engine.MocoEntryPoint
-import io.moco.engine.preprocessing.PreprocessConverter
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugin.MojoExecutionException
 import org.apache.maven.plugins.annotations.LifecyclePhase
@@ -34,10 +34,35 @@ class Moco : AbstractMojo() {
     private val outputDirectory: File? = null
 
     /**
-     * The greeting to display.
+     * Preprocess storage file name
      */
-    @Parameter(property = "sayhi.greeting", defaultValue = "Hello World!")
-    private val greeting: String? = null
+    @Parameter(defaultValue = "preprocess", property = "preprocessFilename", required = false)
+    private val preprocessFilename: String? = null
+
+    /**
+     * Mutation result storage file name
+     */
+    @Parameter(defaultValue = "mutation", property = "mutationResultsFilename", required = false)
+    private val mutationResultsFilename: String? = null
+
+    /**
+     * Excluded source classes
+     */
+    @Parameter(defaultValue = "", property = "excludedSourceClasses", required = false)
+    private val excludedSourceClasses: String? = null
+
+    /**
+     * Excluded tests classes, comma separated string
+     */
+    @Parameter(defaultValue = "", property = "excludedTestClasses", required = false)
+    private val excludedTestClasses: String? = null
+
+    /**
+     * Excluded mutation operators, comma separated string
+     */
+    @Parameter(defaultValue = "", property = "excludedMutationOperatorNames", required = false)
+    private val excludedMutationOperatorNames: String? = null
+
 
     @Throws(MojoExecutionException::class)
     override fun execute() {
@@ -48,21 +73,28 @@ class Moco : AbstractMojo() {
                 project?.build?.outputDirectory.toString()
             val testRoot =
                 project?.build?.testOutputDirectory.toString()
-            val runtimeClassPath =
-                project?.runtimeClasspathElements
-            val compileClassPath =
-                project?.compileClasspathElements
+            val runtimeClassPath = project?.runtimeClasspathElements
+            val classPath =
+                runtimeClassPath
+                    ?: System.getProperty(
+                        "java.class.path"
+                    ).split(File.pathSeparatorChar.toString())
             val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
-            val includedOperators = listOf("AOR", "LCR", "ROR", "UOI")
 
-            if (runtimeClassPath != null) {
-                if (compileClassPath != null) {
-                    MocoEntryPoint(
-                        codeRoot, testRoot, "", buildRoot,
-                        runtimeClassPath, compileClassPath, jvm, includedOperators
-                    ).execute()
-                }
-            }
+            Configuration.setConfiguration(
+                buildRoot,
+                codeRoot,
+                testRoot,
+                excludedSourceClasses!!,
+                classPath,
+                jvm,
+                preprocessFilename!!,
+                mutationResultsFilename!!,
+                excludedMutationOperatorNames!!,
+                excludedTestClasses!!
+            )
+
+            MocoEntryPoint().execute()
 
         } catch (e: Exception) {
             log.info(e.printStackTrace().toString())
