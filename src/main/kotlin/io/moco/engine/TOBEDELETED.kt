@@ -95,33 +95,33 @@ object ABC {
 }
 
 fun main() {
-    val status = JavaProcess.exec(ABC::class.java, null)
-//    val buildRoot =
-//        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target"
-//    val codeRoot =
-//        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
-//    val testRoot =
-//        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
-//    val classpath = System.getProperty("java.class.path").split(File.pathSeparatorChar.toString()).toMutableList()
-//    val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
-//
-//    Configuration.setConfiguration(
-//        buildRoot,
-//        codeRoot,
-//        testRoot,
-//        "",
-//        classpath,
-//        jvm,
-//        "preprocess",
-//        "moco",
-//        "",
-//        "",
-//    )
-//
-//    MocoEntryPoint().execute()
+//    val status = JavaProcess.exec(ABC::class.java, null)
+    val buildRoot =
+        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target"
+    val codeRoot =
+        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
+    val testRoot =
+        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
+    val classpath = System.getProperty("java.class.path").split(File.pathSeparatorChar.toString()).toMutableList()
+    val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
 
-//    val abc = JsonConverter("$buildRoot/moco/preprocess/", "preprocess.json").retrieveObjectFromJson()
-//    print(abc)
+    Configuration.setConfiguration(
+        buildRoot,
+        codeRoot,
+        testRoot,
+        "",
+        classpath,
+        jvm,
+        "preprocess",
+        "moco",
+        "",
+        "",
+    )
+
+    MocoEntryPoint().execute()
+
+    val abc = JsonConverter("$buildRoot/moco/preprocess/", "preprocess").retrieveObjectFromJson()
+    print(abc)
 
 
 }
