@@ -8,15 +8,15 @@ import java.util.concurrent.ConcurrentHashMap
 class PreprocessorTracker {
     companion object {
         //TODO: map from test class to list of CUT
-        val testToCUTTracker: ConcurrentHashMap<String, MutableSet<String>> = ConcurrentHashMap()
+        var testToCUTTracker: ConcurrentHashMap<String, MutableSet<String>> = ConcurrentHashMap()
 
         //TODO: map from CUT to list of blocks
-        val blockTracker: ConcurrentHashMap<String, MutableList<Block>> = ConcurrentHashMap()
-        val cutRecord: MutableSet<String> = mutableSetOf()
+        var blockTracker: ConcurrentHashMap<String, MutableList<Block>> = ConcurrentHashMap()
+        var cutRecord: MutableSet<String> = mutableSetOf()
 
         // Internal class name of ProcessorTracker to be called by asm method visitor
         val internalClsName: String = PreprocessorTracker::class.qualifiedName.toString().replace(".", "/")
-        private val testExecutionTime = mutableMapOf<String, Long>()
+        private var testExecutionTime = mutableMapOf<String, Long>()
 
         @Synchronized
         @JvmStatic
@@ -36,7 +36,6 @@ class PreprocessorTracker {
             } else {
                 testToCUTTracker[testClass.cls.name] = cutRecord
             }
-
             if (testExecutionTime.containsKey(testClass.cls.name)) {
                 if (testClass.executionTime > testExecutionTime[testClass.cls.name]!!) {
                     testExecutionTime[testClass.cls.name] = testClass.executionTime
@@ -55,15 +54,13 @@ class PreprocessorTracker {
         @Synchronized
         @JvmStatic
         fun clearTracker() {
-            cutRecord.clear()
+            cutRecord = mutableSetOf()
         }
 
         fun getPreprocessResults(): PreprocessStorage {
             val res: MutableList<PreprocessClassResult> = mutableListOf()
             for (cutCls: String in blockTracker.keys) {
                 val recordTestClasses: MutableList<Pair<String, Long?>> = mutableListOf()
-
-
                 for (testCls: String in testToCUTTracker.keys) {
                     if (testToCUTTracker[testCls]?.contains(cutCls) == true) {
                         val temp = Pair(testCls, testExecutionTime[testCls])

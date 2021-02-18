@@ -120,8 +120,8 @@ fun main() {
 
     MocoEntryPoint().execute()
 
-    val abc = JsonConverter("$buildRoot/moco/preprocess/", "preprocess").retrieveObjectFromJson()
-    print(abc)
+//    val abc = JsonConverter("$buildRoot/moco/preprocess/", "preprocess").retrieveObjectFromJson()
+//    print(abc)
 
 
 }
