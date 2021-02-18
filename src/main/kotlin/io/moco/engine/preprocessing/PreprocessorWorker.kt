@@ -25,8 +25,7 @@ object PreprocessorWorker {
             ex.printStackTrace(System.out)
         } finally {
             JsonConverter(
-                "$buildRoot/moco/preprocess/",
-                preprocessFilename
+                "$buildRoot/moco/preprocess/", preprocessFilename
             ).saveObjectToJson(PreprocessorTracker.getPreprocessResults())
             println("------------------Complete preprocessing step------------------")
             socket?.close()

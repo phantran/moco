@@ -34,8 +34,8 @@ object JavaProcess {
         val className = klass.name
         val command: MutableList<String> = LinkedList()
 
-//        val abcd = "-javaagent:MyJar.jar"
-        val abcd = "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/m0c0-maven-plugin-1.0-SNAPSHOT.jar"
+        val abcd = "-javaagent:MyJar.jar"
+//        val abcd = "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/MyJar.jar"
         command.add(javaBin)
         command.add(abcd)
 
@@ -80,45 +80,45 @@ object ABC {
         val result: org.junit.runner.Result = junit.run(beanClass)
         junit.run(beanClass1)
 
-//        PreprocessorTracker.registerMappingTestToCUT(beanClass.canonicalName)
+//        PreprocessorTracker.registerMappingTestToCUT(beanClass)
 
         for (failure in result.failures) {
             println("$failure")
         }
         println(
             "passed:" + result.wasSuccessful() +
-                    PreprocessorTracker.cutRecord +
-                    PreprocessorTracker.testToCUTTracker +
+                    PreprocessorTracker.cutRecord + "\n" +
+                    PreprocessorTracker.testToCUTTracker + "\n" +
                     PreprocessorTracker.blockTracker
         )
     }
 }
 
 fun main() {
-
-    val buildRoot =
-        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target"
-    val codeRoot =
-        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
-    val testRoot =
-        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
-    val classpath = System.getProperty("java.class.path").split(File.pathSeparatorChar.toString()).toMutableList()
-    val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
-
-    Configuration.setConfiguration(
-        buildRoot,
-        codeRoot,
-        testRoot,
-        "",
-        classpath,
-        jvm,
-        "preprocess",
-        "moco",
-        "",
-        "",
-    )
-
-    MocoEntryPoint().execute()
+    val status = JavaProcess.exec(ABC::class.java, null)
+//    val buildRoot =
+//        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target"
+//    val codeRoot =
+//        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/classes"
+//    val testRoot =
+//        "/Users/phantran/Study/Passau/Thesis/Moco/m0c0-maven-plugin/target/test-classes"
+//    val classpath = System.getProperty("java.class.path").split(File.pathSeparatorChar.toString()).toMutableList()
+//    val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
+//
+//    Configuration.setConfiguration(
+//        buildRoot,
+//        codeRoot,
+//        testRoot,
+//        "",
+//        classpath,
+//        jvm,
+//        "preprocess",
+//        "moco",
+//        "",
+//        "",
+//    )
+//
+//    MocoEntryPoint().execute()
 
 //    val abc = JsonConverter("$buildRoot/moco/preprocess/", "preprocess.json").retrieveObjectFromJson()
 //    print(abc)

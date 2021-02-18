@@ -1,17 +1,17 @@
-package io.moco.engine;
+package io.moco;
 
 import io.moco.engine.DummyForTesting;
-import io.moco.engine.preprocessing.PreprocessorTracker;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestTest2 {
+
+public class TestTest1 {
 
     @Test
     public void test_hihi() {
-        DummyForTesting t1 = new DummyForTesting();
-        t1.dummy();
+        DummyForTesting t = new DummyForTesting();
+        t.dummy();
         int a = 1;
         int b = 2;
         assertEquals(b, a + 1);
@@ -19,7 +19,13 @@ public class TestTest2 {
 
     @Test
     public void test_hihi1() {
-        DummyForTesting t1 = new DummyForTesting();
+        int a = 1;
+        int b = 2;
+        assertEquals(b, a + 1);
+    }
+
+    @Test
+    public void test_hihi3() {
         int a = 1;
         int b = 2;
         assertEquals(b, a + 1);
