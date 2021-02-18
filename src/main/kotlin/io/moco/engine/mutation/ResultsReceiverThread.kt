@@ -111,9 +111,21 @@ class ResultsReceiverThread(
                     }
                     if (mutationStorage.entries.containsKey(clsName)) {
                         // NOTE: do not change map keys because of the consistency between moco and gamekins
-                        mutationStorage.entries[clsName]?.add(mapOf("mutationDetails" to mutation, "result" to status))
+                        mutationStorage.entries[clsName]?.add(
+                            mapOf(
+                                "mutationDetails" to mutation,
+                                "result" to status,
+                                "uniqueID" to mutation.hashCode()
+                            )
+                        )
                     } else {
-                        mutationStorage.entries[clsName] = mutableListOf(mapOf("mutationDetails" to mutation, "result" to status))
+                        mutationStorage.entries[clsName] = mutableListOf(
+                            mapOf(
+                                "mutationDetails" to mutation,
+                                "result" to status,
+                                "uniqueID" to mutation.hashCode()
+                            )
+                        )
                     }
                 }
 
