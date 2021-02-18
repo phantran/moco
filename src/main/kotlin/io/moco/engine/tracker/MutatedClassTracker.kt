@@ -12,14 +12,11 @@ class MutatedClassTracker {
     private var clsInfo: ClassInfo? = null
     private var fileName: String? = null
 
-    val javaClsName: String?
-        get() = clsInfo?.name?.replace("/", ".")
-
     fun getMutation(mutationID: MutationID): List<Mutation> {
         return mutations.filter{ it.mutationID == mutationID }
     }
 
-    fun contextHasMutation(newMutationID: MutationID): Boolean {
+    fun isRegisteredMutant(newMutationID: MutationID): Boolean {
         return mutations.any{ it.mutationID == newMutationID }
     }
 

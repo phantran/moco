@@ -5,14 +5,13 @@ import io.moco.engine.mutation.MutatedMethodLocation
 import io.moco.engine.mutation.MutationID
 import io.moco.engine.operator.Operator
 
-class MutatedMethodTracker (
+class MutatedMethodTracker(
     private val mutatedClassTracker: MutatedClassTracker,
     private val mutatedMethodLocation: MutatedMethodLocation
 ) {
 
     var instructionIndex = 0
     var currMutatedLineNumber = 0
-
 
     fun registerMutant(
         operator: Operator, description: String
@@ -23,12 +22,12 @@ class MutatedMethodTracker (
             mutatedClassTracker.getFileName(),
             currMutatedLineNumber,
             description,
-            )
+        )
         this.mutatedClassTracker.addMutation(newMutant)
         return newMutationID
     }
 
     fun mutantExists(newMutationID: MutationID): Boolean {
-        return mutatedClassTracker.contextHasMutation(newMutationID)
+        return mutatedClassTracker.isRegisteredMutant(newMutationID)
     }
 }

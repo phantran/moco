@@ -31,7 +31,7 @@ class MocoEntryPoint {
     private val classPath: String
     private var byteArrLoader: ByteArrayLoader
     private var createdAgentLocation: String?
-    private val filteredMutationOperator: List<Operator>
+    private val filteredMutationOperatorNames: List<String>
     private val mutationStorage: MutationStorage = MutationStorage(mutableMapOf())
 
     init {
@@ -39,9 +39,8 @@ class MocoEntryPoint {
         classPath = "$cp:$codeRoot:$testRoot:$buildRoot"
         byteArrLoader = ByteArrayLoader(cp)
         createdAgentLocation = createTemporaryAgentJar()
-        filteredMutationOperator =
+        filteredMutationOperatorNames =
             Operator.supportedOperatorNames.filter { !Configuration.excludedMutationOperatorNames!!.contains(it) }
-                .mapNotNull { Operator.nameToOperator(it) }
     }
 
     fun execute() {
@@ -53,10 +52,11 @@ class MocoEntryPoint {
 //            10, TimeUnit.SECONDS, LinkedBlockingQueue(),
 //            Executors.defaultThreadFactory()
 //        )
-
-        // Preprocessing step
+        println("------------------------------------Start preprocessing step------------------------------------")
         preprocessing()
-//        mutationTest()
+        println("------------------------------------Complete preprocessing step------------------------------------")
+
+        mutationTest()
 
 
         // Remove generated agent after finishing
@@ -76,17 +76,21 @@ class MocoEntryPoint {
 
     private fun mutationTest() {
         // Mutations collecting
+        println("------------------------------------Start mutation collecting step------------------------------------")
+
         val preprocessedStorage = PreprocessStorage.getStoredPreprocessStorage(buildRoot)
         val toBeMutatedClasses: List<ClassName> =
             preprocessedStorage.classRecord.map { ClassName(it.classUnderTestName) }
-        val mGen = MutationGenerator(byteArrLoader, filteredMutationOperator)
+        val mGen = MutationGenerator(byteArrLoader, filteredMutationOperatorNames.mapNotNull { Operator.nameToOperator(it) })
         var foundMutations: Map<ClassName, List<Mutation>> =
             toBeMutatedClasses.associateWith { mGen.findPossibleMutationsOfClass(it) }
         foundMutations = foundMutations.filter { it.value.isNotEmpty() }
+        println("------------------------------------Complete mutation collecting step------------------------------------")
 
         // Mutants generation and tests execution
         val testRetriever = RelatedTestRetriever(buildRoot)
         val processArgs = getMutationPreprocessArgs()
+        println("------------------------------------Start mutation testing step------------------------------------")
         foundMutations.forEach label@{ (className, mutationList) ->
             println("Starting executing tests for mutants of class $className")
             val relatedTests: List<ClassName> = testRetriever.retrieveRelatedTest(className)
@@ -100,6 +104,8 @@ class MocoEntryPoint {
             "$buildRoot/moco/mutation/",
             Configuration.mutationResultsFilename!!
         ).saveObjectToJson(mutationStorage)
+        println("------------------------------------Complete mutation testing step------------------------------------")
+
     }
 
 
@@ -122,7 +128,7 @@ class MocoEntryPoint {
     ): Pair<WorkerProcess, ResultsReceiverThread> {
 
         val mutationWorkerArgs =
-            ResultsReceiverThread.MutationWorkerArguments(mutations, tests, classPath, filteredMutationOperator, "")
+            ResultsReceiverThread.MutationWorkerArguments(mutations, tests, classPath, filteredMutationOperatorNames, "")
         val mutationTestWorkerProcess = WorkerProcess(
             MutationTestWorker::class.java,
             processArgs,

@@ -12,7 +12,8 @@ public class TestTest2 {
     public void test_hihi() {
         BlockTracker t = new BlockTracker();
         DummyForTesting t1 = new DummyForTesting();
-        t1.dummy();
+        assertEquals(t1.dummy(), 10);
+
         int a = 1;
         int b = 2;
         assertEquals(b, a + 1);

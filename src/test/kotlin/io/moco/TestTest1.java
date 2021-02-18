@@ -11,10 +11,9 @@ public class TestTest1 {
     @Test
     public void test_hihi() {
         DummyForTesting t = new DummyForTesting();
-        t.dummy();
-        int a = 1;
-        int b = 2;
-        assertEquals(b, a + 1);
+        int x = t.dummy();
+        assertEquals(x, 10);
+
     }
 
     @Test

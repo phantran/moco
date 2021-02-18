@@ -6,15 +6,14 @@ package io.moco.engine
  * @author Tran Phan
  * @since 1.0
  */
-class DummyForTesting() {
-    fun dummy() {
+class DummyForTesting {
+
+    fun dummy(): Int {
         val a = 1
         val b = 5 + 4
         val c = 10 / 2
         val d = 2 * 4
         val e = a + b
-        if (e == 10) {
-            val f = 4 - 9
-        }
+        return e
     }
 }

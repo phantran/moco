@@ -6,5 +6,4 @@ data class MutationID(
     val location: MutatedMethodLocation,
     val instructionIndices: Collection<Int>?,
     val operatorName: String  // mutation operator unique name
-): Serializable {
-}
+): Serializable

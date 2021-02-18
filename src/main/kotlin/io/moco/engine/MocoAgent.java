@@ -13,6 +13,8 @@ public class MocoAgent {
             instrumentation.redefineClasses(definitions);
             return true;
         } catch (final ClassNotFoundException | UnmodifiableClassException | VerifyError | InternalError ignored) {
+            System.out.println("Error while replacing a class under test by its mutant");
+
         }
         return false;
     }

@@ -2,22 +2,15 @@ package io.moco.engine
 
 
 import io.moco.utils.ClassLoaderUtil
+import java.io.Serializable
 import java.util.stream.Stream
 
-data class ClassName (val name: String) {
+data class ClassName (val name: String): Serializable {
 
     private val javaName = name.replace('/', '.')
 
     fun getJavaName(): String {
         return javaName
-    }
-
-    fun getInternalName(): String {
-        return name
-    }
-
-    fun getQualifiedName(): String {
-        return name
     }
 
     companion object {

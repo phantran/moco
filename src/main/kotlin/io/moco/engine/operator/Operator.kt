@@ -15,9 +15,9 @@ interface Operator {
 
         private val mapping: Map<String, Operator> = mapOf(
             "AOR" to ReplacementOperator(), // Arithmetic operator replacement
-            "LCR" to ReplacementOperator(), // Logical connector replacement
-            "ROR" to ReplacementOperator(), // Relational operator replacement
-            "UOI" to ReplacementOperator() // Unary operator insertion
+//            "LCR" to ReplacementOperator(), // Logical connector replacement
+//            "ROR" to ReplacementOperator(), // Relational operator replacement
+//            "UOI" to ReplacementOperator() // Unary operator insertion
         )
     }
 

@@ -1,6 +1,8 @@
 package io.moco.engine.mutation
 
+import io.moco.engine.DummyForTesting
 import io.moco.engine.io.ByteArrayLoader
+import io.moco.engine.operator.Operator
 import io.moco.engine.test.TestItem
 import io.moco.engine.test.TestItemWrapper
 import io.moco.engine.test.TestResult
@@ -47,7 +49,9 @@ class MutationTestWorker(
             val byteArrLoader = ByteArrayLoader(classPath)
             mutantIntroducer = MutantIntroducer(byteArrLoader)
             outputStream = DataOutputStream(socket.getOutputStream())
-            mGen = MutationGenerator(byteArrLoader, givenWorkerArgs.includedOperators)
+            mGen = MutationGenerator(
+                byteArrLoader,
+                givenWorkerArgs.includedOperators.mapNotNull { Operator.nameToOperator(it) })
             val testItems: List<TestItem> = TestItem.testClassesToTestItems(givenWorkerArgs.tests)
             val wrappedTest: Pair<List<TestItemWrapper>, List<TestResultAggregator>> =
                 TestItemWrapper.wrapTestItem(testItems)
@@ -83,8 +87,7 @@ class MutationTestWorker(
             MutationTestResult(0, MutationTestStatus.RUN_ERROR)
         } else {
             introduceMutantThenExec(
-                mutation, mutatedClass,
-                tests
+                mutation, mutatedClass, tests
             )
         }
         report(mutationId, testResult)

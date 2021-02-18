@@ -5,7 +5,7 @@ import java.util.concurrent.Callable
 
 class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResultAggregator) : Callable<Unit> {
     override fun call() {
-        println("Preprocess by executing test " + testItem.desc)
+        println("Executing test " + testItem.desc)
         val t0 = System.currentTimeMillis()
         if (testItem.executionTime != -1L){
             val heuristicTimeOut = (testItem.executionTime * 1.5 + 5000).toLong()

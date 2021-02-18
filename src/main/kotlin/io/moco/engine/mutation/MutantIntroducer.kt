@@ -27,6 +27,7 @@ class MutantIntroducer(private val byteArrayLoader: ByteArrayLoader) {
             }
             previousClass = clsName
             previousLoader = loader
+
             MocoAgent.introduceMutant(Class.forName(clsName?.getJavaName(), false, loader), byteArr)
         } catch (e: ClassNotFoundException) {
             throw e

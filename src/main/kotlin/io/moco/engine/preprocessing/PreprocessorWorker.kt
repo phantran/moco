@@ -27,7 +27,6 @@ object PreprocessorWorker {
             JsonConverter(
                 "$buildRoot/moco/preprocess/", preprocessFilename
             ).saveObjectToJson(PreprocessorTracker.getPreprocessResults())
-            println("------------------Complete preprocessing step------------------")
             socket?.close()
         }
     }

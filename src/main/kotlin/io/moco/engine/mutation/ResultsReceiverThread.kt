@@ -120,12 +120,11 @@ class ResultsReceiverThread(
         }
     }
 
-
     class MutationWorkerArguments(
         val mutations: List<Mutation>,
         val tests: List<ClassName>,
         val classPath: String,
-        val includedOperators: List<Operator>,
+        val includedOperators: List<String>,
         val filter: String,
     ) : Serializable
 }

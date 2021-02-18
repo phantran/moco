@@ -31,7 +31,7 @@ class WorkerProcess(
         val processBuilder = ProcessBuilder(commandsToProcess)
         try {
             process = processBuilder.inheritIO().start()
-            process?.waitFor()
+//            process?.waitFor()
         } catch (ex: Exception) {
             ex.printStackTrace()
         }

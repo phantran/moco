@@ -31,7 +31,7 @@ class MutationGenerator(
     ): List<Mutation> {
         val tracker = MutatedClassTracker()
         val bytesArray: ByteArray? = bytesArrayLoader.getByteArray(
-            clsToMutate.getInternalName()
+            clsToMutate.name
         )
         if (bytesArray != null) {
             return visitAndCollectMutations(tracker, bytesArray)
@@ -70,6 +70,7 @@ class MutationGenerator(
         )
         cr.accept(mcv, ClassReader.EXPAND_FRAMES)
         val mutations: List<Mutation> = tracker.getMutation(mutationID)
+
         return Mutant(mutations[0], cw.toByteArray())
     }
 }
