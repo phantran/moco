@@ -109,10 +109,11 @@ class ResultsReceiverThread(
                         MutationTestStatus.SURVIVED -> "survived"
                         else -> "unknown"
                     }
-                    if (mutationStorage.entry.containsKey(clsName)) {
-                        mutationStorage.entry[clsName]?.add(Pair(mutation, status))
+                    if (mutationStorage.entries.containsKey(clsName)) {
+                        // NOTE: do not change map keys because of the consistency between moco and gamekins
+                        mutationStorage.entries[clsName]?.add(mapOf("mutationDetails" to mutation, "result" to status))
                     } else {
-                        mutationStorage.entry[clsName] = mutableListOf(Pair(mutation, status))
+                        mutationStorage.entries[clsName] = mutableListOf(mapOf("mutationDetails" to mutation, "result" to status))
                     }
                 }
 

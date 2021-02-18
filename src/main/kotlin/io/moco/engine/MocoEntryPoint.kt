@@ -103,7 +103,7 @@ class MocoEntryPoint {
         JsonConverter(
             "$buildRoot/moco/mutation/",
             Configuration.mutationResultsFilename!!
-        ).saveObjectToJson(mutationStorage)
+        ).saveObjectToJson(mutationStorage.entries)
         println("------------------------------------Complete mutation testing step------------------------------------")
 
     }
