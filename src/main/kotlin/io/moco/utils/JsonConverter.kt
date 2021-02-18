@@ -37,7 +37,7 @@ class JsonConverter(private val dir: String, private val fileName: String) {
             mapper.writeValue(File("$dir$fileName.json"), results)
         } catch (e: IOException) {
             println(e.printStackTrace())
-            throw RuntimeException("Error while saving result to preprocessing file")
+            throw RuntimeException("Error while saving results to csv file")
         }
     }
 
