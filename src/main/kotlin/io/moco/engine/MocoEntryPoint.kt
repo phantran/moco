@@ -64,7 +64,8 @@ class MocoEntryPoint {
     }
 
     private fun preprocessing() {
-        val workerArgs = mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot, Configuration.preprocessFilename!!)
+        val workerArgs =
+            mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot, Configuration.preprocessFilename!!)
         val preprocessWorkerProcess = WorkerProcess(
             PreprocessorWorker.javaClass,
             getPreprocessWorkerArgs(),
@@ -76,7 +77,8 @@ class MocoEntryPoint {
     private fun mutationTest() {
         // Mutations collecting
         val preprocessedStorage = PreprocessStorage.getStoredPreprocessStorage(buildRoot)
-        val toBeMutatedClasses: List<ClassName> = preprocessedStorage.classRecord.map { ClassName(it.classUnderTestName) }
+        val toBeMutatedClasses: List<ClassName> =
+            preprocessedStorage.classRecord.map { ClassName(it.classUnderTestName) }
         val mGen = MutationGenerator(byteArrLoader, filteredMutationOperator)
         var foundMutations: Map<ClassName, List<Mutation>> =
             toBeMutatedClasses.associateWith { mGen.findPossibleMutationsOfClass(it) }

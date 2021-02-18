@@ -1,4 +1,4 @@
-package io.moco;
+package io.moco.engine;
 
 /**
  * Mutation Generator to create mutants.
@@ -6,7 +6,7 @@ package io.moco;
  * @author Tran Phan
  * @since 1.0
  */
-class DummyForTesting {
+public class DummyForTesting {
     public void dummy() {
         int a = 1;
         int b = 5 + 4;

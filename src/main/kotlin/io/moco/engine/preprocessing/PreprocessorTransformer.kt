@@ -27,7 +27,7 @@ class PreprocessorTransformer(private val includedTargets: MutableList<ClassName
                 return try {
                     cr.accept(
                         PreprocessorClassVisitor(cw),
-                        ClassReader.SKIP_FRAMES
+                        ClassReader.EXPAND_FRAMES
                     )
                     cw.toByteArray()
                 } catch (e: Exception) {

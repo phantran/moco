@@ -1,5 +1,6 @@
-package io.moco;
+package io.moco.engine;
 
+import io.moco.engine.DummyForTesting;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

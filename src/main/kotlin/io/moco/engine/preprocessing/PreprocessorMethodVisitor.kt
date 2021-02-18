@@ -9,8 +9,8 @@ import org.objectweb.asm.tree.MethodNode
 
 class PreprocessorMethodVisitor(
     val parent: PreprocessorClassVisitor, val className: String,
-    val mv: MethodVisitor?, val access: Int,
-    val name: String?, val desc: String?, val signature: String?,
+    val mv: MethodVisitor?, access: Int,
+    val name: String?, desc: String?, signature: String?,
     exceptions: Array<String?>?
 ) : MethodNode(ASMInfoUtil.ASM_VERSION, access, name, desc, signature, exceptions) {
 
