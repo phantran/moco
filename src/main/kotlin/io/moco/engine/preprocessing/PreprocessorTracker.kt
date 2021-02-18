@@ -8,11 +8,11 @@ import java.util.concurrent.ConcurrentHashMap
 class PreprocessorTracker {
     companion object {
         //TODO: map from test class to list of CUT
-        var testToCUTTracker: ConcurrentHashMap<String, MutableSet<String>> = ConcurrentHashMap()
+        val testToCUTTracker: ConcurrentHashMap<String, MutableSet<String>> = ConcurrentHashMap()
 
         //TODO: map from CUT to list of blocks
-        var blockTracker: ConcurrentHashMap<String, MutableList<Block>> = ConcurrentHashMap()
-        var cutRecord: MutableSet<String> = mutableSetOf()
+        val blockTracker: ConcurrentHashMap<String, MutableList<Block>> = ConcurrentHashMap()
+        val cutRecord: MutableSet<String> = mutableSetOf()
 
         // Internal class name of ProcessorTracker to be called by asm method visitor
         val internalClsName: String = PreprocessorTracker::class.qualifiedName.toString().replace(".", "/")
@@ -36,6 +36,7 @@ class PreprocessorTracker {
             } else {
                 testToCUTTracker[testClass.cls.name] = cutRecord
             }
+
             if (testExecutionTime.containsKey(testClass.cls.name)) {
                 if (testClass.executionTime > testExecutionTime[testClass.cls.name]!!) {
                     testExecutionTime[testClass.cls.name] = testClass.executionTime
@@ -54,13 +55,15 @@ class PreprocessorTracker {
         @Synchronized
         @JvmStatic
         fun clearTracker() {
-            cutRecord = mutableSetOf()
+            cutRecord.clear()
         }
 
         fun getPreprocessResults(): PreprocessStorage {
             val res: MutableList<PreprocessClassResult> = mutableListOf()
             for (cutCls: String in blockTracker.keys) {
                 val recordTestClasses: MutableList<Pair<String, Long?>> = mutableListOf()
+
+
                 for (testCls: String in testToCUTTracker.keys) {
                     if (testToCUTTracker[testCls]?.contains(cutCls) == true) {
                         val temp = Pair(testCls, testExecutionTime[testCls])

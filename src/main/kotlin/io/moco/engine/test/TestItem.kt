@@ -67,6 +67,6 @@ class TestItem(
     }
 
     override fun toString(): String {
-        return ("TestItem [cls=" + cls + "description" + desc + "]")
+        return ("TestItem [cls=$cls description=$desc]")
     }
 }

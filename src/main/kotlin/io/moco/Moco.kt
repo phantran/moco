@@ -37,31 +37,31 @@ class Moco : AbstractMojo() {
      * Preprocess storage file name
      */
     @Parameter(defaultValue = "preprocess", property = "preprocessFilename", required = false)
-    private val preprocessFilename: String? = null
+    private val preprocessFilename: String = "preprocess"
 
     /**
      * Mutation result storage file name
      */
     @Parameter(defaultValue = "mutation", property = "mutationResultsFilename", required = false)
-    private val mutationResultsFilename: String? = null
+    private val mutationResultsFilename: String = "mutation"
 
     /**
      * Excluded source classes
      */
     @Parameter(defaultValue = "", property = "excludedSourceClasses", required = false)
-    private val excludedSourceClasses: String? = null
+    private val excludedSourceClasses: String = ""
 
     /**
      * Excluded tests classes, comma separated string
      */
     @Parameter(defaultValue = "", property = "excludedTestClasses", required = false)
-    private val excludedTestClasses: String? = null
+    private val excludedTestClasses: String = ""
 
     /**
      * Excluded mutation operators, comma separated string
      */
     @Parameter(defaultValue = "", property = "excludedMutationOperatorNames", required = false)
-    private val excludedMutationOperatorNames: String? = null
+    private val excludedMutationOperatorNames: String = ""
 
 
     @Throws(MojoExecutionException::class)
@@ -85,13 +85,13 @@ class Moco : AbstractMojo() {
                 buildRoot,
                 codeRoot,
                 testRoot,
-                excludedSourceClasses!!,
+                excludedSourceClasses,
                 classPath,
                 jvm,
-                preprocessFilename!!,
-                mutationResultsFilename!!,
-                excludedMutationOperatorNames!!,
-                excludedTestClasses!!
+                preprocessFilename,
+                mutationResultsFilename,
+                excludedMutationOperatorNames,
+                excludedTestClasses
             )
 
             MocoEntryPoint().execute()

@@ -1,7 +1,5 @@
 package io.moco
 
-import io.moco.engine.DummyForTesting
-import io.moco.engine.MethodName
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith

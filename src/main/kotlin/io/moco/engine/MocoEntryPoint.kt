@@ -27,7 +27,7 @@ class MocoEntryPoint {
     private val buildRoot = Configuration.buildRoot
     private val jvm: String = Configuration.jvm
 
-    private val excludedClasses: String = Configuration.excludedClasses
+    private val excludedClasses: String = Configuration.excludedClasses!!
     private val classPath: String
     private var byteArrLoader: ByteArrayLoader
     private var createdAgentLocation: String?
@@ -40,7 +40,7 @@ class MocoEntryPoint {
         byteArrLoader = ByteArrayLoader(cp)
         createdAgentLocation = createTemporaryAgentJar()
         filteredMutationOperator =
-            Operator.supportedOperatorNames.filter { !Configuration.excludedMutationOperatorNames.contains(it) }
+            Operator.supportedOperatorNames.filter { !Configuration.excludedMutationOperatorNames!!.contains(it) }
                 .mapNotNull { Operator.nameToOperator(it) }
     }
 
@@ -56,7 +56,7 @@ class MocoEntryPoint {
 
         // Preprocessing step
         preprocessing()
-        mutationTest()
+//        mutationTest()
 
 
         // Remove generated agent after finishing
@@ -64,7 +64,7 @@ class MocoEntryPoint {
     }
 
     private fun preprocessing() {
-        val workerArgs = mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot, Configuration.preprocessFilename)
+        val workerArgs = mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot, Configuration.preprocessFilename!!)
         val preprocessWorkerProcess = WorkerProcess(
             PreprocessorWorker.javaClass,
             getPreprocessWorkerArgs(),
@@ -96,7 +96,7 @@ class MocoEntryPoint {
         }
         JsonConverter(
             "$buildRoot/moco/mutation/",
-            Configuration.mutationResultsFilename
+            Configuration.mutationResultsFilename!!
         ).saveObjectToJson(mutationStorage)
     }
 
