@@ -18,16 +18,17 @@ import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 
 
-class MocoEntryPoint {
+class MocoEntryPoint(private val configuration: Configuration) {
     // Preprocessing step: Parse the targets source code and tests to collect information
     // about code blocks and mapping from classes under test to test classes
     // (which test classes are responsible for which classes under test)
-    private val codeRoot: String = Configuration.codeRoot
-    private val testRoot: String = Configuration.testRoot
-    private val buildRoot = Configuration.buildRoot
-    private val jvm: String = Configuration.jvm
 
-    private val excludedClasses: String = Configuration.excludedClasses!!
+    private val codeRoot: String = configuration.codeRoot
+    private val testRoot: String = configuration.testRoot
+    private val buildRoot = configuration.buildRoot
+    private val jvm: String = configuration.jvm
+
+    private val excludedClasses: String = configuration.excludedClasses
     private val classPath: String
     private var byteArrLoader: ByteArrayLoader
     private var createdAgentLocation: String?
@@ -35,12 +36,12 @@ class MocoEntryPoint {
     private val mutationStorage: MutationStorage = MutationStorage(mutableMapOf())
 
     init {
-        val cp = Configuration.classPath.joinToString(separator = File.pathSeparatorChar.toString())
+        val cp = configuration.classPath.joinToString(separator = File.pathSeparatorChar.toString())
         classPath = "$cp:$codeRoot:$testRoot:$buildRoot"
         byteArrLoader = ByteArrayLoader(cp)
         createdAgentLocation = createTemporaryAgentJar()
         filteredMutationOperatorNames =
-            Operator.supportedOperatorNames.filter { !Configuration.excludedMutationOperatorNames!!.contains(it) }
+            Operator.supportedOperatorNames.filter { !configuration.excludedMutationOperatorNames.contains(it) }
     }
 
     fun execute() {
@@ -65,7 +66,7 @@ class MocoEntryPoint {
 
     private fun preprocessing() {
         val workerArgs =
-            mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot, Configuration.preprocessResultFileName!!)
+            mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot, configuration.preprocessResultFileName)
         val preprocessWorkerProcess = WorkerProcess(
             PreprocessorWorker.javaClass,
             getPreprocessWorkerArgs(),
@@ -102,7 +103,7 @@ class MocoEntryPoint {
         }
         JsonConverter(
             "$buildRoot/moco/mutation/",
-            Configuration.mutationResultsFileName!!
+            configuration.mutationResultsFileName
         ).saveObjectToJson(mutationStorage)
         println("------------------------------------Complete mutation testing step------------------------------------")
 

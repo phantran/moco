@@ -28,12 +28,6 @@ class Moco : AbstractMojo() {
 
 
     /**
-     * Location of the file.
-     */
-    @Parameter(defaultValue = "\${project.build.directory}", property = "outputDir", required = true)
-    private val outputDirectory: File? = null
-
-    /**
      * Preprocess storage file name
      */
     @Parameter(defaultValue = "preprocess", property = "preprocessFilename", required = false)
@@ -63,31 +57,28 @@ class Moco : AbstractMojo() {
     @Parameter(defaultValue = "", property = "excludedMutationOperatorNames", required = false)
     private val excludedMutationOperatorNames: String = ""
 
+    /**
+     * Set to true to tell MoCo to only generate mutation for changed classes based on git commit info
+     */
+    @Parameter(defaultValue = "true", property = "gitChangedClassesMode", required = false)
+    private val gitChangedClassesMode: Boolean = true
 
     @Throws(MojoExecutionException::class)
     override fun execute() {
         try {
-            println(project?.basedir)
-            println(project?.compileSourceRoots)
-            println(project?.groupId)
-            println(project?.artifactId)
-
-
             val buildRoot =
                 project?.build?.directory.toString()
             val codeRoot =
                 project?.build?.outputDirectory.toString()
             val testRoot =
                 project?.build?.testOutputDirectory.toString()
+
             val runtimeClassPath = project?.runtimeClasspathElements
-            val classPath =
-                runtimeClassPath
-                    ?: System.getProperty(
-                        "java.class.path"
-                    ).split(File.pathSeparatorChar.toString())
+            val classPath = runtimeClassPath?: System.getProperty("java.class.path").
+                                                                split(File.pathSeparatorChar.toString())
             val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
 
-            Configuration.setConfiguration(
+            val configuration = Configuration(
                 buildRoot,
                 codeRoot,
                 testRoot,
@@ -100,11 +91,11 @@ class Moco : AbstractMojo() {
                 excludedTestClasses,
                 project?.basedir.toString(),
                 project?.compileSourceRoots,
-                project?.artifactId,
-
+                project?.artifactId!!,
+                gitChangedClassesMode
             )
-
-            MocoEntryPoint().execute()
+            Configuration.currentConfig = configuration
+            MocoEntryPoint(configuration).execute()
 
         } catch (e: Exception) {
             log.info(e.printStackTrace().toString())

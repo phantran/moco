@@ -22,7 +22,7 @@ object PreprocessingFilterByGit {
     @JvmStatic
     @Throws(IOException::class)
     fun getChangedClassesSinceLastStoredCommit(lastCommitName: String,
-                                               gitRootPath: String? = Configuration.baseDir,
+                                               gitRootPath: String? = Configuration.currentConfig?.baseDir,
                                                projectArtifactID: String): List<String> {
 
 
