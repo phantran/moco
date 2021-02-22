@@ -1,5 +1,7 @@
 package io.moco.engine
 
+import java.io.File
+
 class Configuration {
     companion object {
         lateinit var buildRoot: String
@@ -8,10 +10,13 @@ class Configuration {
         var excludedClasses: String? = ""
         lateinit var classPath: List<String>
         lateinit var jvm: String
-        var preprocessFilename: String? = ""
-        var mutationResultsFilename: String? = ""
+        var preprocessResultFileName: String? = ""
+        var mutationResultsFileName: String? = ""
         var excludedMutationOperatorNames: String? = ""
-        var excludedTestClasses: String? = ""
+        private var excludedTestClasses: String? = ""
+        var baseDir: String? = ""
+        var compileSourceRoots: List<String>? = mutableListOf()
+        var artifactId: String? = ""
 
         fun setConfiguration(
             buildRoot: String,
@@ -20,21 +25,27 @@ class Configuration {
             excludedClasses: String?,
             classPath: List<String>,
             jvm: String,
-            preprocessFilename: String?,
-            mutationResultsFilename: String?,
+            preprocessResultFileName: String?,
+            mutationResultsFileName: String?,
             excludedMutationOperatorNames: String?,
-            excludedTestClasses: String?
-        ) {
+            excludedTestClasses: String?,
+            baseDir: String?,
+            compileSourceRoots: List<String>?,
+            artifactId: String?
+            ) {
             Configuration.buildRoot = buildRoot
             Configuration.codeRoot = codeRoot
             Configuration.testRoot = testRoot
             Configuration.excludedClasses = excludedClasses
             Configuration.classPath = classPath
             Configuration.jvm = jvm
-            Configuration.preprocessFilename = preprocessFilename
-            Configuration.mutationResultsFilename = mutationResultsFilename
+            Configuration.preprocessResultFileName = preprocessResultFileName
+            Configuration.mutationResultsFileName = mutationResultsFileName
             Configuration.excludedMutationOperatorNames = excludedMutationOperatorNames
             Configuration.excludedTestClasses = excludedTestClasses
+            Configuration.baseDir = baseDir
+            Configuration.compileSourceRoots = compileSourceRoots
+            Configuration.artifactId = artifactId
         }
     }
 }

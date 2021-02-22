@@ -12,7 +12,7 @@ public class TestTest1 {
     public void test_hihi() {
         DummyForTesting t = new DummyForTesting();
         int x = t.dummy();
-        assertEquals(x, 10);
+        assertEquals(x, 8);
 
     }
 

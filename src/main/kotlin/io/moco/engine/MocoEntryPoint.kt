@@ -65,7 +65,7 @@ class MocoEntryPoint {
 
     private fun preprocessing() {
         val workerArgs =
-            mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot, Configuration.preprocessFilename!!)
+            mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot, Configuration.preprocessResultFileName!!)
         val preprocessWorkerProcess = WorkerProcess(
             PreprocessorWorker.javaClass,
             getPreprocessWorkerArgs(),
@@ -102,7 +102,7 @@ class MocoEntryPoint {
         }
         JsonConverter(
             "$buildRoot/moco/mutation/",
-            Configuration.mutationResultsFilename!!
+            Configuration.mutationResultsFileName!!
         ).saveObjectToJson(mutationStorage)
         println("------------------------------------Complete mutation testing step------------------------------------")
 

@@ -37,13 +37,13 @@ class Moco : AbstractMojo() {
      * Preprocess storage file name
      */
     @Parameter(defaultValue = "preprocess", property = "preprocessFilename", required = false)
-    private val preprocessFilename: String = "preprocess"
+    private val preprocessResultFileName: String = "preprocess"
 
     /**
      * Mutation result storage file name
      */
-    @Parameter(defaultValue = "mutation", property = "mutationResultsFilename", required = false)
-    private val mutationResultsFilename: String = "mutation"
+    @Parameter(defaultValue = "moco", property = "mutationResultsFilename", required = false)
+    private val mutationResultsFileName: String = "moco"
 
     /**
      * Excluded source classes
@@ -67,6 +67,12 @@ class Moco : AbstractMojo() {
     @Throws(MojoExecutionException::class)
     override fun execute() {
         try {
+            println(project?.basedir)
+            println(project?.compileSourceRoots)
+            println(project?.groupId)
+            println(project?.artifactId)
+
+
             val buildRoot =
                 project?.build?.directory.toString()
             val codeRoot =
@@ -88,10 +94,14 @@ class Moco : AbstractMojo() {
                 excludedSourceClasses,
                 classPath,
                 jvm,
-                preprocessFilename,
-                mutationResultsFilename,
+                preprocessResultFileName,
+                mutationResultsFileName,
                 excludedMutationOperatorNames,
-                excludedTestClasses
+                excludedTestClasses,
+                project?.basedir.toString(),
+                project?.compileSourceRoots,
+                project?.artifactId,
+
             )
 
             MocoEntryPoint().execute()

@@ -13,7 +13,7 @@ class DummyForTesting {
         val b = 5 + 4
         val c = 10 / 2
         val d = 2 * 4
-        val e = a + b
-        return e
+        val p = a * d
+        return p
     }
 }
