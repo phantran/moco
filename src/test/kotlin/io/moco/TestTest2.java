@@ -1,6 +1,7 @@
 package io.moco;
 
-import io.moco.engine.DummyForTesting;
+
+import io.moco.dev.DummyForTesting;
 import io.moco.engine.tracker.BlockTracker;
 import org.junit.Test;
 
