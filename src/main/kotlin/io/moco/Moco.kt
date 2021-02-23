@@ -31,7 +31,7 @@ import java.lang.Exception
 
 
 /**
- * Goal which touches a timestamp file.
+ * Goal which perform mutation tests, collect mutation information and store mutation information into JSON file
  */
 @Mojo(
     name = "moco",
