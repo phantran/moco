@@ -63,4 +63,4 @@ buildSrcTmp/
 distTmp/
 outTmp/
 target
-src/main/kotlin/io/moco/dev
+**/kotlin/io/moco/dev

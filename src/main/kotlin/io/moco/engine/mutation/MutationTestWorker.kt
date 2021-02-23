@@ -1,6 +1,5 @@
 package io.moco.engine.mutation
 
-import io.moco.engine.DummyForTesting
 import io.moco.engine.io.ByteArrayLoader
 import io.moco.engine.operator.Operator
 import io.moco.engine.test.TestItem
