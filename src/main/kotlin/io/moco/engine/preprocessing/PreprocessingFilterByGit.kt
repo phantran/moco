@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2021. Tran Phan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package io.moco.engine.preprocessing
 
 import io.moco.engine.Configuration
@@ -16,19 +33,19 @@ import org.eclipse.jgit.revwalk.RevTree
 import org.eclipse.jgit.api.errors.GitAPIException
 import java.lang.Exception
 
-
 object PreprocessingFilterByGit {
 
     @JvmStatic
     @Throws(IOException::class)
-    fun getChangedClassesSinceLastStoredCommit(lastCommitName: String,
-                                               gitRootPath: String? = Configuration.currentConfig?.baseDir,
-                                               projectArtifactID: String): List<String> {
-
-
+    fun getChangedClsSinceLastStoredCommit(projectArtifactID: String,
+                                           gitRootPath: String? = Configuration.currentConfig?.baseDir): List<String>? {
+        val lastCommitName = getLastStoredCommit()
         val builder = FileRepositoryBuilder()
         val repo = builder.setGitDir(File("$gitRootPath/.git")).setMustExist(true).build()
         val headCommit = getHead(repo)
+        if (headCommit.name == lastCommitName) {
+            return null
+        }
         Git(repo).use { git ->
             val commits = git.log().all().call()
             for (commit in commits) {
@@ -37,7 +54,12 @@ object PreprocessingFilterByGit {
                 }
             }
         }
-        return listOf()
+        return null
+    }
+
+    private fun getLastStoredCommit(): String {
+        // TODO: retrieve from DB
+        return "4f2ca1734321f276804dced80799ce6a2dbc429b"
     }
 
     @Throws(IOException::class)
@@ -64,8 +86,8 @@ object PreprocessingFilterByGit {
             .setNewTree(prepareTreeParser(repository, newCommit))
             .call()
 
-        val classFiles = diff.map { it.newPath }.filter { it.endsWith(".java") }.
-                    map { it.replace("/", ".") }
+        val classFiles = diff.map { it.newPath }.filter { it.endsWith(".java") }
+
         val res = mutableListOf<String>()
         classFiles.map {
             try {
@@ -74,7 +96,7 @@ object PreprocessingFilterByGit {
                     res.add(it.substring(startIndex, it.length - 5))
                 }
             } catch (ex: Exception) {
-                println("Error while getting changed classes between since stored git commit")
+                println("[MoCo] Error while getting changed classes between since stored git commit")
             }
         }
         return res

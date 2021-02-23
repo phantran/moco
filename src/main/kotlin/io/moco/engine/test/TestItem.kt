@@ -22,8 +22,7 @@ class TestItem(
     fun execute(tra: TestResultAggregator) {
         val runner: Runner = createRunner(cls)
         if (runner is ErrorReportingRunner) {
-            println("Error while running test of $cls")
-//            logger.warn { "Error while running test of $cls" }
+            println("[MoCo] Error while running test of $cls")
         }
         try {
             val runNotifier = RunNotifier()
@@ -31,7 +30,7 @@ class TestItem(
             runNotifier.addFirstListener(listener)
             runner.run(runNotifier)
         } catch (e: Exception) {
-//            logger.error(e) { "Error while running test of $cls with desc $desc" }
+           println("[MoCo] Error while running test of $cls with desc $desc")
             throw RuntimeException(e)
         }
     }

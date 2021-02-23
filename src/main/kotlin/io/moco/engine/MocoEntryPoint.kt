@@ -1,17 +1,36 @@
+/*
+ * Copyright (c) 2021. Tran Phan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+
 package io.moco.engine
 
 import io.moco.engine.io.ByteArrayLoader
 import io.moco.engine.mutation.*
 import io.moco.engine.operator.Operator
 import io.moco.engine.preprocessing.PreprocessStorage
+import io.moco.engine.preprocessing.PreprocessingFilterByGit
 import io.moco.utils.JsonConverter
 import io.moco.engine.preprocessing.PreprocessorWorker
 import io.moco.engine.test.RelatedTestRetriever
+import org.apache.maven.plugin.logging.Log
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.ServerSocket
-import java.util.concurrent.ThreadPoolExecutor
 
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
@@ -23,77 +42,84 @@ class MocoEntryPoint(private val configuration: Configuration) {
     // about code blocks and mapping from classes under test to test classes
     // (which test classes are responsible for which classes under test)
 
-    private val codeRoot: String = configuration.codeRoot
-    private val testRoot: String = configuration.testRoot
-    private val buildRoot = configuration.buildRoot
-    private val jvm: String = configuration.jvm
-
-    private val excludedClasses: String = configuration.excludedClasses
     private val classPath: String
     private var byteArrLoader: ByteArrayLoader
     private var createdAgentLocation: String?
     private val filteredMutationOperatorNames: List<String>
     private val mutationStorage: MutationStorage = MutationStorage(mutableMapOf())
+    private var filteredClsByGit: List<String>? = mutableListOf()
+//    private var logger: Any = getLogger(log)
 
     init {
         val cp = configuration.classPath.joinToString(separator = File.pathSeparatorChar.toString())
-        classPath = "$cp:$codeRoot:$testRoot:$buildRoot"
+        classPath = "$cp:${configuration.codeRoot}:${configuration.testRoot}:${configuration.buildRoot}"
         byteArrLoader = ByteArrayLoader(cp)
         createdAgentLocation = createTemporaryAgentJar()
-        filteredMutationOperatorNames =
-            Operator.supportedOperatorNames.filter { !configuration.excludedMutationOperatorNames.contains(it) }
+        filteredMutationOperatorNames = Operator.supportedOperatorNames.filter {
+            !configuration.excludedMutationOperatorNames.contains(it)
+        }
+        if (configuration.gitChangedClassesMode) {
+            filteredClsByGit = PreprocessingFilterByGit.getChangedClsSinceLastStoredCommit(
+                configuration.artifactId.replace(".", "/"),
+                configuration.baseDir
+            )
+        }
     }
 
     fun execute() {
         if (createdAgentLocation == null) {
             return
         }
-//        val executor = ThreadPoolExecutor(
-//            1, 2,
-//            10, TimeUnit.SECONDS, LinkedBlockingQueue(),
-//            Executors.defaultThreadFactory()
-//        )
-        println("------------------------------------Start preprocessing step------------------------------------")
+        println("[MoCo] --- Start preprocessing step ---")
+        // skip preprocessing if no detected changed classes in git based mode
         preprocessing()
-        println("------------------------------------Complete preprocessing step------------------------------------")
+        println("[MoCo] --- Complete Preprocessing step ---")
 
-        mutationTest()
-
-
+//        mutationTest()
         // Remove generated agent after finishing
         removeTemporaryAgentJar(createdAgentLocation)
     }
 
     private fun preprocessing() {
-        val workerArgs =
-            mutableListOf(codeRoot, testRoot, excludedClasses, buildRoot, configuration.preprocessResultFileName)
+        if (configuration.gitChangedClassesMode) {
+            if (filteredClsByGit.isNullOrEmpty()) {
+                println("[MoCo] Preprocessing: Git mode: No changed classes found by using git commits diff")
+                // skip preprocessing in git mode and no detected changed class
+                return
+            }
+            println("[MoCo] Preprocessing: Git mode: ${filteredClsByGit!!.size} changed classes found by using git commits diff")
+        }
+        val processWorkerArguments = configuration.getPreprocessProcessArgs()
+        processWorkerArguments.add(filteredClsByGit!!.joinToString(","))
         val preprocessWorkerProcess = WorkerProcess(
             PreprocessorWorker.javaClass,
-            getPreprocessWorkerArgs(),
-            workerArgs
+            getProcessArguments(),
+            processWorkerArguments
         )
         preprocessWorkerProcess.start()
+        preprocessWorkerProcess.getProcess()?.waitFor()
     }
 
     private fun mutationTest() {
         // Mutations collecting
-        println("------------------------------------Start mutation collecting step------------------------------------")
+        println("[MoCo] --- Start mutation collecting step---")
 
-        val preprocessedStorage = PreprocessStorage.getStoredPreprocessStorage(buildRoot)
+        val preprocessedStorage = PreprocessStorage.getStoredPreprocessStorage(configuration.buildRoot)
         val toBeMutatedClasses: List<ClassName> =
             preprocessedStorage.classRecord.map { ClassName(it.classUnderTestName) }
-        val mGen = MutationGenerator(byteArrLoader, filteredMutationOperatorNames.mapNotNull { Operator.nameToOperator(it) })
+        val mGen =
+            MutationGenerator(byteArrLoader, filteredMutationOperatorNames.mapNotNull { Operator.nameToOperator(it) })
         var foundMutations: Map<ClassName, List<Mutation>> =
             toBeMutatedClasses.associateWith { mGen.findPossibleMutationsOfClass(it) }
         foundMutations = foundMutations.filter { it.value.isNotEmpty() }
-        println("------------------------------------Complete mutation collecting step------------------------------------")
+        println("[MoCo] --- Complete mutation collecting step ---")
 
         // Mutants generation and tests execution
-        val testRetriever = RelatedTestRetriever(buildRoot)
+        val testRetriever = RelatedTestRetriever(configuration.buildRoot)
         val processArgs = getMutationPreprocessArgs()
-        println("------------------------------------Start mutation testing step------------------------------------")
+        println("[MoCo] --- Start mutation testing step ---")
         foundMutations.forEach label@{ (className, mutationList) ->
-            println("Starting executing tests for mutants of class $className")
+            println("[MoCo] Starting executing tests for mutants of class $className")
             val relatedTests: List<ClassName> = testRetriever.retrieveRelatedTest(className)
             if (relatedTests.isEmpty()) {
                 return@label
@@ -102,10 +128,10 @@ class MocoEntryPoint(private val configuration: Configuration) {
             executeMutationTestingProcess(mutationTestWorkerProcess)
         }
         JsonConverter(
-            "$buildRoot/moco/mutation/",
+            "${configuration.buildRoot}/moco/mutation/",
             configuration.mutationResultsFileName
         ).saveObjectToJson(mutationStorage)
-        println("------------------------------------Complete mutation testing step------------------------------------")
+        println("[MoCo] --- Complete mutation testing step ---")
 
     }
 
@@ -129,7 +155,13 @@ class MocoEntryPoint(private val configuration: Configuration) {
     ): Pair<WorkerProcess, ResultsReceiverThread> {
 
         val mutationWorkerArgs =
-            ResultsReceiverThread.MutationWorkerArguments(mutations, tests, classPath, filteredMutationOperatorNames, "")
+            ResultsReceiverThread.MutationWorkerArguments(
+                mutations,
+                tests,
+                classPath,
+                filteredMutationOperatorNames,
+                ""
+            )
         val mutationTestWorkerProcess = WorkerProcess(
             MutationTestWorker::class.java,
             processArgs,
@@ -140,12 +172,12 @@ class MocoEntryPoint(private val configuration: Configuration) {
     }
 
     private fun getMutationPreprocessArgs(): MutableMap<String, Any> {
-        return getPreprocessWorkerArgs()
+        return getProcessArguments()
     }
 
-    private fun getPreprocessWorkerArgs(): MutableMap<String, Any> {
+    private fun getProcessArguments(): MutableMap<String, Any> {
         return mutableMapOf(
-            "port" to ServerSocket(0), "javaExecutable" to jvm,
+            "port" to ServerSocket(0), "javaExecutable" to configuration.jvm,
             "javaAgentJarPath" to "-javaagent:$createdAgentLocation", "classPath" to classPath
         )
     }

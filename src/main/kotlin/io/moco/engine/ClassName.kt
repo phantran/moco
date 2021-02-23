@@ -2,10 +2,10 @@ package io.moco.engine
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.annotation.JsonUnwrapped
 import io.moco.utils.ClassLoaderUtil
 import java.io.Serializable
 import java.util.stream.Stream
+
 
 data class ClassName (@JsonProperty("className") val name: String): Serializable {
 

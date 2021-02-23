@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2021. Tran Phan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+
 package io.moco.engine.preprocessing
 
 import io.moco.engine.ClassName
@@ -11,7 +29,13 @@ import java.security.ProtectionDomain
 import java.io.PrintWriter
 
 
-class PreprocessorTransformer(private val includedTargets: MutableList<ClassName>) : ClassFileTransformer {
+/**
+ * Preprocessor transformer
+ *
+ * @property filteredSourceClasses
+ * @constructor Create empty Preprocessor transformer
+ */
+class PreprocessorTransformer(private val filteredSourceClasses: List<ClassName>) : ClassFileTransformer {
 
     @Throws(IllegalClassFormatException::class)
     override fun transform(
@@ -19,7 +43,7 @@ class PreprocessorTransformer(private val includedTargets: MutableList<ClassName
         classBeingRedefined: Class<*>?,
         protectionDomain: ProtectionDomain, classfileBuffer: ByteArray
     ): ByteArray? {
-        return if (isCUT(className)) {
+        return if (isTargetCUT(className)) {
             try {
                 val cr = ClassReader(classfileBuffer)
                 val cw = ClassWriter(cr, COMPUTE_MAXS);
@@ -35,7 +59,7 @@ class PreprocessorTransformer(private val includedTargets: MutableList<ClassName
                     null
                 }
             } catch (t: RuntimeException) {
-                System.err.println("RuntimeException while transforming and preprocessing $className")
+                System.err.println("[MoCo] Error while transforming and preprocessing $className")
                 t.printStackTrace()
                 throw t
             }
@@ -45,18 +69,7 @@ class PreprocessorTransformer(private val includedTargets: MutableList<ClassName
     }
 
     // TODO: find a way to choose only source classes -> by using codebase class for instance
-    private fun isCUT(className: String): Boolean {
-        return className.contains("DummyForTesting")
-//        if (includedTargets.any { it.getInternalName() == className })  {
-//            if (className.contains("io/moco/engine/preprocessing/") ||
-//                className.contains("io/moco/engine/test/") ||
-//                className.contains("io/moco/utils/JsonConverter") ||
-//                className.contains("io/moco/utils/ClassLoaderUtil") ||
-//                className.contains("io/moco/engine/tracker/")) {
-//                return false
-//            }
-//            return true
-//        }
-//        return false
+    private fun isTargetCUT(className: String): Boolean {
+        return filteredSourceClasses.any { it.name == className }
     }
 }

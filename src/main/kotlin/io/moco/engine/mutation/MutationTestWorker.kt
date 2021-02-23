@@ -70,7 +70,7 @@ class MutationTestWorker(
         for (mutation: Mutation in mutations) {
             val t0 = System.currentTimeMillis()
             runOneByOne(mutation, tests)
-            println("Execution finished in " + (System.currentTimeMillis() - t0) + " ms")
+            println("[MoCo] Execution finished in " + (System.currentTimeMillis() - t0) + " ms")
         }
     }
 
@@ -106,7 +106,7 @@ class MutationTestWorker(
                 mutatedClass.byteArray
             )
         ) {
-            println("Introduce mutant in " + (System.currentTimeMillis() - t0) + " ms")
+            println("[MoCo] Introduce mutant in " + (System.currentTimeMillis() - t0) + " ms")
             mtr = executeTestAndGetResult(tests)
         } else {
             return MutationTestResult(0, MutationTestStatus.RUN_ERROR)
@@ -131,7 +131,7 @@ class MutationTestWorker(
                         break
                     }
                 } catch (e: Exception) {
-                    println("Error while executing test ${test?.testItem}")
+                    println("[MoCo] Error while executing test ${test?.testItem}")
                 } finally {
                 }
             }

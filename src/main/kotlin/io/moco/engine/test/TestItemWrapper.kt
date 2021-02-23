@@ -5,7 +5,7 @@ import java.util.concurrent.Callable
 
 class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResultAggregator) : Callable<Unit> {
     override fun call() {
-        println("Executing test " + testItem.desc)
+        println("[MoCo] Preprocessing: Executing test " + testItem.desc.name)
         val t0 = System.currentTimeMillis()
         if (testItem.executionTime != -1L){
             val heuristicTimeOut = (testItem.executionTime * 1.5 + 5000).toLong()
@@ -18,7 +18,7 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
             } catch (e: TimeoutCancellationException) {
                 testResultAggregator.results.add(TestResult(testItem.desc,
                     e, TestResult.TestState.TIMEOUT))
-                println("Test execution timeout - allowed time is $heuristicTimeOut")
+                println("[MoCo] Preprocessing: Test execution timeout - allowed time is $heuristicTimeOut")
                 return
             }
         } else {
@@ -26,7 +26,7 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
             testItem.executionTime = System.currentTimeMillis() - t0
         }
         val executionTime = (System.currentTimeMillis() - t0).toInt()
-        println("Execution time: $executionTime milliseconds")
+        println("[MoCo] Preprocessing: Execution time: $executionTime milliseconds")
     }
 
 

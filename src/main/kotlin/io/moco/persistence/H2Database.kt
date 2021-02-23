@@ -1,10 +1,27 @@
+/*
+ * Copyright (c) 2021. Tran Phan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package io.moco.persistence
 
 import java.lang.Exception
 import java.sql.ResultSet
 
 
-open class H2Database(
+class H2Database(
     url: String = "",
     user: String = "",
     password: String = ""
@@ -20,7 +37,7 @@ open class H2Database(
             val statement = "CREATE TABLE IF NOT EXISTS $tableName ( $schemaText );"
             connection?.createStatement().use { st -> st?.execute(statement) }
         } catch (ex: Exception) {
-            println("Cannot create database table $tableName")
+            println("[MoCo] Cannot create database table $tableName")
         }
     }
 
@@ -29,7 +46,7 @@ open class H2Database(
             val statement = "DROP TABLE IF EXISTS $tableName;"
             connection?.createStatement().use { st -> st?.execute(statement) }
         } catch (ex: Exception) {
-            println("Cannot delete database table $tableName")
+            println("[MoCo] Cannot delete database table $tableName")
         }
     }
 
@@ -38,7 +55,7 @@ open class H2Database(
             val statement = "DROP DATABASE dbName;"
             connection?.createStatement().use { st -> st?.execute(statement) }
         } catch (ex: Exception) {
-            println("Cannot drop database $dbName")
+            println("[MoCo] Cannot drop database $dbName")
         }
     }
 
@@ -49,7 +66,7 @@ open class H2Database(
             val statement = "INSERT INTO $table $columns VALUES $values; "
             connection?.createStatement().use { st -> st?.execute(statement) }
         } catch (ex: Exception) {
-            println("Error while inserting data $data to $table")
+            println("[MoCo] Error while inserting data $data to $table")
         }
 
     }
@@ -59,7 +76,7 @@ open class H2Database(
             val statement = "DELETE FROM $table WHERE $condition;"
             connection?.createStatement().use { st -> st?.execute(statement) }
         } catch (ex: Exception) {
-            println("Error while deleting data from $table with condition $condition")
+            println("[MoCo] Error while deleting data from $table with condition $condition")
         }
     }
 
@@ -68,7 +85,7 @@ open class H2Database(
             val statement = "DELETE FROM $table;"
             connection?.createStatement().use { st -> st?.execute(statement) }
         } catch (ex: Exception) {
-            println("Error while deleting all rows of $table")
+            println("[MoCo] Error while deleting all rows of $table")
         }
     }
 
@@ -79,7 +96,7 @@ open class H2Database(
             return stm?.executeQuery(query)
         } catch (ex: Exception) {
             println(ex.printStackTrace())
-            println("Error while fetch one from $table with condition $condition $query")
+            println("[MoCo] Error while fetch one from $table with condition $condition $query")
             null
         }
     }
@@ -91,7 +108,7 @@ open class H2Database(
             val stm = connection?.createStatement()
             return stm?.executeQuery(query)
         } catch (ex: Exception) {
-            println("Error while fetch all from $table with condition $condition $query")
+            println("[MoCo] Error while fetch all from $table with condition $condition $query")
             return null
 
         }
