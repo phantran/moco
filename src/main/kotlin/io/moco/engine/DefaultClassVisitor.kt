@@ -117,7 +117,7 @@ class DefaultClassVisitor : ClassVisitor(ASMInfoUtil.ASM_VERSION) {
     override fun visitEnd() {}
     override fun visitField(
         arg0: Int, arg1: String,
-        arg2: String, arg3: String, arg4: Any
+        arg2: String, arg3: String?, arg4: Any?
     ): FieldVisitor {
         return object : FieldVisitor(ASMInfoUtil.ASM_VERSION) {
             override fun visitAnnotation(

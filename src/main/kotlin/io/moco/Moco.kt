@@ -48,13 +48,13 @@ class Moco : AbstractMojo() {
     /**
      * Preprocess storage file name
      */
-    @Parameter(defaultValue = "preprocess", property = "preprocessFilename", required = false)
+    @Parameter(defaultValue = "preprocess", property = "preprocessResultFileName", required = false)
     private val preprocessResultFileName: String = "preprocess"
 
     /**
      * Mutation result storage file name
      */
-    @Parameter(defaultValue = "moco", property = "mutationResultsFilename", required = false)
+    @Parameter(defaultValue = "moco", property = "mutationResultsFileName", required = false)
     private val mutationResultsFileName: String = "moco"
 
     /**

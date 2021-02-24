@@ -30,12 +30,13 @@ class MutationTestWorker(
         @JvmStatic
         fun main(args: Array<String>) {
             MoCoLogger.debugEnable = true
+            MoCoLogger.useKotlinLog()
             val port = Integer.valueOf(args[0])
             var socket: Socket? = null
             try {
                 socket = Socket("localhost", port)
-                val instance = MutationTestWorker(socket)
-                instance.run()
+                val worker = MutationTestWorker(socket)
+                worker.run()
             } catch (e: Throwable) {
                 e.printStackTrace(System.out)
             } finally {
@@ -52,6 +53,8 @@ class MutationTestWorker(
             val byteArrLoader = ByteArrayLoader(classPath)
             mutantIntroducer = MutantIntroducer(byteArrLoader)
             outputStream = DataOutputStream(socket.getOutputStream())
+            TestItemWrapper.configuredTestTimeOut = if (givenWorkerArgs.testTimeOut.toIntOrNull() != null)
+                givenWorkerArgs.testTimeOut.toLong() else -1
             mGen = MutationGenerator(
                 byteArrLoader,
                 givenWorkerArgs.includedOperators.mapNotNull { Operator.nameToOperator(it) })
@@ -123,28 +126,30 @@ class MutationTestWorker(
     ): MutationTestResult {
         var killed = false
         var numberOfExecutedTests = 0
+        var finalStatus: MutationTestStatus
         try {
-            for (test: TestItemWrapper? in tests) {
-                try {
-                    runBlocking {
+            runBlocking {
+                for (test: TestItemWrapper? in tests) {
+                    try {
                         test?.call()
+                        numberOfExecutedTests += 1
+                        // A mutant is killed if a test is failed
+                        killed = checkIfMutantWasKilled(test?.testResultAggregator)
+                        if (killed) {
+                            break
+                        }
+                    } catch (e: Exception) {
+                        logger.error("Error while executing test ${test?.testItem}")
+                    } finally {
                     }
-                    numberOfExecutedTests += 1
-                    // A mutant is killed if a test is failed
-                    killed = checkIfMutantWasKilled(test?.testResultAggregator)
-                    if (killed) {
-                        break
-                    }
-                } catch (e: Exception) {
-                    logger.error("Error while executing test ${test?.testItem}")
-                } finally {
                 }
+                finalStatus = if (killed) MutationTestStatus.KILLED else MutationTestStatus.SURVIVED
             }
-            val finalStatus = if (killed) MutationTestStatus.KILLED else MutationTestStatus.SURVIVED
             return MutationTestResult(numberOfExecutedTests, finalStatus)
         } catch (ex: Exception) {
             return MutationTestResult(numberOfExecutedTests, MutationTestStatus.RUN_ERROR)
         }
+
     }
 
     private fun checkIfMutantWasKilled(tra: TestResultAggregator?): Boolean {

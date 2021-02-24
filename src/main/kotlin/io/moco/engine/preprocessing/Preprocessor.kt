@@ -63,6 +63,6 @@ class Preprocessor(
                 }
             }
         }
-        logger.debug("[MoCo] Preprocessing: Test and Collect Done in $time ms")
+        logger.debug("[MoCo] Preprocessing: Testing and Collecting Done in $time ms")
     }
 }

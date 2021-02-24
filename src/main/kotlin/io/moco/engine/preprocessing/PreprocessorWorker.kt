@@ -82,10 +82,10 @@ object PreprocessorWorker {
             Preprocessor(analysedCodeBase).preprocessing()
             JsonConverter("$buildRoot/moco/preprocess/", preprocessResultFileName).
                                                         saveObjectToJson(PreprocessorTracker.getPreprocessResults())
+            logger.info("Preprocessing: Data saved and exit")
         } catch (ex: Exception) {
             ex.printStackTrace(System.out)
         } finally {
-            logger.info("Preprocessing: Data saved and exit")
             socket?.close()
         }
     }

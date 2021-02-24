@@ -70,10 +70,14 @@ class MocoEntryPoint(private val configuration: Configuration) {
         }
         logger.info("MoCo START")
         // skip preprocessing if no detected changed classes in git based mode
-        preprocessing()
-        logger.debug("Complete Preprocessing")
+        logger.info("Preprocessing started")
+//        preprocessing()
+        logger.info("Preprocessing completed")
 
-//        mutationTest()
+        logger.info("Mutation Test started")
+        mutationTest()
+        logger.info("Mutation Test completed")
+
         // Remove generated agent after finishing
         removeTemporaryAgentJar(createdAgentLocation)
         logger.info("MoCo DONE")
@@ -105,6 +109,10 @@ class MocoEntryPoint(private val configuration: Configuration) {
         logger.debug("Start mutation collecting")
 
         val preprocessedStorage = PreprocessStorage.getStoredPreprocessStorage(configuration.buildRoot)
+        if (preprocessedStorage.classRecord.isNullOrEmpty()) {
+            logger.info("No new ")
+            return
+        }
         val toBeMutatedClasses: List<ClassName> =
             preprocessedStorage.classRecord.map { ClassName(it.classUnderTestName) }
         val mGen =
@@ -116,9 +124,9 @@ class MocoEntryPoint(private val configuration: Configuration) {
 
         // Mutants generation and tests execution
         val testRetriever = RelatedTestRetriever(configuration.buildRoot)
-        val processArgs = getMutationPreprocessArgs()
         logger.debug("Start mutation testing")
         foundMutations.forEach label@{ (className, mutationList) ->
+            val processArgs = getMutationPreprocessArgs()
             logger.debug(" Starting executing tests for mutants of class $className")
             val relatedTests: List<ClassName> = testRetriever.retrieveRelatedTest(className)
             if (relatedTests.isEmpty()) {
@@ -134,7 +142,6 @@ class MocoEntryPoint(private val configuration: Configuration) {
         logger.debug("Complete mutation testing")
 
     }
-
 
     private fun executeMutationTestingProcess(p: Pair<WorkerProcess, ResultsReceiverThread>) {
         val process = p.first
@@ -160,7 +167,8 @@ class MocoEntryPoint(private val configuration: Configuration) {
                 tests,
                 classPath,
                 filteredMutationOperatorNames,
-                ""
+                "",
+                configuration.testTimeOut
             )
         val mutationTestWorkerProcess = WorkerProcess(
             MutationTestWorker::class.java,

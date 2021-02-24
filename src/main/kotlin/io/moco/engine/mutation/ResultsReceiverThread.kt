@@ -139,5 +139,6 @@ class ResultsReceiverThread(
         val classPath: String,
         val includedOperators: List<String>,
         val filter: String,
+        val testTimeOut: String
     ) : Serializable
 }
