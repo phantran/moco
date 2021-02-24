@@ -7,7 +7,8 @@ import org.objectweb.asm.MethodVisitor
 
 interface Operator {
     companion object {
-        val supportedOperatorNames = listOf("AOR", "LCR", "ROR", "UOI")
+//        val supportedOperatorNames = listOf("AOR", "LCR", "ROR", "UOI")
+        val supportedOperatorNames = listOf("AOR")
 
         fun nameToOperator(it: String): Operator? {
             return mapping[it]

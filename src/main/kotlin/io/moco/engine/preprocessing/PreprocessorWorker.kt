@@ -45,10 +45,6 @@ object PreprocessorWorker {
      */
     @JvmStatic
     fun main(args: Array<String>) {
-        MoCoLogger.debugEnable = true
-        MoCoLogger.useKotlinLog()
-        val logger = MoCoLogger()
-
         var socket: Socket? = null
         val buildRoot = args[1]  // path to build or target folder of project
         val codeRoot = args[2]
@@ -62,6 +58,9 @@ object PreprocessorWorker {
         // this list is null of empty if git mode changed classes if off or no changed classes are detected
         val filteredClsByGitCommit =
             if (args[10] != "") args[10].split(",").map { it.trim() } else null
+        MoCoLogger.debugEnabled = args[11] == "true"
+        MoCoLogger.useKotlinLog()
+        val logger = MoCoLogger()
 
         try {
             socket = Socket("localhost", args[0].toInt())

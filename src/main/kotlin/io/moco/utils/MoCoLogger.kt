@@ -36,7 +36,7 @@ class MoCoLogger {
 
     @Synchronized
     fun debug(m: String) {
-        if (debugEnable) {
+        if (debugEnabled) {
             if (useMvnLog) {
                 mvnLogger?.info(m)
             } else {
@@ -66,7 +66,7 @@ class MoCoLogger {
     companion object {
         var useMvnLog = false
         var mvnLogger: Log? = null
-        var debugEnable = false
+        var debugEnabled = false
 
         fun useMvnLog(logger: Log? = null) {
             useMvnLog = true

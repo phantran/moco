@@ -1,6 +1,7 @@
 package io.moco.engine
 
-import org.apache.maven.plugin.logging.Log
+import io.moco.utils.MoCoLogger
+
 
 data class Configuration(
     val buildRoot: String,
@@ -27,7 +28,8 @@ data class Configuration(
 
     fun getPreprocessProcessArgs(): MutableList<String> {
         return mutableListOf(buildRoot, codeRoot, testRoot, excludedSourceClasses, excludedSourceFolders,
-            excludedTestClasses, excludedTestFolders, preprocessResultFileName, testTimeOut
+            excludedTestClasses, excludedTestFolders, preprocessResultFileName,
+            testTimeOut, MoCoLogger.debugEnabled.toString()
         )
     }
 }

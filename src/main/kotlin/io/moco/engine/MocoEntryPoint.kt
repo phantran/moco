@@ -35,6 +35,7 @@ import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 import io.moco.utils.MoCoLogger
+import kotlin.system.measureTimeMillis
 
 
 class MocoEntryPoint(private val configuration: Configuration) {
@@ -65,22 +66,25 @@ class MocoEntryPoint(private val configuration: Configuration) {
     }
 
     fun execute() {
-        if (createdAgentLocation == null) {
-            return
+        val executionTime = measureTimeMillis {
+            if (createdAgentLocation == null) {
+                return
+            }
+            logger.info("START")
+            // Skip preprocessing if no detected changed classes in git based mode
+            logger.info("Preprocessing started...")
+            // preprocessing()
+            logger.info("Preprocessing completed")
+
+            logger.info("Mutation Test started...")
+            mutationTest()
+            logger.info("Mutation Test completed")
+
+            // Remove generated agent after finishing
+            removeTemporaryAgentJar(createdAgentLocation)
         }
-        logger.info("MoCo START")
-        // skip preprocessing if no detected changed classes in git based mode
-        logger.info("Preprocessing started")
-//        preprocessing()
-        logger.info("Preprocessing completed")
-
-        logger.info("Mutation Test started")
-        mutationTest()
-        logger.info("Mutation Test completed")
-
-        // Remove generated agent after finishing
-        removeTemporaryAgentJar(createdAgentLocation)
-        logger.info("MoCo DONE")
+        logger.info("Execution done after ${executionTime/1000}s" )
+        logger.info("DONE")
     }
 
     private fun preprocessing() {
@@ -127,7 +131,6 @@ class MocoEntryPoint(private val configuration: Configuration) {
         logger.debug("Start mutation testing")
         foundMutations.forEach label@{ (className, mutationList) ->
             val processArgs = getMutationPreprocessArgs()
-            logger.debug(" Starting executing tests for mutants of class $className")
             val relatedTests: List<ClassName> = testRetriever.retrieveRelatedTest(className)
             if (relatedTests.isEmpty()) {
                 return@label
@@ -168,7 +171,8 @@ class MocoEntryPoint(private val configuration: Configuration) {
                 classPath,
                 filteredMutationOperatorNames,
                 "",
-                configuration.testTimeOut
+                configuration.testTimeOut,
+                MoCoLogger.debugEnabled
             )
         val mutationTestWorkerProcess = WorkerProcess(
             MutationTestWorker::class.java,

@@ -5,6 +5,7 @@ import io.moco.engine.mutation.MutationID
 import io.moco.engine.operator.ReplacementOperator
 import io.moco.engine.tracker.MutatedMethodTracker
 import io.moco.utils.ASMInfoUtil
+import io.moco.utils.MoCoLogger
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
@@ -12,9 +13,9 @@ import org.objectweb.asm.Opcodes
 class AOR1Visitor(
     val operator: ReplacementOperator,
     val tracker: MutatedMethodTracker,
-    val methodInfo: MethodInfo,
     delegateMethodVisitor: MethodVisitor
 ) : MethodVisitor(ASMInfoUtil.ASM_VERSION, delegateMethodVisitor) {
+    private val logger = MoCoLogger()
 
     companion object {
         val opcodeToMutator: MutableMap<Int, ReplaceOperation> = mutableMapOf()
@@ -115,15 +116,14 @@ class AOR1Visitor(
 
     override fun visitInsn(opcode: Int) {
         if (opcodeToMutator.containsKey(opcode)) {
-            val mutator: ReplaceOperation? = opcodeToMutator[opcode]
-
-            val newMutationId: MutationID? = mutator?.let {
-                tracker.registerMutant(
-                    operator, it.message
-                )
+            val operation: ReplaceOperation? = opcodeToMutator[opcode]
+            val newMutationId: MutationID? = operation?.let {
+                tracker.registerMutant(operator, it.message)
             }
-            if (newMutationId?.let { tracker.mutantExists(it) } == true) {
-                mutator.accept(mv)
+            if (newMutationId?.let { tracker.isTargetMutation(it) } == true) {
+                logger.debug("Old Opcode: $opcode")
+                logger.debug("New Opcode: ${operation.replacementOpcode}")
+                operation.accept(mv)
             } else {
                 mv.visitInsn(opcode)
             }

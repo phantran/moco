@@ -24,10 +24,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 class PreprocessorTracker {
     companion object {
-        //TODO: map from test class to list of CUT
-        var testToCUTTracker: ConcurrentHashMap<String, MutableSet<String>> = ConcurrentHashMap()
 
-        //TODO: map from CUT to list of blocks
+        var testToCUTTracker: ConcurrentHashMap<String, MutableSet<String>> = ConcurrentHashMap()
         var blockTracker: ConcurrentHashMap<String, MutableList<Block>> = ConcurrentHashMap()
         var cutRecord: MutableSet<String> = mutableSetOf()
 

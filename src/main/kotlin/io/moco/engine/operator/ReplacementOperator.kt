@@ -14,7 +14,7 @@ class ReplacementOperator: Operator {
         methodInfo: MethodInfo,
         delegateMethodVisitor: MethodVisitor
     ): MethodVisitor {
-        return AOR1Visitor(this, tracker, methodInfo, delegateMethodVisitor)
+        return AOR1Visitor(this, tracker, delegateMethodVisitor)
     }
 
     override fun getName(): String {

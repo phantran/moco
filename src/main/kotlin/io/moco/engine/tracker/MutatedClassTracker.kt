@@ -1,24 +1,15 @@
 package io.moco.engine.tracker
 
 import io.moco.engine.ClassInfo
-import io.moco.engine.mutation.Mutant
 import io.moco.engine.mutation.Mutation
 import io.moco.engine.mutation.MutationID
 
 
-class MutatedClassTracker {
-    private var consideredMutantID: String? = null
+class MutatedClassTracker(val targetMutationID: MutationID? = null) {
     private var mutations: MutableList<Mutation> = mutableListOf()
+    private var targetMutation: Mutation? = null
     private var clsInfo: ClassInfo? = null
     private var fileName: String? = null
-
-    fun getMutation(mutationID: MutationID): List<Mutation> {
-        return mutations.filter{ it.mutationID == mutationID }
-    }
-
-    fun isRegisteredMutant(newMutationID: MutationID): Boolean {
-        return mutations.any{ it.mutationID == newMutationID }
-    }
 
     fun addMutation(mutation: Mutation) {
         mutations.add(mutation)
@@ -28,14 +19,13 @@ class MutatedClassTracker {
         return mutations
     }
 
-    fun setConsideredMutantID(mutantID: String) {
-        consideredMutantID = mutantID
+    fun setTargetMutation(mutation: Mutation) {
+        targetMutation = mutation
     }
 
-    fun getConsideredMutantID(): String? {
-        return consideredMutantID
+    fun getTargetMutation(): Mutation? {
+        return targetMutation
     }
-
 
     fun setClsInfo(info: ClassInfo) {
         clsInfo = info
@@ -52,4 +42,5 @@ class MutatedClassTracker {
     fun getFileName(): String? {
         return fileName
     }
+
 }

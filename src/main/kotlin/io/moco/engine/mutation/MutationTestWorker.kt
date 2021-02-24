@@ -29,7 +29,6 @@ class MutationTestWorker(
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            MoCoLogger.debugEnable = true
             MoCoLogger.useKotlinLog()
             val port = Integer.valueOf(args[0])
             var socket: Socket? = null
@@ -49,6 +48,7 @@ class MutationTestWorker(
         try {
             val givenWorkerArgs: ResultsReceiverThread.MutationWorkerArguments =
                 DataStreamUtils.readObject(DataInputStream(socket.getInputStream()))
+            MoCoLogger.debugEnabled = givenWorkerArgs.debugEnabled
             classPath = givenWorkerArgs.classPath
             val byteArrLoader = ByteArrayLoader(classPath)
             mutantIntroducer = MutantIntroducer(byteArrLoader)
@@ -73,27 +73,32 @@ class MutationTestWorker(
     private fun runMutationTests(
         mutations: List<Mutation>, tests: List<TestItemWrapper>
     ) {
+        var mutatedClassByteArr: ByteArray? = null
         for (mutation: Mutation in mutations) {
+            logger.debug("------- Handle mutation --------------")
+            if (mutatedClassByteArr == null) {
+                val clsJavaName = mutation.mutationID.location.className?.getJavaName()
+                mutatedClassByteArr = mGen.bytesArrayLoader.getByteArray(clsJavaName)
+            }
             val t0 = System.currentTimeMillis()
-            runOneByOne(mutation, tests)
-            logger.debug("Execution finished in " + (System.currentTimeMillis() - t0) + " ms")
+            runOneByOne(mutation, tests, mutatedClassByteArr)
+            logger.debug("------- Done in " + (System.currentTimeMillis() - t0) + " ms -------------")
         }
     }
 
     @Throws(IOException::class)
     private fun runOneByOne(
         mutation: Mutation,
-        tests: List<TestItemWrapper>,
+        tests: List<TestItemWrapper>, byteArray: ByteArray?
     ) {
-        val mutationId: MutationID = mutation.mutationID
-        val mutatedClass: Mutant = mGen.createMutant(mutationId)
-
+        val mutationId = mutation.mutationID
+        val createdMutant = mGen.createMutant(mutationId, byteArray) ?: return
         register(mutationId)
         val testResult: MutationTestResult = if (tests.isEmpty()) {
             MutationTestResult(0, MutationTestStatus.RUN_ERROR)
         } else {
             introduceMutantThenExec(
-                mutation, mutatedClass, tests
+                mutation, createdMutant, tests
             )
         }
         report(mutationId, testResult)
@@ -106,13 +111,11 @@ class MutationTestWorker(
     ): MutationTestResult {
         val mtr: MutationTestResult
         val t0 = System.currentTimeMillis()
-        if (mutantIntroducer.introduce(
-                mutation.mutationID.location.className,
-                clsLoader,
-                mutatedClass.byteArray
-            )
+        if (mutantIntroducer.introduce(mutation.mutationID.location.className, clsLoader, mutatedClass.byteArray)
         ) {
             logger.debug("Introduce mutant in " + (System.currentTimeMillis() - t0) + " ms")
+            logger.debug("Mutation at line ${mutation.lineOfCode}")
+            logger.debug("Mutation operator ${mutation.description}")
             mtr = executeTestAndGetResult(tests)
         } else {
             return MutationTestResult(0, MutationTestStatus.RUN_ERROR)
