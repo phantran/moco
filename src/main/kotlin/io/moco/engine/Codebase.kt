@@ -62,9 +62,6 @@ class Codebase(
         if (folderFilter.any { file.absolutePath.contains(it) }) {
             return null
         }
-//        println(filter)
-//        println(folderFilter)
-//        println(filterByGitCommit)
 
         val res = file.absolutePath.substring(
             curRoot.absolutePath.length + 1,

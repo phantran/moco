@@ -19,6 +19,7 @@ package io.moco
 
 import io.moco.engine.Configuration
 import io.moco.engine.MocoEntryPoint
+import io.moco.utils.MoCoLogger
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugin.MojoExecutionException
 import org.apache.maven.plugins.annotations.LifecyclePhase
@@ -121,9 +122,8 @@ class Moco : AbstractMojo() {
             val testRoot =
                 project?.build?.testOutputDirectory.toString()
 
-            val runtimeClassPath = project?.runtimeClasspathElements
-            val classPath = runtimeClassPath?: System.getProperty("java.class.path").
-                                                                split(File.pathSeparatorChar.toString())
+            val runtimeCp = project?.runtimeClasspathElements
+            val classPath = runtimeCp?: System.getProperty("java.class.path").split(File.pathSeparatorChar.toString())
             val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
 
             val configuration = Configuration(
@@ -147,6 +147,7 @@ class Moco : AbstractMojo() {
             )
 
             Configuration.currentConfig = configuration
+            MoCoLogger.useMvnLog(log)
             MocoEntryPoint(configuration).execute()
 
         } catch (e: Exception) {

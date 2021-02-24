@@ -18,7 +18,7 @@ import java.io.IOException
 class JsonConverter(private val dir: String, private val fileName: String) {
 
     private val mapper = jacksonObjectMapper()
-
+    private val logger = MoCoLogger()
     init {
         val temp = File(dir)
         if (!temp.exists()) {
@@ -36,7 +36,7 @@ class JsonConverter(private val dir: String, private val fileName: String) {
         try {
             mapper.writeValue(File("$dir$fileName.json"), results)
         } catch (e: IOException) {
-            println(e.printStackTrace())
+            logger.error(e.printStackTrace().toString())
             throw RuntimeException("Error while saving results to csv file")
         }
     }
@@ -45,7 +45,7 @@ class JsonConverter(private val dir: String, private val fileName: String) {
         try {
             return mapper.readValue(File("$dir$fileName.json"), PreprocessStorage::class.java)
         } catch (e: Exception) {
-            println(e.printStackTrace())
+            logger.error(e.printStackTrace().toString())
             throw RuntimeException("Error while reading preprocess csv store")
         }
     }

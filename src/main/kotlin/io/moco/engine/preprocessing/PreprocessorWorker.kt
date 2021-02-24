@@ -22,6 +22,7 @@ import io.moco.engine.Codebase
 import io.moco.engine.MocoAgent
 import io.moco.engine.test.TestItemWrapper
 import io.moco.utils.JsonConverter
+import io.moco.utils.MoCoLogger
 import java.net.Socket
 
 
@@ -44,6 +45,10 @@ object PreprocessorWorker {
      */
     @JvmStatic
     fun main(args: Array<String>) {
+        MoCoLogger.debugEnable = true
+        MoCoLogger.useMvnLog()
+        val logger = MoCoLogger()
+
         var socket: Socket? = null
         val buildRoot = args[1]  // path to build or target folder of project
         val codeRoot = args[2]
@@ -67,11 +72,11 @@ object PreprocessorWorker {
                 filteredClsByGitCommit
             )
 
-            println("[MoCo] Preprocessing: ${analysedCodeBase.sourceClassNames.size} source classes found")
-            println("[MoCo] Preprocessing: ${analysedCodeBase.testClassesNames.size} test classes left after filtering")
+            logger.info("Preprocessing: ${analysedCodeBase.sourceClassNames.size} source classes found")
+            logger.info("Preprocessing: ${analysedCodeBase.testClassesNames.size} test classes left after filtering")
 
             if (analysedCodeBase.testClassesNames.size == 0) {
-                println("[MoCo] Preprocessing: No new tests to run")
+                logger.info("Preprocessing: No new tests to run")
                 return
             }
             MocoAgent.addTransformer(PreprocessorTransformer(analysedCodeBase.sourceClassNames))
@@ -81,7 +86,7 @@ object PreprocessorWorker {
         } catch (ex: Exception) {
             ex.printStackTrace(System.out)
         } finally {
-            println("[MoCo] Preprocessing: Data saved and exit")
+            logger.info("Preprocessing: Data saved and exit")
             socket?.close()
         }
     }

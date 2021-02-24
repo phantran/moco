@@ -20,6 +20,7 @@ package io.moco.engine.preprocessing
 import io.moco.engine.Codebase
 import io.moco.engine.test.TestItem
 import io.moco.engine.test.TestItemWrapper
+import io.moco.utils.MoCoLogger
 import kotlinx.coroutines.*
 import java.io.IOException
 import java.lang.Exception
@@ -30,6 +31,7 @@ import kotlin.system.measureTimeMillis
 class Preprocessor(
     private val codeBase: Codebase,
 ) {
+    private val logger = MoCoLogger()
     /**
     This class is responsible for parsing the whole codebase to get the information of
     which test classes are responsible for which classes under test and store this information
@@ -55,12 +57,12 @@ class Preprocessor(
                         test?.testItem?.let { PreprocessorTracker.registerMappingTestToCUT(it) }
                         PreprocessorTracker.clearTracker()
                     } catch (e: Exception) {
-                        println("[MoCo] Error while executing test ${test?.testItem}")
+                        logger.error("Error while executing test ${test?.testItem}")
                     } finally {
                     }
                 }
             }
         }
-        println("[MoCo] Preprocessing: Test and Collect Done in $time ms")
+        logger.debug("[MoCo] Preprocessing: Test and Collect Done in $time ms")
     }
 }

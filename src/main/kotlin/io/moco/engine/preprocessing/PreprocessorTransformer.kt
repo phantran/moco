@@ -19,6 +19,7 @@
 package io.moco.engine.preprocessing
 
 import io.moco.engine.ClassName
+import io.moco.utils.MoCoLogger
 import org.objectweb.asm.*;
 import org.objectweb.asm.ClassWriter.COMPUTE_FRAMES
 import org.objectweb.asm.ClassWriter.COMPUTE_MAXS
@@ -36,6 +37,7 @@ import java.io.PrintWriter
  * @constructor Create empty Preprocessor transformer
  */
 class PreprocessorTransformer(private val filteredSourceClasses: List<ClassName>) : ClassFileTransformer {
+    private val logger = MoCoLogger()
 
     @Throws(IllegalClassFormatException::class)
     override fun transform(
@@ -59,7 +61,7 @@ class PreprocessorTransformer(private val filteredSourceClasses: List<ClassName>
                     null
                 }
             } catch (t: RuntimeException) {
-                System.err.println("[MoCo] Error while transforming and preprocessing $className")
+                logger.error("Error while transforming and preprocessing $className")
                 t.printStackTrace()
                 throw t
             }

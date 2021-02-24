@@ -17,6 +17,7 @@
 
 package io.moco.persistence
 
+import io.moco.utils.MoCoLogger
 import java.lang.Exception
 import java.sql.ResultSet
 
@@ -26,6 +27,8 @@ class H2Database(
     user: String = "",
     password: String = ""
 ) : Database(url, user, password) {
+
+    private val logger = MoCoLogger()
 
     override fun createTable(tableName: String, schema: Map<String, String>) {
         try {
@@ -37,7 +40,7 @@ class H2Database(
             val statement = "CREATE TABLE IF NOT EXISTS $tableName ( $schemaText );"
             connection?.createStatement().use { st -> st?.execute(statement) }
         } catch (ex: Exception) {
-            println("[MoCo] Cannot create database table $tableName")
+            logger.error("Cannot create database table $tableName")
         }
     }
 
@@ -46,7 +49,7 @@ class H2Database(
             val statement = "DROP TABLE IF EXISTS $tableName;"
             connection?.createStatement().use { st -> st?.execute(statement) }
         } catch (ex: Exception) {
-            println("[MoCo] Cannot delete database table $tableName")
+            logger.error( "Cannot delete database table $tableName")
         }
     }
 
@@ -55,7 +58,7 @@ class H2Database(
             val statement = "DROP DATABASE dbName;"
             connection?.createStatement().use { st -> st?.execute(statement) }
         } catch (ex: Exception) {
-            println("[MoCo] Cannot drop database $dbName")
+            logger.error( "Cannot drop database $dbName")
         }
     }
 
@@ -66,7 +69,7 @@ class H2Database(
             val statement = "INSERT INTO $table $columns VALUES $values; "
             connection?.createStatement().use { st -> st?.execute(statement) }
         } catch (ex: Exception) {
-            println("[MoCo] Error while inserting data $data to $table")
+            logger.error( "Error while inserting data $data to $table")
         }
 
     }
@@ -76,7 +79,7 @@ class H2Database(
             val statement = "DELETE FROM $table WHERE $condition;"
             connection?.createStatement().use { st -> st?.execute(statement) }
         } catch (ex: Exception) {
-            println("[MoCo] Error while deleting data from $table with condition $condition")
+            logger.error( "Error while deleting data from $table with condition $condition")
         }
     }
 
@@ -85,7 +88,7 @@ class H2Database(
             val statement = "DELETE FROM $table;"
             connection?.createStatement().use { st -> st?.execute(statement) }
         } catch (ex: Exception) {
-            println("[MoCo] Error while deleting all rows of $table")
+            logger.error( "Error while deleting all rows of $table")
         }
     }
 
@@ -96,7 +99,7 @@ class H2Database(
             return stm?.executeQuery(query)
         } catch (ex: Exception) {
             println(ex.printStackTrace())
-            println("[MoCo] Error while fetch one from $table with condition $condition $query")
+            logger.error( "Error while fetch one from $table with condition $condition $query")
             null
         }
     }
@@ -104,12 +107,12 @@ class H2Database(
     override fun fetchAll(table: Any, condition: String, select: List<String>): ResultSet? {
         val where = if (condition.isNotEmpty()) "WHERE $condition" else ""
         val query = "SELECT ${select.joinToString(separator = ",")} FROM $table " + where + ";"
-        try {
+        return try {
             val stm = connection?.createStatement()
-            return stm?.executeQuery(query)
+            stm?.executeQuery(query)
         } catch (ex: Exception) {
-            println("[MoCo] Error while fetch all from $table with condition $condition $query")
-            return null
+            logger.error( "Error while fetch all from $table with condition $condition $query")
+            null
 
         }
     }
@@ -129,5 +132,4 @@ class H2Database(
 
         }
     }
-
 }

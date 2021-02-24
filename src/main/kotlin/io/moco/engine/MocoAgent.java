@@ -17,6 +17,8 @@
 
 package io.moco.engine;
 
+import io.moco.utils.MoCoLogger;
+
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -25,12 +27,13 @@ import java.lang.instrument.UnmodifiableClassException;
 
 public class MocoAgent {
     public static boolean introduceMutant(final Class<?> toBeReplacedCls, final byte[] bytes) {
+        MoCoLogger logger = new MoCoLogger();
         final ClassDefinition[] definitions = {new ClassDefinition(toBeReplacedCls, bytes)};
         try {
             instrumentation.redefineClasses(definitions);
             return true;
         } catch (final ClassNotFoundException | UnmodifiableClassException | VerifyError | InternalError ignored) {
-            System.out.println("[MoCo] Error while replacing a class under test by its mutant");
+            logger.error("Error while replacing a class under test by its mutant");
 
         }
         return false;

@@ -19,7 +19,7 @@ data class Configuration(
     val compileSourceRoots: List<String>?,
     val artifactId: String,
     val gitChangedClassesMode: Boolean,
-    val testTimeOut: String
+    val testTimeOut: String,
 ) {
     companion object {
         var currentConfig: Configuration? = null

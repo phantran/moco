@@ -8,6 +8,7 @@ import io.moco.engine.test.TestResult
 import io.moco.engine.test.TestResultAggregator
 import io.moco.utils.ClassLoaderUtil
 import io.moco.utils.DataStreamUtils
+import io.moco.utils.MoCoLogger
 import kotlinx.coroutines.runBlocking
 import java.io.DataInputStream
 import java.io.DataOutputStream
@@ -23,10 +24,12 @@ class MutationTestWorker(
     private lateinit var mGen: MutationGenerator
     private lateinit var mutantIntroducer: MutantIntroducer
     private val clsLoader = ClassLoaderUtil.contextClsLoader
+    private val logger = MoCoLogger()
 
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
+            MoCoLogger.debugEnable = true
             val port = Integer.valueOf(args[0])
             var socket: Socket? = null
             try {
@@ -70,7 +73,7 @@ class MutationTestWorker(
         for (mutation: Mutation in mutations) {
             val t0 = System.currentTimeMillis()
             runOneByOne(mutation, tests)
-            println("[MoCo] Execution finished in " + (System.currentTimeMillis() - t0) + " ms")
+            logger.debug("Execution finished in " + (System.currentTimeMillis() - t0) + " ms")
         }
     }
 
@@ -106,7 +109,7 @@ class MutationTestWorker(
                 mutatedClass.byteArray
             )
         ) {
-            println("[MoCo] Introduce mutant in " + (System.currentTimeMillis() - t0) + " ms")
+            logger.debug("Introduce mutant in " + (System.currentTimeMillis() - t0) + " ms")
             mtr = executeTestAndGetResult(tests)
         } else {
             return MutationTestResult(0, MutationTestStatus.RUN_ERROR)
@@ -133,7 +136,7 @@ class MutationTestWorker(
                         break
                     }
                 } catch (e: Exception) {
-                    println("[MoCo] Error while executing test ${test?.testItem}")
+                    logger.error("Error while executing test ${test?.testItem}")
                 } finally {
                 }
             }

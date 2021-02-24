@@ -1,8 +1,10 @@
 package io.moco.engine.test
 
+import io.moco.utils.MoCoLogger
 import kotlinx.coroutines.*
 
 class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResultAggregator) {
+    private val logger = MoCoLogger()
 
     suspend fun call() = withContext(Dispatchers.Default) {
         val timeOut: Long = if (testItem.executionTime != -1L) {
@@ -15,7 +17,7 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
                 testItem.execute(testResultAggregator, timeOut)
             }
         } catch (ex: Exception) {
-            println("[MoCo] Preprocessing: Error while executing test ${testItem.desc.name}")
+            logger.error("Preprocessing: Error while executing test ${testItem.desc.name}")
         }
     }
 
@@ -23,7 +25,6 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
         var configuredTestTimeOut: Long = 0
 
         fun wrapTestItem(testItems: List<TestItem>): Pair<List<TestItemWrapper>, List<TestResultAggregator>> {
-            // Put test items into callable object so it can be submitted by thread executor service
             val wrappedItems: MutableList<TestItemWrapper> = mutableListOf()
             val aggregator: MutableList<TestResultAggregator> = mutableListOf()
 

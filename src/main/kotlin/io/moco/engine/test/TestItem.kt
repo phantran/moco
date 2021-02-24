@@ -1,6 +1,7 @@
 package io.moco.engine.test
 
 import io.moco.engine.ClassName
+import io.moco.utils.MoCoLogger
 import kotlinx.coroutines.*
 import org.junit.internal.builders.AllDefaultPossibilitiesBuilder
 import org.junit.internal.runners.ErrorReportingRunner
@@ -17,11 +18,12 @@ class TestItem(
 ) {
     val desc: Description = Description(this.cls.name, this.cls.name)
     var executionTime: Long = -1
+    private val logger = MoCoLogger()
 
     suspend fun execute(tra: TestResultAggregator, timeOut: Long) {
         val runner: Runner = createRunner(cls)
         if (runner is ErrorReportingRunner) {
-            println("[MoCo] Error while running test of $cls")
+            logger.error("Error while running test of $cls")
         }
         try {
             val runNotifier = RunNotifier()
@@ -31,14 +33,14 @@ class TestItem(
                 executionTime = measureTimeMillis {
                     runner.run(runNotifier)
                 }
-                println("[MoCo] Preprocessing: Test ${desc.name} finished after $executionTime milliseconds")
+                logger.debug("Test ${desc.name} finished after $executionTime milliseconds")
             }
             job.join()
         } catch (e: Exception) {
             when (e) {
                 is TimeoutCancellationException -> {
                     tra.results.add(TestResult(desc, e, TestResult.TestState.TIMEOUT))
-                    println("[MoCo] Preprocessing: Test ${desc.name} execution TIMEOUT - allowed time $timeOut")
+                    logger.warn("Preprocessing: Test ${desc.name} execution TIMEOUT - allowed time $timeOut")
                 }
             }
             throw RuntimeException(e)

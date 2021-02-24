@@ -18,6 +18,7 @@
 package io.moco.engine.preprocessing
 
 import io.moco.engine.Configuration
+import io.moco.utils.MoCoLogger
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
@@ -34,6 +35,8 @@ import org.eclipse.jgit.api.errors.GitAPIException
 import java.lang.Exception
 
 object PreprocessingFilterByGit {
+
+    private val logger = MoCoLogger()
 
     @JvmStatic
     @Throws(IOException::class)
@@ -96,7 +99,7 @@ object PreprocessingFilterByGit {
                     res.add(it.substring(startIndex, it.length - 5))
                 }
             } catch (ex: Exception) {
-                println("[MoCo] Error while getting changed classes between since stored git commit")
+                logger.error("Error while getting changed classes since last recorded GIT commit")
             }
         }
         return res
