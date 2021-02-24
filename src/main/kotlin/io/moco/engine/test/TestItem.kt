@@ -20,7 +20,7 @@ class TestItem(
     var executionTime: Long = -1
     private val logger = MoCoLogger()
 
-    suspend fun execute(tra: TestResultAggregator, timeOut: Long) {
+    suspend fun execute(tra: TestResultAggregator, timeOut: Long = -1) {
         val runner: Runner = createRunner(cls)
         if (runner is ErrorReportingRunner) {
             logger.error("Error while running test of $cls")

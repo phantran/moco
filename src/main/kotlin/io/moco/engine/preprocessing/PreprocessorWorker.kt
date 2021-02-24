@@ -46,7 +46,7 @@ object PreprocessorWorker {
     @JvmStatic
     fun main(args: Array<String>) {
         MoCoLogger.debugEnable = true
-        MoCoLogger.useMvnLog()
+        MoCoLogger.useKotlinLog()
         val logger = MoCoLogger()
 
         var socket: Socket? = null
@@ -58,7 +58,7 @@ object PreprocessorWorker {
         val excludedTestClasses = if (args[6] != "") args[6].split(",").map { it.trim() } else listOf()
         val excludedTestFolders = if (args[7] != "") args[7].split(",").map { it.trim() } else listOf()
         val preprocessResultFileName = args[8]
-        TestItemWrapper.configuredTestTimeOut = if (args[9].toIntOrNull() != null) args[9].toLong() else 0
+        TestItemWrapper.configuredTestTimeOut = if (args[9].toIntOrNull() != null) args[9].toLong() else -1
         // this list is null of empty if git mode changed classes if off or no changed classes are detected
         val filteredClsByGitCommit =
             if (args[10] != "") args[10].split(",").map { it.trim() } else null
@@ -71,7 +71,6 @@ object PreprocessorWorker {
                 excludedTestFolders,
                 filteredClsByGitCommit
             )
-
             logger.info("Preprocessing: ${analysedCodeBase.sourceClassNames.size} source classes found")
             logger.info("Preprocessing: ${analysedCodeBase.testClassesNames.size} test classes left after filtering")
 

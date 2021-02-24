@@ -40,7 +40,7 @@ class MoCoLogger {
             if (useMvnLog) {
                 mvnLogger?.info(m)
             } else {
-                devLogger?.info { "$m" }
+                devLogger?.info { "[DEBUG] $m" }
             }
         }
     }

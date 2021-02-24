@@ -7,22 +7,26 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
     private val logger = MoCoLogger()
 
     suspend fun call() = withContext(Dispatchers.Default) {
-        val timeOut: Long = if (testItem.executionTime != -1L) {
+        var timeOut: Long = if (testItem.executionTime != -1L) {
             (testItem.executionTime * 1.5 + 5000).toLong()
         } else {
             configuredTestTimeOut
+        }
+        if (timeOut == -1L) {
+            // If still no timeout can be calculated, use a default value of 20 seconds
+            timeOut = 30000L
         }
         try {
             withTimeout(timeOut) {
                 testItem.execute(testResultAggregator, timeOut)
             }
         } catch (ex: Exception) {
-            logger.error("Preprocessing: Error while executing test ${testItem.desc.name}")
+            logger.warn("Preprocessing: Error while executing test ${testItem.desc.name}")
         }
     }
 
     companion object {
-        var configuredTestTimeOut: Long = 0
+        var configuredTestTimeOut: Long = -1
 
         fun wrapTestItem(testItems: List<TestItem>): Pair<List<TestItemWrapper>, List<TestResultAggregator>> {
             val wrappedItems: MutableList<TestItemWrapper> = mutableListOf()
