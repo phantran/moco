@@ -8,6 +8,7 @@ import io.moco.engine.test.TestResult
 import io.moco.engine.test.TestResultAggregator
 import io.moco.utils.ClassLoaderUtil
 import io.moco.utils.DataStreamUtils
+import kotlinx.coroutines.runBlocking
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.IOException
@@ -122,7 +123,9 @@ class MutationTestWorker(
         try {
             for (test: TestItemWrapper? in tests) {
                 try {
-                    test?.call()
+                    runBlocking {
+                        test?.call()
+                    }
                     numberOfExecutedTests += 1
                     // A mutant is killed if a test is failed
                     killed = checkIfMutantWasKilled(test?.testResultAggregator)

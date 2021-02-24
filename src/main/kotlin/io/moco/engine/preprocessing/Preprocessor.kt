@@ -20,8 +20,11 @@ package io.moco.engine.preprocessing
 import io.moco.engine.Codebase
 import io.moco.engine.test.TestItem
 import io.moco.engine.test.TestItemWrapper
+import kotlinx.coroutines.*
 import java.io.IOException
+import java.lang.Exception
 import java.util.concurrent.ExecutionException
+import kotlin.system.measureTimeMillis
 
 
 class Preprocessor(
@@ -44,17 +47,20 @@ class Preprocessor(
     private fun collectInfo(
         wrappedTests: Collection<TestItemWrapper?>,
     ) {
-        for (test: TestItemWrapper? in wrappedTests) {
-            try {
-                if (test != null) {
-                    test.call()
-                    PreprocessorTracker.registerMappingTestToCUT(test.testItem)
-                    PreprocessorTracker.clearTracker()
+        val time = measureTimeMillis {
+            runBlocking {
+                for (test: TestItemWrapper? in wrappedTests) {
+                    try {
+                        test?.call()
+                        test?.testItem?.let { PreprocessorTracker.registerMappingTestToCUT(it) }
+                        PreprocessorTracker.clearTracker()
+                    } catch (e: Exception) {
+                        println("[MoCo] Error while executing test ${test?.testItem}")
+                    } finally {
+                    }
                 }
-            } catch (e: Exception) {
-                println("[MoCo] Error while executing test ${test?.testItem}")
-            } finally {
             }
         }
+        println("[MoCo] Preprocessing: Test and Collect Done in $time ms")
     }
 }

@@ -20,6 +20,7 @@ package io.moco.engine.preprocessing
 
 import io.moco.engine.Codebase
 import io.moco.engine.MocoAgent
+import io.moco.engine.test.TestItemWrapper
 import io.moco.utils.JsonConverter
 import java.net.Socket
 
@@ -52,9 +53,11 @@ object PreprocessorWorker {
         val excludedTestClasses = if (args[6] != "") args[6].split(",").map { it.trim() } else listOf()
         val excludedTestFolders = if (args[7] != "") args[7].split(",").map { it.trim() } else listOf()
         val preprocessResultFileName = args[8]
+        TestItemWrapper.configuredTestTimeOut = if (args[9].toIntOrNull() != null) args[9].toLong() else 0
         // this list is null of empty if git mode changed classes if off or no changed classes are detected
         val filteredClsByGitCommit =
-            if (args[9] != "") args[9].split(",").map { it.trim() } else null
+            if (args[10] != "") args[10].split(",").map { it.trim() } else null
+
         try {
             socket = Socket("localhost", args[0].toInt())
             val analysedCodeBase = Codebase(
@@ -73,15 +76,12 @@ object PreprocessorWorker {
             }
             MocoAgent.addTransformer(PreprocessorTransformer(analysedCodeBase.sourceClassNames))
             Preprocessor(analysedCodeBase).preprocessing()
-
-            println("[MoCo] Preprocessing: Saving preprocess data to JSON file")
-
             JsonConverter("$buildRoot/moco/preprocess/", preprocessResultFileName).
                                                         saveObjectToJson(PreprocessorTracker.getPreprocessResults())
         } catch (ex: Exception) {
             ex.printStackTrace(System.out)
         } finally {
-            println("[MoCo] Preprocessing: Exit")
+            println("[MoCo] Preprocessing: Data saved and exit")
             socket?.close()
         }
     }

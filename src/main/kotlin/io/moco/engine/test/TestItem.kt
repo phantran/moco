@@ -1,9 +1,7 @@
 package io.moco.engine.test
 
-//import mu.KotlinLogging
 import io.moco.engine.ClassName
-import io.moco.engine.Codebase
-import io.moco.engine.preprocessing.PreprocessorTracker
+import kotlinx.coroutines.*
 import org.junit.internal.builders.AllDefaultPossibilitiesBuilder
 import org.junit.internal.runners.ErrorReportingRunner
 import org.junit.runner.Runner
@@ -11,6 +9,7 @@ import org.junit.runner.notification.RunListener
 import java.lang.Exception
 import org.junit.runner.notification.RunNotifier
 import org.junit.runners.Suite
+import kotlin.system.measureTimeMillis
 
 
 class TestItem(
@@ -19,30 +18,39 @@ class TestItem(
     val desc: Description = Description(this.cls.name, this.cls.name)
     var executionTime: Long = -1
 
-    fun execute(tra: TestResultAggregator) {
+    suspend fun execute(tra: TestResultAggregator, timeOut: Long) {
         val runner: Runner = createRunner(cls)
         if (runner is ErrorReportingRunner) {
             println("[MoCo] Error while running test of $cls")
         }
         try {
             val runNotifier = RunNotifier()
-            val listener: RunListener = CustomRunListener(this.desc, tra)
+            val listener: RunListener = CustomRunListener(desc, tra)
             runNotifier.addFirstListener(listener)
-            runner.run(runNotifier)
+            val job = GlobalScope.launch {
+                executionTime = measureTimeMillis {
+                    runner.run(runNotifier)
+                }
+                println("[MoCo] Preprocessing: Test ${desc.name} finished after $executionTime milliseconds")
+            }
+            job.join()
         } catch (e: Exception) {
-           println("[MoCo] Error while running test of $cls with desc $desc")
+            when (e) {
+                is TimeoutCancellationException -> {
+                    tra.results.add(TestResult(desc, e, TestResult.TestState.TIMEOUT))
+                    println("[MoCo] Preprocessing: Test ${desc.name} execution TIMEOUT - allowed time $timeOut")
+                }
+            }
             throw RuntimeException(e)
         }
     }
 
     companion object {
-//        private val logger = KotlinLogging.logger {}
         fun createRunner(cls: Class<*>): Runner {
             val builder = AllDefaultPossibilitiesBuilder(true)
             try {
                 return builder.runnerForClass(cls)
             } catch (ex: Throwable) {
-//                logger.error(ex) { "Error while creating runner for $cls"}
                 throw RuntimeException(ex)
             }
         }

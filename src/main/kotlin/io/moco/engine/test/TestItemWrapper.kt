@@ -1,36 +1,27 @@
 package io.moco.engine.test
 
 import kotlinx.coroutines.*
-import java.util.concurrent.Callable
 
-class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResultAggregator) : Callable<Unit> {
-    override fun call() {
-        println("[MoCo] Preprocessing: Executing test " + testItem.desc.name)
-        val t0 = System.currentTimeMillis()
-        if (testItem.executionTime != -1L){
-            val heuristicTimeOut = (testItem.executionTime * 1.5 + 5000).toLong()
-            try {
-                runBlocking {
-                    withTimeout(heuristicTimeOut) {
-                        testItem.execute(testResultAggregator)
-                    }
-                }
-            } catch (e: TimeoutCancellationException) {
-                testResultAggregator.results.add(TestResult(testItem.desc,
-                    e, TestResult.TestState.TIMEOUT))
-                println("[MoCo] Preprocessing: Test execution timeout - allowed time is $heuristicTimeOut")
-                return
-            }
+class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResultAggregator) {
+
+    suspend fun call() = withContext(Dispatchers.Default) {
+        val timeOut: Long = if (testItem.executionTime != -1L) {
+            (testItem.executionTime * 1.5 + 5000).toLong()
         } else {
-            testItem.execute(testResultAggregator)
-            testItem.executionTime = System.currentTimeMillis() - t0
+            configuredTestTimeOut
         }
-        val executionTime = (System.currentTimeMillis() - t0).toInt()
-        println("[MoCo] Preprocessing: Execution time: $executionTime milliseconds")
+        try {
+            withTimeout(timeOut) {
+                testItem.execute(testResultAggregator, timeOut)
+            }
+        } catch (ex: Exception) {
+            println("[MoCo] Preprocessing: Error while executing test ${testItem.desc.name}")
+        }
     }
 
-
     companion object {
+        var configuredTestTimeOut: Long = 0
+
         fun wrapTestItem(testItems: List<TestItem>): Pair<List<TestItemWrapper>, List<TestResultAggregator>> {
             // Put test items into callable object so it can be submitted by thread executor service
             val wrappedItems: MutableList<TestItemWrapper> = mutableListOf()

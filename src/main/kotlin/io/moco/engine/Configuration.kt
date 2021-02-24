@@ -18,7 +18,8 @@ data class Configuration(
     val baseDir: String,
     val compileSourceRoots: List<String>?,
     val artifactId: String,
-    val gitChangedClassesMode: Boolean
+    val gitChangedClassesMode: Boolean,
+    val testTimeOut: String
 ) {
     companion object {
         var currentConfig: Configuration? = null
@@ -26,7 +27,7 @@ data class Configuration(
 
     fun getPreprocessProcessArgs(): MutableList<String> {
         return mutableListOf(buildRoot, codeRoot, testRoot, excludedSourceClasses, excludedSourceFolders,
-            excludedTestClasses, excludedTestFolders, preprocessResultFileName,
+            excludedTestClasses, excludedTestFolders, preprocessResultFileName, testTimeOut
         )
     }
 }
