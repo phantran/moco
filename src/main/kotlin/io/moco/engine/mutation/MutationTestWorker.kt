@@ -75,7 +75,8 @@ class MutationTestWorker(
     ) {
         var mutatedClassByteArr: ByteArray? = null
         for (mutation: Mutation in mutations) {
-            logger.debug("------- Handle mutation --------------")
+            logger.debug("\n")
+            logger.debug("------- Handle mutation of class ${mutation.mutationID.location.className?.getJavaName()}--------------")
             if (mutatedClassByteArr == null) {
                 val clsJavaName = mutation.mutationID.location.className?.getJavaName()
                 mutatedClassByteArr = mGen.bytesArrayLoader.getByteArray(clsJavaName)
@@ -147,9 +148,17 @@ class MutationTestWorker(
                     }
                 }
                 finalStatus = if (killed) MutationTestStatus.KILLED else MutationTestStatus.SURVIVED
+                if (finalStatus == MutationTestStatus.SURVIVED) {
+                    if (numberOfExecutedTests == tests.size &&
+                        tests.all { it.testResultAggregator.results.all { it1 -> it1.error != null } } ) {
+                        // A mutant is not erroneous if all tests ran against it have thrown errors
+                        finalStatus = MutationTestStatus.RUN_ERROR
+                    }
+                }
             }
             return MutationTestResult(numberOfExecutedTests, finalStatus)
         } catch (ex: Exception) {
+            println("here $ex")
             return MutationTestResult(numberOfExecutedTests, MutationTestStatus.RUN_ERROR)
         }
 

@@ -109,6 +109,13 @@ class Moco : AbstractMojo() {
     @Parameter(defaultValue = "true", property = "gitChangedClassesMode", required = false)
     private val gitChangedClassesMode: Boolean = true
 
+    /**
+     * Set to true to tell MoCo to only generate mutation only for changed classes based on git commit information
+     */
+    @Parameter(defaultValue = "5", property = "mutationPerClass", required = false)
+    private val mutationPerClass: Int = 5
+
+
     @Throws(MojoExecutionException::class)
     override fun execute() {
         try {
@@ -143,7 +150,8 @@ class Moco : AbstractMojo() {
                 project?.compileSourceRoots,
                 project?.artifactId!!,
                 gitChangedClassesMode,
-                testTimeOut
+                testTimeOut,
+                mutationPerClass
             )
 
             Configuration.currentConfig = configuration

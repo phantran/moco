@@ -22,6 +22,7 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
             }
         } catch (ex: Exception) {
             logger.warn("Preprocessing: Error while executing test ${testItem.desc.name}")
+            throw ex
         }
     }
 

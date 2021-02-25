@@ -21,6 +21,7 @@ data class Configuration(
     val artifactId: String,
     val gitChangedClassesMode: Boolean,
     val testTimeOut: String,
+    val mutationPerClass: Int
 ) {
     companion object {
         var currentConfig: Configuration? = null

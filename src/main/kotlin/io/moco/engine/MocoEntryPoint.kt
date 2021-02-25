@@ -73,7 +73,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
             logger.info("START")
             // Skip preprocessing if no detected changed classes in git based mode
             logger.info("Preprocessing started...")
-            // preprocessing()
+             preprocessing()
             logger.info("Preprocessing completed")
 
             logger.info("Mutation Test started...")
@@ -83,6 +83,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
             // Remove generated agent after finishing
             removeTemporaryAgentJar(createdAgentLocation)
         }
+        logger.info("\n")
         logger.info("Execution done after ${executionTime/1000}s" )
         logger.info("DONE")
     }

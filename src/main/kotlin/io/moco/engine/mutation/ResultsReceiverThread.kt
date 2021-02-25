@@ -107,8 +107,9 @@ class ResultsReceiverThread(
                     val status = when (resultMapping[mutation.mutationID]?.mutationTestStatus) {
                         MutationTestStatus.KILLED -> "killed"
                         MutationTestStatus.SURVIVED -> "survived"
-                        else -> "unknown"
+                        else -> "run_error"
                     }
+                    // storage already contain class name entry
                     if (mutationStorage.entries.containsKey(clsName)) {
                         // NOTE: do not change map keys because of the consistency between moco and gamekins
                         mutationStorage.entries[clsName]?.add(
@@ -119,6 +120,7 @@ class ResultsReceiverThread(
                             )
                         )
                     } else {
+                        // add new class name entry to storage
                         mutationStorage.entries[clsName] = mutableListOf(
                             mapOf(
                                 "mutationDetails" to mutation,
