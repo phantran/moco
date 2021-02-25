@@ -98,7 +98,7 @@ class H2Database(
             val stm = connection?.createStatement()
             return stm?.executeQuery(query)
         } catch (ex: Exception) {
-            println(ex.printStackTrace())
+            logger.error(ex.printStackTrace().toString())
             logger.error( "Error while fetch one from $table with condition $condition $query")
             null
         }

@@ -6,33 +6,26 @@ import io.moco.engine.mutation.MutationID
 import io.moco.engine.operator.Operator
 
 class MutatedMethodTracker(
-    private val mutatedClassTracker: MutatedClassTracker,
+    val mutatedClassTracker: MutatedClassTracker,
     private val mutatedMethodLocation: MutatedMethodLocation
 ) {
 
     var instructionIndex = 0
-    var currMutatedLineNumber = 0
+    var currConsideredLineNumber = 0
 
-    fun registerMutant(
+    fun registerMutation(
         operator: Operator, description: String
-    ): MutationID {
+    ): Mutation {
         val newMutationID = MutationID(mutatedMethodLocation, mutableListOf(instructionIndex), operator.getName())
-        val newMutant = Mutation(
+        val newMutation = Mutation(
             newMutationID,
             mutatedClassTracker.getFileName(),
-            currMutatedLineNumber,
+            currConsideredLineNumber,
             description,
         )
-        if (mutatedClassTracker.targetMutationID == null) {
-            // target mutation id is null means it is in mutation collecting state
-            this.mutatedClassTracker.addMutation(newMutant)
-        } else {
-            // target mutation id is not null, we only care about the target mutation
-            this.mutatedClassTracker.setTargetMutation(newMutant)
-        }
-        return newMutationID
+        this.mutatedClassTracker.addMutation(newMutation)
+        return newMutation
     }
-
 
     fun isTargetMutation(newMutationID: MutationID): Boolean {
         return newMutationID == mutatedClassTracker.targetMutationID

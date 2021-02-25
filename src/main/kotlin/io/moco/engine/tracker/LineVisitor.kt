@@ -12,7 +12,7 @@ class LineVisitor(
     MethodVisitor(ASMInfoUtil.ASM_VERSION, delegateMethodVisitor) {
 
     override fun visitLineNumber(line: Int, start: Label) {
-        mutatedMethodTracker.currMutatedLineNumber = line
+        mutatedMethodTracker.currConsideredLineNumber = line
         mv.visitLineNumber(line, start)
     }
 

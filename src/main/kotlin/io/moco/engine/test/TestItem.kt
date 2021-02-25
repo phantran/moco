@@ -33,14 +33,14 @@ class TestItem(
                 executionTime = measureTimeMillis {
                     runner.run(runNotifier)
                 }
-                logger.debug("Test ${desc.name} finished after $executionTime milliseconds")
+                logger.debug("Test ${desc.name} finished after $executionTime ms")
             }
             job.join()
         } catch (e: Exception) {
             when (e) {
                 is TimeoutCancellationException -> {
                     tra.results.add(TestResult(desc, e, TestResult.TestState.TIMEOUT))
-                    logger.warn("Preprocessing: Test ${desc.name} execution TIMEOUT - allowed time $timeOut")
+                    logger.warn("Preprocessing: Test ${desc.name} execution TIMEOUT - allowed time $timeOut ms")
                 }
             }
             throw RuntimeException(e)

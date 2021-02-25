@@ -76,7 +76,7 @@ class MutationTestWorker(
         var mutatedClassByteArr: ByteArray? = null
         for (mutation: Mutation in mutations) {
             logger.debug("\n")
-            logger.debug("------- Handle mutation of class ${mutation.mutationID.location.className?.getJavaName()}--------------")
+            logger.debug("-------$ .Handle mutation of class ${mutation.mutationID.location.className?.getJavaName()}--------------")
             if (mutatedClassByteArr == null) {
                 val clsJavaName = mutation.mutationID.location.className?.getJavaName()
                 mutatedClassByteArr = mGen.bytesArrayLoader.getByteArray(clsJavaName)
@@ -135,8 +135,8 @@ class MutationTestWorker(
             runBlocking {
                 for (test: TestItemWrapper? in tests) {
                     try {
-                        test?.call()
                         numberOfExecutedTests += 1
+                        test?.call()
                         // A mutant is killed if a test is failed
                         killed = checkIfMutantWasKilled(test?.testResultAggregator)
                         if (killed) {
@@ -144,21 +144,22 @@ class MutationTestWorker(
                         }
                     } catch (e: Exception) {
                         logger.error("Error while executing test ${test?.testItem}")
-                    } finally {
                     }
                 }
+
                 finalStatus = if (killed) MutationTestStatus.KILLED else MutationTestStatus.SURVIVED
                 if (finalStatus == MutationTestStatus.SURVIVED) {
                     if (numberOfExecutedTests == tests.size &&
-                        tests.all { it.testResultAggregator.results.all { it1 -> it1.error != null } } ) {
+                        tests.all { it.testResultAggregator.results.any { it1 -> it1.error != null } } ) {
                         // A mutant is not erroneous if all tests ran against it have thrown errors
                         finalStatus = MutationTestStatus.RUN_ERROR
                     }
                 }
+                // Reset test result aggregator of test classes before moving to the next mutant
+                tests.map { it.testResultAggregator.results.clear() }
             }
             return MutationTestResult(numberOfExecutedTests, finalStatus)
         } catch (ex: Exception) {
-            println("here $ex")
             return MutationTestResult(numberOfExecutedTests, MutationTestStatus.RUN_ERROR)
         }
 
