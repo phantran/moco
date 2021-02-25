@@ -67,7 +67,7 @@ class MutationGenerator(
 
         val filter = listOf<String>()
         val mcv = MutatedClassVisitor(
-            cw, tracker, filter, operators?.filter { it.getName() == mutationID.operatorName }
+            cw, tracker, filter, operators?.filter { it.operatorName == mutationID.operatorName }
         )
         cr.accept(mcv, ClassReader.EXPAND_FRAMES)
 

@@ -15,6 +15,10 @@ class MutatedClassTracker(val targetMutationID: MutationID? = null) {
         mutations.add(mutation)
     }
 
+    fun mutationAlreadyCollected(id: MutationID): Boolean {
+        return mutations.any { it.mutationID == id }
+    }
+
     fun getCollectedMutations(): List<Mutation> {
         return mutations
     }

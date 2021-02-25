@@ -76,7 +76,7 @@ class MutationTestWorker(
         var mutatedClassByteArr: ByteArray? = null
         for (mutation: Mutation in mutations) {
             logger.debug("\n")
-            logger.debug("-------$ .Handle mutation of class ${mutation.mutationID.location.className?.getJavaName()}--------------")
+            logger.debug("------- Handle mutation of class ${mutation.mutationID.location.className?.getJavaName()}--------------")
             if (mutatedClassByteArr == null) {
                 val clsJavaName = mutation.mutationID.location.className?.getJavaName()
                 mutatedClassByteArr = mGen.bytesArrayLoader.getByteArray(clsJavaName)
@@ -143,7 +143,7 @@ class MutationTestWorker(
                             break
                         }
                     } catch (e: Exception) {
-                        logger.error("Error while executing test ${test?.testItem}")
+                        logger.error("Error while executing test ${test?.testItem?.desc?.name}")
                     }
                 }
 

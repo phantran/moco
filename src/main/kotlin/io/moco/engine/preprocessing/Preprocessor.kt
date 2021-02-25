@@ -57,7 +57,7 @@ class Preprocessor(
                         test?.testItem?.let { PreprocessorTracker.registerMappingTestToCUT(it) }
                         PreprocessorTracker.clearTracker()
                     } catch (e: Exception) {
-                        logger.error("Error while executing test ${test?.testItem}")
+                        logger.error("Error while executing test ${test?.testItem?.desc?.name}")
                     } finally {
                     }
                 }

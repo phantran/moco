@@ -6,18 +6,19 @@ import org.objectweb.asm.MethodVisitor
 
 
 interface Operator {
+    val operatorName: String
+
     companion object {
-//        val supportedOperatorNames = listOf("AOR", "LCR", "ROR", "UOI")
-        val supportedOperatorNames = listOf("AOR")
+//        val supportedOperatorNames = listOf("AOR", "ROR", "LCR", "UOI")
+        val supportedOperatorNames = listOf("AOR", "ROR")
 
         fun nameToOperator(it: String): Operator? {
             return mapping[it]
         }
-
         private val mapping: Map<String, Operator> = mapOf(
-            "AOR" to ReplacementOperator(), // Arithmetic operator replacement
+            "AOR" to ReplacementOperator("AOR"), // Arithmetic operator replacement
+            "ROR" to ReplacementOperator("ROR"), // Relational operator replacement
 //            "LCR" to ReplacementOperator(), // Logical connector replacement
-//            "ROR" to ReplacementOperator(), // Relational operator replacement
 //            "UOI" to ReplacementOperator() // Unary operator insertion
         )
     }
@@ -26,7 +27,5 @@ interface Operator {
         tracker: MutatedMethodTracker,
         methodInfo: MethodInfo,
         delegateMethodVisitor: MethodVisitor
-    ): MethodVisitor
-
-    fun getName(): String
+    ): MethodVisitor?
 }

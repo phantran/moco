@@ -123,7 +123,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
         val mGen =
             MutationGenerator(byteArrLoader, filteredMutationOperatorNames.mapNotNull { Operator.nameToOperator(it) })
         var foundMutations: Map<ClassName, List<Mutation>> =
-            toBeMutatedClasses.associateWith { mGen.findPossibleMutationsOfClass(it) }
+            toBeMutatedClasses.associateWith { mGen.findPossibleMutationsOfClass(it).distinct() }
         foundMutations = foundMutations.filter { it.value.isNotEmpty() }
         logger.debug("Complete mutation collecting step")
 
@@ -131,6 +131,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
         val testRetriever = RelatedTestRetriever(configuration.buildRoot)
         logger.debug("Start mutation testing")
         foundMutations.forEach label@{ (className, mutationList) ->
+            logger.info("Handle ${mutationList.size} mutants of class ${className.getJavaName()}")
             val processArgs = getMutationPreprocessArgs()
             val relatedTests: List<ClassName> = testRetriever.retrieveRelatedTest(className)
             if (relatedTests.isEmpty()) {

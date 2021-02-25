@@ -15,8 +15,11 @@ class MutatedMethodTracker(
 
     fun registerMutation(
         operator: Operator, description: String
-    ): Mutation {
-        val newMutationID = MutationID(mutatedMethodLocation, mutableListOf(instructionIndex), operator.getName())
+    ): Mutation? {
+        val newMutationID = MutationID(mutatedMethodLocation, mutableListOf(instructionIndex), operator.operatorName)
+        if (mutatedClassTracker.mutationAlreadyCollected(newMutationID)) {
+            return null
+        }
         val newMutation = Mutation(
             newMutationID,
             mutatedClassTracker.getFileName(),
