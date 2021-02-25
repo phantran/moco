@@ -15,12 +15,7 @@
  *
  */
 
-package io.moco.engine
+package io.moco.engine.mutator.replacement
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import java.io.Serializable
-
-
-data class MethodName (
-    @JsonProperty("methodName") val name: String,
-) : Serializable
+class LCR {
+}
