@@ -22,10 +22,12 @@ import io.moco.engine.DefaultClassVisitor
 import io.moco.engine.io.ByteArrayLoader
 import io.moco.engine.operator.Operator
 import io.moco.engine.tracker.MutatedClassTracker
+import io.moco.utils.MoCoLogger
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.TraceClassVisitor
 import java.io.PrintWriter
+import java.lang.Exception
 
 /**
  * Mutation finder
@@ -39,6 +41,7 @@ class MutationGenerator(
     val bytesArrayLoader: ByteArrayLoader,
     private val operators: List<Operator>?,
 ) {
+    val logger = MoCoLogger()
     /**
      * Find possible mutations
      *
@@ -64,6 +67,7 @@ class MutationGenerator(
     ): List<Mutation> {
         val cr = ClassReader(clsToMutate)
         val filter = listOf<String>()
+//        val cv = TraceClassVisitor(DefaultClassVisitor(), PrintWriter(System.out))
         val mcv = MutatedClassVisitor(DefaultClassVisitor(), tracker, filter, operators)
         cr.accept(mcv, ClassReader.EXPAND_FRAMES)
         return tracker.getCollectedMutations()
@@ -81,13 +85,15 @@ class MutationGenerator(
         val cr = ClassReader(byteArray)
         val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
 //        val cv = TraceClassVisitor(cw, PrintWriter(System.out))
-
         val filter = listOf<String>()
         val mcv = MutatedClassVisitor(
             cw, tracker, filter, operators?.filter { it.operatorName == mutationID.operatorName }
         )
-        cr.accept(mcv, ClassReader.EXPAND_FRAMES)
-
+        try {
+            cr.accept(mcv, ClassReader.EXPAND_FRAMES)
+        } catch (e: Exception) {
+            logger.error(e.printStackTrace().toString())
+        }
         return if (tracker.getTargetMutation() != null) {
             Mutant(tracker.getTargetMutation()!!, cw.toByteArray())
         } else {

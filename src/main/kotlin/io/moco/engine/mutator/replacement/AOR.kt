@@ -24,6 +24,15 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
 
+/**
+ * AOR - Arithmetic Operator Replacement
+ *
+ * @constructor
+ *
+ * @param operator
+ * @param tracker
+ * @param delegateMethodVisitor
+ */
 class AOR(
     operator: ReplacementOperator,
     tracker: MutatedMethodTracker,

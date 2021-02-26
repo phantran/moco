@@ -37,7 +37,7 @@ open class ReplacementMutator(
     open val supportedOpcodes: Map<String, List<Int>> = mapOf()
 
     open fun createDesc(op1: Int, op2: Int): String {
-        return "Replacement of ${opcodeDesc[op1]?.first} with ${opcodeDesc[op2]?.first}"
+        return "replacement of ${opcodeDesc[op1]?.first} with ${opcodeDesc[op2]?.first}"
     }
 
     open fun createUniqueID(op1: Int, op2: Int): String {

@@ -24,6 +24,15 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
 
+/**
+ * Relational Operator Replacement
+ *
+ * @constructor
+ *
+ * @param operator
+ * @param tracker
+ * @param delegateMethodVisitor
+ */
 class ROR(
     operator: ReplacementOperator, tracker: MutatedMethodTracker, delegateMethodVisitor: MethodVisitor
 ) : ReplacementMutator(operator, tracker, delegateMethodVisitor) {

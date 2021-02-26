@@ -61,7 +61,7 @@ class AORR(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                "Removal of operand after ${opcodeDesc[opcode]?.first} operator",
+                "removal of operand after ${opcodeDesc[opcode]?.first} operator",
                                                 "KEEP_F_$opcode"
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutationID != null) {
@@ -86,7 +86,7 @@ class AORR(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                "Removal of operand before ${opcodeDesc[opcode]?.first} operator ",
+                "removal of operand before ${opcodeDesc[opcode]?.first} operator ",
                                                         "KEEP_S_$opcode"
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutationID != null) {

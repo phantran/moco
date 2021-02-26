@@ -51,6 +51,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
     private var filteredClsByGit: List<String>? = mutableListOf()
 
     init {
+        logger.info("START")
         val cp = configuration.classPath.joinToString(separator = File.pathSeparatorChar.toString())
         classPath = "$cp:${configuration.codeRoot}:${configuration.testRoot}:${configuration.buildRoot}"
         byteArrLoader = ByteArrayLoader(cp)
@@ -58,6 +59,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
         filteredMutationOperatorNames = Operator.supportedOperatorNames.filter {
             !configuration.excludedMutationOperatorNames.contains(it)
         }
+        logger.info("Selected mutation operators: ${filteredMutationOperatorNames.joinToString(", ")}")
         if (configuration.gitChangedClassesMode) {
             filteredClsByGit = PreprocessingFilterByGit.getChangedClsSinceLastStoredCommit(
                 configuration.artifactId.replace(".", "/"), configuration.baseDir
@@ -70,7 +72,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
             if (createdAgentLocation == null) {
                 return
             }
-            logger.info("START")
+
             // Skip preprocessing if no detected changed classes in git based mode
             logger.info("Preprocessing started...")
              preprocessing()
@@ -125,6 +127,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
         var foundMutations: Map<ClassName, List<Mutation>> =
             toBeMutatedClasses.associateWith { mGen.findPossibleMutationsOfClass(it).distinct() }
         foundMutations = foundMutations.filter { it.value.isNotEmpty() }
+        logger.debug("Found ${foundMutations.size} possible mutations")
         logger.debug("Complete mutation collecting step")
 
         // Mutants generation and tests execution

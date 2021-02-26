@@ -23,8 +23,16 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
 
-
-class LCR(
+/**
+ * BLR - Bitwise Logical Replacement
+ *
+ * @constructor
+ *
+ * @param operator
+ * @param tracker
+ * @param delegateMethodVisitor
+ */
+class BLR(
     operator: ReplacementOperator,
     tracker: MutatedMethodTracker,
     delegateMethodVisitor: MethodVisitor

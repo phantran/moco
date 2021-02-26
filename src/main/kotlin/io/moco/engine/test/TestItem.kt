@@ -43,15 +43,19 @@ class TestItem(
         if (runner is ErrorReportingRunner) {
             logger.error("Error while running test of $cls")
         }
+
+        var job: Job? = null
         try {
             val runNotifier = RunNotifier()
             val listener: RunListener = CustomRunListener(desc, tra)
             runNotifier.addFirstListener(listener)
-            val job = GlobalScope.launch {
-                executionTime = measureTimeMillis {
-                    runner.run(runNotifier)
+            job = GlobalScope.launch {
+                withTimeout(timeOut) {
+                    executionTime = measureTimeMillis {
+                        runner.run(runNotifier)
+                    }
+                    logger.debug("Test ${desc.name} finished after $executionTime ms")
                 }
-                logger.debug("Test ${desc.name} finished after $executionTime ms")
             }
             job.join()
         } catch (e: Exception) {
@@ -62,7 +66,10 @@ class TestItem(
                 }
             }
             throw RuntimeException(e)
+        } finally {
+            job!!.cancel()
         }
+
     }
 
     companion object {
