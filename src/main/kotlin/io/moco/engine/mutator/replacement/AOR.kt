@@ -30,22 +30,22 @@ class AOR(
     delegateMethodVisitor: MethodVisitor
 ) : ReplacementMutator(operator, tracker, delegateMethodVisitor) {
 
-    override val opcodeDesc: Map<Int, String> = mapOf(
-        Opcodes.IADD to "integer addition", Opcodes.ISUB to "integer subtraction",
-        Opcodes.IMUL to "integer multiplication", Opcodes.IDIV to "integer division",
-        Opcodes.IREM to "integer modulo",
+    override val opcodeDesc: Map<Int, Pair<String, String>> = mapOf(
+        Opcodes.IADD to Pair("integer addition", "IADD"), Opcodes.ISUB to Pair("integer subtraction","ISUB"),
+        Opcodes.IMUL to Pair("integer multiplication", "IMUL"), Opcodes.IDIV to Pair("integer division","IDIV"),
+        Opcodes.IREM to Pair("integer modulo", "IREM"),
 
-        Opcodes.LADD to "long addition", Opcodes.LSUB to "long subtraction",
-        Opcodes.LMUL to "long multiplication", Opcodes.LDIV to "long division",
-        Opcodes.LREM to "long modulo",
+        Opcodes.LADD to Pair("long addition", "LADD"), Opcodes.LSUB to Pair("long subtraction","LSUB"),
+        Opcodes.LMUL to Pair("long multiplication", "LMUL"), Opcodes.LDIV to Pair("long division","LDIV"),
+        Opcodes.LREM to Pair("long modulo", "LREM"),
 
-        Opcodes.FADD to "float addition", Opcodes.FSUB to "float subtraction",
-        Opcodes.FMUL to "float multiplication", Opcodes.FDIV to "float division",
-        Opcodes.FREM to "float modulo",
+        Opcodes.FADD to Pair("float addition", "FADD"), Opcodes.FSUB to Pair("float subtraction","FSUB"),
+        Opcodes.FMUL to Pair("float multiplication", "FMUL"), Opcodes.FDIV to Pair("float division","FDIV"),
+        Opcodes.FREM to Pair("float modulo", "FREM"),
 
-        Opcodes.DADD to "double addition", Opcodes.DSUB to "double subtraction",
-        Opcodes.DMUL to "double multiplication", Opcodes.DDIV to "double division",
-        Opcodes.DREM to "double modulo",
+        Opcodes.DADD to Pair("double addition", "DADD"), Opcodes.DSUB to Pair("double subtraction","DSUB"),
+        Opcodes.DMUL to Pair("double multiplication", "DMUL"), Opcodes.DDIV to Pair("double division", "DDIV"),
+        Opcodes.DREM to Pair("double modulo", "DREM"),
     )
 
     override val supportedOpcodes = mapOf(
@@ -70,7 +70,8 @@ class AOR(
             for (newOpcode in supportedOpcodes[type]!!) {
                 if (newOpcode != opcode) {
                     // Collect mutation information
-                    val newMutation = tracker.registerMutation(operator, createDesc(opcode, newOpcode)) ?: continue
+                    val newMutation = tracker.registerMutation(operator,
+                        createDesc(opcode, newOpcode), createUniqueID(opcode, newOpcode)) ?: continue
                     if (tracker.mutatedClassTracker.targetMutationID != null) {
                         // In mutant creation phase, visit corresponding instruction to mutate it
                         if (tracker.isTargetMutation(newMutation.mutationID)) {

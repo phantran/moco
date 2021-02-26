@@ -32,9 +32,10 @@ class MutatedMethodTracker(
     var currConsideredLineNumber = 0
 
     fun registerMutation(
-        operator: Operator, description: String
+        operator: Operator, description: String, mutatorUniqueID: String
     ): Mutation? {
-        val newMutationID = MutationID(mutatedMethodLocation, mutableListOf(instructionIndex), operator.operatorName)
+        val newMutationID = MutationID(mutatedMethodLocation, mutableListOf(instructionIndex),
+                                       operator.operatorName, mutatorUniqueID)
         if (mutatedClassTracker.mutationAlreadyCollected(newMutationID)) {
             return null
         }

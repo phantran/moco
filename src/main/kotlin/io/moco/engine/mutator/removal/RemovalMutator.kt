@@ -15,32 +15,19 @@
  *
  */
 
-package io.moco.engine.mutator.replacement
+package io.moco.engine.mutator.removal
 
-import io.moco.engine.operator.ReplacementOperator
-import io.moco.engine.tracker.MutatedMethodTracker
+import io.moco.engine.MethodInfo
 import io.moco.utils.ASMInfoUtil
 import io.moco.utils.MoCoLogger
 import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.commons.LocalVariablesSorter
 
-
-open class ReplacementMutator(
-    val operator: ReplacementOperator,
-    val tracker: MutatedMethodTracker,
+open class RemovalMutator(
+    methodInfo: MethodInfo,
     delegateMethodVisitor: MethodVisitor
-) : MethodVisitor(ASMInfoUtil.ASM_VERSION, delegateMethodVisitor) {
-
+) : LocalVariablesSorter(ASMInfoUtil.ASM_VERSION, methodInfo.access, methodInfo.methodDescriptor, delegateMethodVisitor) {
     val logger = MoCoLogger()
-
     open val opcodeDesc: Map<Int, Pair<String, String>> = mapOf()
-
     open val supportedOpcodes: Map<String, List<Int>> = mapOf()
-
-    open fun createDesc(op1: Int, op2: Int): String {
-        return "Replacement of ${opcodeDesc[op1]?.first} with ${opcodeDesc[op2]?.first}"
-    }
-
-    open fun createUniqueID(op1: Int, op2: Int): String {
-        return "${opcodeDesc[op1]?.second}_${opcodeDesc[op2]?.second}"
-    }
 }

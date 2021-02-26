@@ -17,5 +17,71 @@
 
 package io.moco.engine.mutator.replacement
 
-class LCR {
+import io.moco.engine.operator.ReplacementOperator
+import io.moco.engine.tracker.MutatedMethodTracker
+import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.Opcodes
+
+
+
+class LCR(
+    operator: ReplacementOperator,
+    tracker: MutatedMethodTracker,
+    delegateMethodVisitor: MethodVisitor
+) : ReplacementMutator(operator, tracker, delegateMethodVisitor) {
+
+    override val opcodeDesc: Map<Int, Pair<String, String>> = mapOf(
+        Opcodes.IAND to Pair("integer AND", "IAND"), Opcodes.IOR to Pair("integer OR", "IOR"),
+        Opcodes.LAND to Pair("long AND", "LAND"), Opcodes.LOR to Pair("long OR", "LOR"),
+    )
+
+    override val supportedOpcodes = mapOf(
+        "int" to listOf(Opcodes.IAND, Opcodes.IOR),
+        "long" to listOf(Opcodes.LAND, Opcodes.LOR),
+    )
+
+    private fun operatorReplace(opcode: Int, newOpcode: Int): Boolean {
+        // Replace IAND by IOR, or vice versa
+        val newMutation = tracker.registerMutation(operator, createDesc(opcode, newOpcode),
+                                                   createUniqueID(opcode, newOpcode)) ?: return false
+        //Collect mutation information
+        if (tracker.mutatedClassTracker.targetMutationID != null) {
+            // In mutant creation phase, visit corresponding instruction to mutate it
+            if (tracker.isTargetMutation(newMutation.mutationID)) {
+                tracker.mutatedClassTracker.setTargetMutation(newMutation)
+                logger.debug("Old Opcode: $opcode")
+                logger.debug("New Opcode: $newOpcode")
+                mv.visitInsn(newOpcode)
+                return true
+            }
+        }
+        return false
+    }
+
+    override fun visitInsn(opcode: Int) {
+        var supported = false
+        var type: String = ""
+        for (key in supportedOpcodes.keys) {
+            if (supportedOpcodes[key]!!.contains(opcode)) {
+                supported = true
+                type = key
+                break
+            }
+        }
+        var visited = false
+        if (supported) {
+            for (newOpcode in supportedOpcodes[type]!!) {
+                if (newOpcode != opcode) {
+                    visited = operatorReplace(opcode, newOpcode)
+                    if (visited) break
+                }
+            }
+            if (!visited) {
+                // Go on without mutating bytecode after collecting all possible mutations
+                mv.visitInsn(opcode)
+            }
+        } else {
+            mv.visitInsn(opcode)
+        }
+    }
 }

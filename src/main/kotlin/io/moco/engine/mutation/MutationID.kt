@@ -24,5 +24,6 @@ data class MutationID(
     // IMPORTANT: Do not change json property names
     @JsonProperty("methodInfo") val location: MutatedMethodLocation,
     @JsonProperty("instructionIndices") val instructionIndices: Collection<Int>?,
-    @JsonProperty("mutationOperatorName") val operatorName: String  // mutation operator unique name
+    @JsonProperty("mutationOperatorName") val operatorName: String,
+    @JsonProperty("mutatorUniqueID") val mutatorUniqueID: String
 ): Serializable

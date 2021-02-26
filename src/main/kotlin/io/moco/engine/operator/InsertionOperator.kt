@@ -15,20 +15,16 @@
  *
  */
 
-
 package io.moco.engine.operator
 
 import io.moco.engine.MethodInfo
-import io.moco.engine.mutator.removal.AORR
-import io.moco.engine.mutator.replacement.AOR
-import io.moco.engine.mutator.replacement.LCR
-import io.moco.engine.mutator.removal.LCRR
-import io.moco.engine.mutator.replacement.ROR
+import io.moco.engine.mutator.insertion.UOIPO
+import io.moco.engine.mutator.insertion.UOIPR
 import io.moco.engine.tracker.MutatedMethodTracker
 import org.objectweb.asm.MethodVisitor
 
 
-class ReplacementOperator(override val operatorName: String): Operator {
+class InsertionOperator(override val operatorName: String): Operator {
 
     override fun generateVisitor(
         tracker: MutatedMethodTracker,
@@ -36,9 +32,7 @@ class ReplacementOperator(override val operatorName: String): Operator {
         delegateMethodVisitor: MethodVisitor
     ): MethodVisitor? {
         return when (operatorName) {
-            "AOR" -> AOR(this, tracker, AORR(this, tracker, methodInfo, delegateMethodVisitor))
-            "ROR" -> ROR(this, tracker, delegateMethodVisitor)
-            "LCR" -> LCR(this, tracker, LCRR(this, tracker, methodInfo, delegateMethodVisitor))
+            "UOI" -> UOIPR(this, tracker, UOIPO(this, tracker, delegateMethodVisitor))
             else -> null
         }
     }

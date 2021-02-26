@@ -15,17 +15,17 @@
  *
  */
 
-package io.moco.engine.mutator.replacement
+package io.moco.engine.mutator.insertion
 
-import io.moco.engine.operator.ReplacementOperator
+import io.moco.engine.operator.InsertionOperator
 import io.moco.engine.tracker.MutatedMethodTracker
 import io.moco.utils.ASMInfoUtil
 import io.moco.utils.MoCoLogger
 import org.objectweb.asm.MethodVisitor
 
 
-open class ReplacementMutator(
-    val operator: ReplacementOperator,
+open class InsertionMutator(
+    val operator: InsertionOperator,
     val tracker: MutatedMethodTracker,
     delegateMethodVisitor: MethodVisitor
 ) : MethodVisitor(ASMInfoUtil.ASM_VERSION, delegateMethodVisitor) {
@@ -36,11 +36,11 @@ open class ReplacementMutator(
 
     open val supportedOpcodes: Map<String, List<Int>> = mapOf()
 
-    open fun createDesc(op1: Int, op2: Int): String {
-        return "Replacement of ${opcodeDesc[op1]?.first} with ${opcodeDesc[op2]?.first}"
+    open fun createDesc(action: String, op: Int): String {
+        return "$action of ${opcodeDesc[op]?.first}"
     }
 
-    open fun createUniqueID(op1: Int, op2: Int): String {
-        return "${opcodeDesc[op1]?.second}_${opcodeDesc[op2]?.second}"
+    open fun createUniqueID(prefix: String, op: Int): String {
+        return "${prefix}_${opcodeDesc[op]?.second}"
     }
 }

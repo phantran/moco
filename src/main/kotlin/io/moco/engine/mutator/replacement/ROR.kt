@@ -28,26 +28,26 @@ class ROR(
     operator: ReplacementOperator, tracker: MutatedMethodTracker, delegateMethodVisitor: MethodVisitor
 ) : ReplacementMutator(operator, tracker, delegateMethodVisitor) {
 
-    override val opcodeDesc: Map<Int, String> = mapOf(
-        Opcodes.IFLT to "less than operator",
-        Opcodes.IFLE to "less than or equal operator",
-        Opcodes.IFGT to "greater than operator",
-        Opcodes.IFGE to "greater than or equal operator",
-        Opcodes.IFEQ to "equal operator",
-        Opcodes.IFNE to "not equal operator",
+    override val opcodeDesc: Map<Int, Pair<String,String>> = mapOf(
+        Opcodes.IFLT to Pair("less than operator", "IFLT") ,
+        Opcodes.IFLE to Pair("less than or equal operator", "IFLE"),
+        Opcodes.IFGT to Pair("greater than operator", "IFGT"),
+        Opcodes.IFGE to Pair("greater than or equal operator", "IFGE"),
+        Opcodes.IFEQ to Pair("equal operator", "IFEQ"),
+        Opcodes.IFNE to Pair("not equal operator", "IFNE"),
 
-        Opcodes.IF_ICMPLT to "less than operator",
-        Opcodes.IF_ICMPLE to "less than or equal operator",
-        Opcodes.IF_ICMPGT to "greater than operator",
-        Opcodes.IF_ICMPGE to "greater than or equal operator",
-        Opcodes.IF_ICMPEQ to "equal operator",
-        Opcodes.IF_ICMPNE to "not equal operator",
+        Opcodes.IF_ICMPLT to Pair("less than operator", "IF_ICMPLT"),
+        Opcodes.IF_ICMPLE to Pair("less than or equal operator", "IF_ICMPLE"),
+        Opcodes.IF_ICMPGT to Pair("greater than operator", "IF_ICMPGT"),
+        Opcodes.IF_ICMPGE to Pair("greater than or equal operator", "IF_ICMPGE"),
+        Opcodes.IF_ICMPEQ to Pair("equal operator", "IF_ICMPEQ"),
+        Opcodes.IF_ICMPNE to Pair("not equal operator", "IF_ICMPNE"),
 
-        Opcodes.IFNULL to "equal operator",
-        Opcodes.IFNONNULL to "not equal operator",
+        Opcodes.IFNULL to Pair("equal operator", "IFNULL"),
+        Opcodes.IFNONNULL to Pair("not equal operator", "IFNONNULL"),
 
-        Opcodes.IF_ACMPEQ to "equal operator",
-        Opcodes.IF_ACMPNE to "not equal operator",
+        Opcodes.IF_ACMPEQ to Pair("equal operator", "IF_ACMPEQ"),
+        Opcodes.IF_ACMPNE to Pair("not equal operator", "IF_ACMPNE"),
         )
 
     override val supportedOpcodes = mapOf(
@@ -76,7 +76,8 @@ class ROR(
             for (newOpcode in supportedOpcodes[type]!!) {
                 if (newOpcode != opcode) {
                     // Collect mutation information
-                    val newMutation = tracker.registerMutation(operator, createDesc(opcode, newOpcode)) ?: continue
+                    val newMutation = tracker.registerMutation(operator,
+                                    createDesc(opcode, newOpcode), createUniqueID(opcode, newOpcode)) ?: continue
                     if (tracker.mutatedClassTracker.targetMutationID != null) {
                         // In mutant creation phase, visit corresponding instruction to mutate it
                         if (tracker.isTargetMutation(newMutation.mutationID)) {
