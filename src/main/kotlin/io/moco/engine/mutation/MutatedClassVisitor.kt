@@ -26,7 +26,7 @@ import io.moco.engine.tracker.InstructionVisitor
 import io.moco.engine.tracker.LineVisitor
 import io.moco.engine.tracker.MutatedClassTracker
 import io.moco.engine.tracker.MutatedMethodTracker
-import io.moco.utils.ASMInfoUtil
+import io.moco.utils.JavaInfo
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 import java.util.HashSet
@@ -34,7 +34,7 @@ import java.util.HashSet
 class MutatedClassVisitor(
     delegateClassVisitor: ClassVisitor?, val tracker: MutatedClassTracker,
     val filter: List<String> = mutableListOf(), operators: List<Operator>?
-) : ClassVisitor(ASMInfoUtil.ASM_VERSION, delegateClassVisitor) {
+) : ClassVisitor(JavaInfo.ASM_VERSION, delegateClassVisitor) {
 
     private val chosenOperators: MutableSet<Operator> = HashSet<Operator>()
 

@@ -18,7 +18,7 @@
 package io.moco.engine.mutator.deletion
 
 import io.moco.engine.MethodInfo
-import io.moco.utils.ASMInfoUtil
+import io.moco.utils.JavaInfo
 import io.moco.utils.MoCoLogger
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.commons.LocalVariablesSorter
@@ -26,7 +26,7 @@ import org.objectweb.asm.commons.LocalVariablesSorter
 open class DeletionMutator(
     methodInfo: MethodInfo,
     delegateMethodVisitor: MethodVisitor
-) : LocalVariablesSorter(ASMInfoUtil.ASM_VERSION, methodInfo.access, methodInfo.methodDescriptor, delegateMethodVisitor) {
+) : LocalVariablesSorter(JavaInfo.ASM_VERSION, methodInfo.access, methodInfo.methodDescriptor, delegateMethodVisitor) {
     val logger = MoCoLogger()
     open val opcodeDesc: Map<Int, Pair<String, String>> = mapOf()
     open val supportedOpcodes: Map<String, List<Int>> = mapOf()

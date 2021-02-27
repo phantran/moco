@@ -19,7 +19,7 @@
 package io.moco.engine.preprocessing
 
 import io.moco.engine.tracker.Block
-import io.moco.utils.ASMInfoUtil
+import io.moco.utils.JavaInfo
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodNode
@@ -30,7 +30,7 @@ class PreprocessorMethodVisitor(
     val mv: MethodVisitor?, access: Int,
     val name: String?, desc: String?, signature: String?,
     exceptions: Array<String?>?
-) : MethodNode(ASMInfoUtil.ASM_VERSION, access, name, desc, signature, exceptions) {
+) : MethodNode(JavaInfo.ASM_VERSION, access, name, desc, signature, exceptions) {
 
     override fun visitEnd() {
         // collect blocks info

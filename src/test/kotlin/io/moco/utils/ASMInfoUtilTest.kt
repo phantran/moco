@@ -21,9 +21,9 @@ import org.junit.Assert
 import org.junit.Test
 import org.objectweb.asm.Opcodes
 
-class ASMInfoUtilTest {
+class JavaInfoTest {
     @Test
-    fun test_ASMInfoUtil() {
-        Assert.assertEquals(ASMInfoUtil.ASM_VERSION, Opcodes.ASM8)
+    fun test_JavaInfo() {
+        Assert.assertEquals(JavaInfo.ASM_VERSION, Opcodes.ASM8)
     }
 }

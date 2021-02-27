@@ -18,12 +18,12 @@
 package io.moco.engine
 
 
-import io.moco.utils.ASMInfoUtil
+import io.moco.utils.JavaInfo
 import org.objectweb.asm.*
 
 
-class DefaultClassVisitor : ClassVisitor(ASMInfoUtil.ASM_VERSION) {
-    class DefaultAnnotationVisitor internal constructor() : AnnotationVisitor(ASMInfoUtil.ASM_VERSION) {
+class DefaultClassVisitor : ClassVisitor(JavaInfo.ASM_VERSION) {
+    class DefaultAnnotationVisitor internal constructor() : AnnotationVisitor(JavaInfo.ASM_VERSION) {
         override fun visit(arg0: String?, arg1: Any) {}
         override fun visitAnnotation(
             arg0: String, arg1: String
@@ -43,7 +43,7 @@ class DefaultClassVisitor : ClassVisitor(ASMInfoUtil.ASM_VERSION) {
         }
     }
 
-    class DefaultMethodVisitor internal constructor() : MethodVisitor(ASMInfoUtil.ASM_VERSION) {
+    class DefaultMethodVisitor internal constructor() : MethodVisitor(JavaInfo.ASM_VERSION) {
         override fun visitAnnotation(
             arg0: String,
             arg1: Boolean
@@ -136,7 +136,7 @@ class DefaultClassVisitor : ClassVisitor(ASMInfoUtil.ASM_VERSION) {
         arg0: Int, arg1: String,
         arg2: String, arg3: String?, arg4: Any?
     ): FieldVisitor {
-        return object : FieldVisitor(ASMInfoUtil.ASM_VERSION) {
+        return object : FieldVisitor(JavaInfo.ASM_VERSION) {
             override fun visitAnnotation(
                 arg0: String,
                 arg1: Boolean

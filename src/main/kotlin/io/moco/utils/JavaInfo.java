@@ -15,11 +15,16 @@
  *
  */
 
+package io.moco.utils;
 
-package io.moco.utils
+import org.objectweb.asm.Opcodes;
 
-import org.objectweb.asm.Opcodes
+public class JavaInfo {
+    public static int ASM_VERSION = Opcodes.ASM8;
 
-object ASMInfoUtil {
-    const val ASM_VERSION = Opcodes.ASM8
+    public static short bytecodeJVersion(byte[] bs) {
+        return (short) (((bs[6] & 0xFF) << 8) | (bs[7] & 0xFF));
+    }
 }
+
+

@@ -18,7 +18,7 @@
 
 package io.moco.engine.tracker
 
-import io.moco.utils.ASMInfoUtil
+import io.moco.utils.JavaInfo
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
@@ -27,7 +27,7 @@ import org.objectweb.asm.MethodVisitor
 class InstructionVisitor(
     mv: MethodVisitor?,
     private val mutatedMethodTracker: MutatedMethodTracker
-) : MethodVisitor(ASMInfoUtil.ASM_VERSION, mv) {
+) : MethodVisitor(JavaInfo.ASM_VERSION, mv) {
 
     override fun visitFrame(
         type: Int, nLocal: Int,

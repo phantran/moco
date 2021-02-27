@@ -56,7 +56,7 @@ class BLD(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                "removal of second operand after logical operator " +
+                "delete second operand after logical operator " +
                         "${opcodeDesc[opcode]?.second?.substring(1)}",
                 "KEEP_F_${opcodeDesc[opcode]?.second}"
             ) ?: return false
@@ -64,7 +64,7 @@ class BLD(
             // In mutant creation phase, visit corresponding instruction to mutate it
             if (tracker.isTargetMutation(newMutation.mutationID)) {
                 tracker.mutatedClassTracker.setTargetMutation(newMutation)
-                logger.debug("Remove second operand after logical operator: $opcode")
+                logger.debug("Delete second operand after logical operator: $opcode")
                 when (type) {
                     "long" -> mv.visitInsn(Opcodes.POP2)
                     "int" -> mv.visitInsn(Opcodes.POP)
@@ -81,7 +81,7 @@ class BLD(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                "removal of first operand before logical operator " +
+                "delete first operand before logical operator " +
                         "${opcodeDesc[opcode]?.second?.substring(1)}",
                 "KEEP_S_${opcodeDesc[opcode]?.second}"
             ) ?: return false
@@ -89,7 +89,7 @@ class BLD(
             // In mutant creation phase, visit corresponding instruction to mutate it
             if (tracker.isTargetMutation(newMutation.mutationID)) {
                 tracker.mutatedClassTracker.setTargetMutation(newMutation)
-                logger.debug("Remove first operand before logical operator: $opcode")
+                logger.debug("Delete first operand before logical operator: $opcode")
                 when (type) {
                     "long" -> {
                         val temp = this.newLocal(Type.LONG_TYPE)

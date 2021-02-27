@@ -22,6 +22,7 @@ import io.moco.engine.DefaultClassVisitor
 import io.moco.engine.io.ByteArrayLoader
 import io.moco.engine.operator.Operator
 import io.moco.engine.tracker.MutatedClassTracker
+import io.moco.utils.JavaInfo
 import io.moco.utils.MoCoLogger
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
@@ -29,6 +30,7 @@ import org.objectweb.asm.util.CheckClassAdapter
 import org.objectweb.asm.util.TraceClassVisitor
 import java.io.PrintWriter
 import java.lang.Exception
+import kotlin.experimental.and
 
 /**
  * Mutation finder
@@ -43,6 +45,7 @@ class MutationGenerator(
     private val operators: List<Operator>?,
 ) {
     val logger = MoCoLogger()
+
     /**
      * Find possible mutations
      *
@@ -81,11 +84,16 @@ class MutationGenerator(
      * @return
      */
     fun createMutant(mutationID: MutationID, byteArray: ByteArray?): Mutant? {
+        // ASM support automatic frame computation since java 7, user COMPUTE_MAXS for version less than 7
+        val java7Version = 51
+        val cwOption =
+            if (JavaInfo.bytecodeJVersion(byteArray) > java7Version)
+                ClassWriter.COMPUTE_FRAMES else ClassWriter.COMPUTE_MAXS
         val tracker = MutatedClassTracker(mutationID)
         val cr = ClassReader(byteArray)
-        val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
+        val cw = ClassWriter(cwOption)
 //        val cv = TraceClassVisitor(cw, PrintWriter(System.out))
-        val ca = CheckClassAdapter(cw, true)
+        val ca = CheckClassAdapter(cw)
 
         val filter = listOf<String>()
         val mcv = MutatedClassVisitor(

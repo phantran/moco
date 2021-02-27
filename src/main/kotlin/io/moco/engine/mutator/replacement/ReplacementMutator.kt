@@ -19,7 +19,7 @@ package io.moco.engine.mutator.replacement
 
 import io.moco.engine.operator.ReplacementOperator
 import io.moco.engine.tracker.MutatedMethodTracker
-import io.moco.utils.ASMInfoUtil
+import io.moco.utils.JavaInfo
 import io.moco.utils.MoCoLogger
 import org.objectweb.asm.MethodVisitor
 
@@ -28,7 +28,7 @@ open class ReplacementMutator(
     val operator: ReplacementOperator,
     val tracker: MutatedMethodTracker,
     delegateMethodVisitor: MethodVisitor
-) : MethodVisitor(ASMInfoUtil.ASM_VERSION, delegateMethodVisitor) {
+) : MethodVisitor(JavaInfo.ASM_VERSION, delegateMethodVisitor) {
 
     val logger = MoCoLogger()
 
@@ -37,7 +37,7 @@ open class ReplacementMutator(
     open val supportedOpcodes: Map<String, List<Int>> = mapOf()
 
     open fun createDesc(op1: Int, op2: Int): String {
-        return "replacement of ${opcodeDesc[op1]?.first} with ${opcodeDesc[op2]?.first}"
+        return "replace ${opcodeDesc[op1]?.first} with ${opcodeDesc[op2]?.first}"
     }
 
     open fun createUniqueID(op1: Int, op2: Int): String {

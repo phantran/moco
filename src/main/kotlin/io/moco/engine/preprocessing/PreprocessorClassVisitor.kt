@@ -18,12 +18,12 @@
 
 package io.moco.engine.preprocessing
 
-import io.moco.utils.ASMInfoUtil
+import io.moco.utils.JavaInfo
 import org.objectweb.asm.*
 
 
 class PreprocessorClassVisitor(val cw: ClassVisitor?) :
-    ClassVisitor(ASMInfoUtil.ASM_VERSION, cw) {
+    ClassVisitor(JavaInfo.ASM_VERSION, cw) {
 
     private var className: String? = null
     private var hasStaticInitializer = false

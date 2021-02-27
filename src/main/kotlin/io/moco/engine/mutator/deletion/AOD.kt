@@ -72,14 +72,14 @@ class AOD(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                "removal of operand after ${opcodeDesc[opcode]?.first} operator",
+                "delete operand after ${opcodeDesc[opcode]?.first} operator",
                                                 "KEEP_F_$opcode"
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutationID != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it
             if (tracker.isTargetMutation(newMutation.mutationID)) {
                 tracker.mutatedClassTracker.setTargetMutation(newMutation)
-                logger.debug("Remove second operand after arithmetic operator: $opcode")
+                logger.debug("Delete second operand after arithmetic operator: $opcode")
 
                 return when (type) {
                     "int", "float" -> {
@@ -102,14 +102,14 @@ class AOD(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                "removal of operand before ${opcodeDesc[opcode]?.first} operator ",
+                "delete operand before ${opcodeDesc[opcode]?.first} operator ",
                                                         "KEEP_S_$opcode"
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutationID != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it
             if (tracker.isTargetMutation(newMutation.mutationID)) {
                 tracker.mutatedClassTracker.setTargetMutation(newMutation)
-                logger.debug("Remove first operand before arithmetic operator: $opcode")
+                logger.debug("Delete first operand before arithmetic operator: $opcode")
 
                 when (type) {
                     "int" -> {
