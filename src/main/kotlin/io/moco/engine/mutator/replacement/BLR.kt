@@ -24,7 +24,7 @@ import org.objectweb.asm.Opcodes
 
 
 /**
- * BLR - Bitwise Logical Replacement
+ * BLR - Bitwise Logical Operator Replacement
  *
  * @constructor
  *

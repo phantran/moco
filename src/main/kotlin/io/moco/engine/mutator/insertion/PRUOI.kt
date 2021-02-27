@@ -23,6 +23,15 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
 
+/**
+ * PRUOI - Pre Unary Operator Insertion
+ *
+ * @constructor
+ *
+ * @param operator
+ * @param tracker
+ * @param delegateMethodVisitor
+ */
 class PRUOI(
     operator: InsertionOperator,
     tracker: MutatedMethodTracker,

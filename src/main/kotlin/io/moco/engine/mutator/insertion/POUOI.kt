@@ -23,6 +23,15 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
 
+/**
+ * POUOI - Post Unary Operator Insertion
+ *
+ * @constructor
+ *
+ * @param operator
+ * @param tracker
+ * @param delegateMethodVisitor
+ */
 class POUOI(
     operator: InsertionOperator,
     tracker: MutatedMethodTracker,

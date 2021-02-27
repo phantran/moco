@@ -24,6 +24,16 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 
+/**
+ * BLD - Bitwise Logical Operator Deletion
+ *
+ * @property operator
+ * @property tracker
+ * @property methodInfo
+ * @constructor
+ *
+ * @param delegateMethodVisitor
+ */
 class BLD(
     val operator: DeletionOperator,
     val tracker: MutatedMethodTracker,
@@ -47,7 +57,8 @@ class BLD(
             tracker.registerMutation(
                 operator,
                 "removal of second operand after logical operator " +
-                        "${opcodeDesc[opcode]?.second?.substring(1)}", "KEEP_F_${opcodeDesc[opcode]?.second}"
+                        "${opcodeDesc[opcode]?.second?.substring(1)}",
+                "KEEP_F_${opcodeDesc[opcode]?.second}"
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutationID != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it
@@ -71,7 +82,8 @@ class BLD(
             tracker.registerMutation(
                 operator,
                 "removal of first operand before logical operator " +
-                        "${opcodeDesc[opcode]?.second?.substring(1)}", "KEEP_S_${opcodeDesc[opcode]?.second}"
+                        "${opcodeDesc[opcode]?.second?.substring(1)}",
+                "KEEP_S_${opcodeDesc[opcode]?.second}"
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutationID != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it

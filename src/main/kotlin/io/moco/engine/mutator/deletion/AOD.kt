@@ -25,6 +25,16 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 
 
+/**
+ * AOD - Arithmetic Operator Deletion
+ *
+ * @property operator
+ * @property tracker
+ * @property methodInfo
+ * @constructor
+ *
+ * @param delegateMethodVisitor
+ */
 class AOD(
     val operator: DeletionOperator,
     val tracker: MutatedMethodTracker,
