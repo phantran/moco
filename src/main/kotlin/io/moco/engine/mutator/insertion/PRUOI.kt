@@ -23,24 +23,24 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
 
-class UOIPO(
+class PRUOI(
     operator: InsertionOperator,
     tracker: MutatedMethodTracker,
     delegateMethodVisitor: MethodVisitor
 ) : InsertionMutator(operator, tracker, delegateMethodVisitor) {
 
     override val opcodeDesc: Map<Int, Pair<String, String>> = mapOf(
-        Opcodes.ILOAD to Pair("local variable type integer", "ILOAD"),
-        Opcodes.LLOAD to Pair("local variable type long", "LLOAD"),
-        Opcodes.FLOAD to Pair("local variable type float", "FLOAD"),
-        Opcodes.DLOAD to Pair("local variable type double", "DLOAD"),
+        Opcodes.ILOAD to Pair("integer local variable", "ILOAD"),
+        Opcodes.LLOAD to Pair("long local variable", "LLOAD"),
+        Opcodes.FLOAD to Pair("float local variable", "FLOAD"),
+        Opcodes.DLOAD to Pair("double local variable", "DLOAD"),
 
-        Opcodes.IALOAD to Pair("element of array type integer", "IALOAD"),
-        Opcodes.FALOAD to Pair("element of array type float", "FALOAD"),
-        Opcodes.LALOAD to Pair("element of array type long", "LALOAD"),
-        Opcodes.DALOAD to Pair("element of array type double", "DALOAD"),
-        Opcodes.BALOAD to Pair("element of array type byte", "BALOAD"),
-        Opcodes.SALOAD to Pair("element of array type short", "SALOAD"),
+        Opcodes.IALOAD to Pair("integer element of array", "IALOAD"),
+        Opcodes.FALOAD to Pair("float element of array", "FALOAD"),
+        Opcodes.LALOAD to Pair("long element of array", "LALOAD"),
+        Opcodes.DALOAD to Pair("double element of array", "DALOAD"),
+        Opcodes.BALOAD to Pair("byte element of array", "BALOAD"),
+        Opcodes.SALOAD to Pair("short element of array", "SALOAD"),
 
         Opcodes.GETFIELD to Pair("object field", "GETFIELD"),
         Opcodes.GETSTATIC to Pair("static field", "GETSTATIC"),
@@ -53,7 +53,7 @@ class UOIPO(
     )
 
     private val operatorTypes = listOf(
-        Pair("post-increment", "POI"), Pair("post-decrement", "POD"),
+        Pair("pre-increment", "PRI"), Pair("pre-decrement", "PRD"),
     )
 
     override fun visitVarInsn(opcode: Int, v: Int) {
@@ -61,7 +61,7 @@ class UOIPO(
         if (supportedOpcodes["var"]!!.contains(opcode) && (!tracker.mutatedClassTracker.getClsInfo()?.isEnum!!)) {
             supported = true
         }
-        mv.visitVarInsn(opcode, v)
+        var visited = false
         if (supported) {
             for (operatorType in operatorTypes) {
                 // Always collect mutation information in both collecting and creating phase
@@ -75,36 +75,53 @@ class UOIPO(
                         tracker.mutatedClassTracker.setTargetMutation(newMutation)
                         logger.debug("${operatorType.first} of variable : $v")
                         when (operatorType.second) {
-                            "POI" -> handleVarPostOp(opcode, v)
-                            "POD" -> handleVarPostOp(opcode, v, false)
+                            "PRI" -> visited = handleVarPreOp(opcode, v)
+                            "PRD" -> visited = handleVarPreOp(opcode, v, false)
                         }
+                        if (visited) break
                     }
                 }
             }
+            if (!visited) {
+                mv.visitVarInsn(opcode, v)
+            }
+        } else {
+            mv.visitVarInsn(opcode, v)
         }
     }
 
-    private fun handleVarPostOp(opcode: Int, v: Int, isInc: Boolean = true) {
+    private fun handleVarPreOp(opcode: Int, v: Int, isInc: Boolean = true): Boolean {
         when (opcode) {
-            Opcodes.ILOAD -> mv.visitIincInsn(v, if (isInc) 1 else -1)
+            Opcodes.ILOAD -> {
+                mv.visitIincInsn(v, if (isInc) 1 else -1)
+                mv.visitVarInsn(opcode, v)
+                return true
+            }
             Opcodes.FLOAD -> {
-                mv.visitInsn(Opcodes.DUP)
+                mv.visitVarInsn(opcode, v)
                 mv.visitInsn(Opcodes.FCONST_1)
                 mv.visitInsn(if (isInc) Opcodes.FADD else Opcodes.FSUB)
                 mv.visitVarInsn(Opcodes.FSTORE, v)
+                mv.visitVarInsn(opcode, v)
+                return true
             }
             Opcodes.LLOAD -> {
-                mv.visitInsn(Opcodes.DUP2)
+                mv.visitVarInsn(opcode, v)
                 mv.visitInsn(Opcodes.LCONST_1)
                 mv.visitInsn(if (isInc) Opcodes.LADD else Opcodes.LSUB)
                 mv.visitVarInsn(Opcodes.LSTORE, v)
+                mv.visitVarInsn(opcode, v)
+                return true
             }
             Opcodes.DLOAD -> {
-                mv.visitInsn(Opcodes.DUP2)
+                mv.visitVarInsn(opcode, v)
                 mv.visitInsn(Opcodes.DCONST_1)
                 mv.visitInsn(if (isInc) Opcodes.DADD else Opcodes.DSUB)
                 mv.visitVarInsn(Opcodes.DSTORE, v)
+                mv.visitVarInsn(opcode, v)
+                return true
             }
+            else -> return false
         }
     }
 
@@ -127,11 +144,10 @@ class UOIPO(
                         tracker.mutatedClassTracker.setTargetMutation(newMutation)
                         logger.debug("${operatorType.first} of array element")
                         when (operatorType.second) {
-                            "POI" -> visited = handleArrPostOp(opcode)
-                            "POD" -> visited = handleArrPostOp(opcode, false)
+                            "PRI" -> visited = handleArrPreOp(opcode)
+                            "PRD" -> visited = handleArrPreOp(opcode, false)
                         }
                         if (visited) break
-
                     }
                 }
             }
@@ -143,61 +159,61 @@ class UOIPO(
         }
     }
 
-    private fun handleArrPostOp(opcode: Int, isInc: Boolean = true): Boolean {
+    private fun handleArrPreOp(opcode: Int, isInc: Boolean = true): Boolean {
         when (opcode) {
             Opcodes.IALOAD -> {
                 mv.visitInsn(Opcodes.DUP2)
                 mv.visitInsn(opcode)
-                mv.visitInsn(Opcodes.DUP_X2)
                 mv.visitInsn(Opcodes.ICONST_1)
                 mv.visitInsn(if (isInc) Opcodes.IADD else Opcodes.ISUB)
+                mv.visitInsn(Opcodes.DUP_X2)
                 mv.visitInsn(Opcodes.IASTORE)
                 return true
             }
             Opcodes.FALOAD -> {
                 mv.visitInsn(Opcodes.DUP2)
                 mv.visitInsn(opcode)
-                mv.visitInsn(Opcodes.DUP_X2)
                 mv.visitInsn(Opcodes.FCONST_1)
                 mv.visitInsn(if (isInc) Opcodes.FADD else Opcodes.FSUB)
+                mv.visitInsn(Opcodes.DUP_X2)
                 mv.visitInsn(Opcodes.FASTORE)
                 return true
             }
             Opcodes.LALOAD -> {
                 mv.visitInsn(Opcodes.DUP2)
                 mv.visitInsn(opcode)
-                mv.visitInsn(Opcodes.DUP2_X2)
                 mv.visitInsn(Opcodes.LCONST_1)
                 mv.visitInsn(if (isInc) Opcodes.LADD else Opcodes.LSUB)
+                mv.visitInsn(Opcodes.DUP2_X2)
                 mv.visitInsn(Opcodes.LASTORE)
                 return true
             }
             Opcodes.DALOAD -> {
                 mv.visitInsn(Opcodes.DUP2)
                 mv.visitInsn(opcode)
-                mv.visitInsn(Opcodes.DUP2_X2)
                 mv.visitInsn(Opcodes.DCONST_1)
                 mv.visitInsn(if (isInc) Opcodes.DADD else Opcodes.DSUB)
+                mv.visitInsn(Opcodes.DUP2_X2)
                 mv.visitInsn(Opcodes.DASTORE)
                 return true
             }
             Opcodes.BALOAD -> {
                 mv.visitInsn(Opcodes.DUP2)
                 mv.visitInsn(opcode)
-                mv.visitInsn(Opcodes.DUP_X2)
                 mv.visitInsn(Opcodes.ICONST_1)
                 mv.visitInsn(if (isInc) Opcodes.IADD else Opcodes.ISUB)
                 mv.visitInsn(Opcodes.I2B)
+                mv.visitInsn(Opcodes.DUP_X2)
                 mv.visitInsn(Opcodes.BASTORE)
                 return true
             }
             Opcodes.SALOAD -> {
                 mv.visitInsn(Opcodes.DUP2)
                 mv.visitInsn(opcode)
-                mv.visitInsn(Opcodes.DUP_X2)
                 mv.visitInsn(Opcodes.ICONST_1)
                 mv.visitInsn(if (isInc) Opcodes.IADD else Opcodes.ISUB)
                 mv.visitInsn(Opcodes.I2S)
+                mv.visitInsn(Opcodes.DUP_X2)
                 mv.visitInsn(Opcodes.SASTORE)
                 return true
             }
@@ -217,35 +233,33 @@ class UOIPO(
         if (supported) {
             for (operatorType in operatorTypes) {
                 // Always collect mutation information in both collecting and creating phase
-
                 val newMutation = tracker.registerMutation(
                     operator,
                     createDesc(operatorType.first, opcode), createUniqueID("${operatorType.second}_$desc", opcode)
                 ) ?: continue
-
                 // But only do visiting to create actual mutant if still in creating phase
                 if (tracker.mutatedClassTracker.targetMutationID != null) {
                     if (tracker.isTargetMutation(newMutation.mutationID)) {
+
                         tracker.mutatedClassTracker.setTargetMutation(newMutation)
                         logger.debug("${operatorType.first} of ${opcodeDesc[opcode]?.first}")
                         when (operatorType.second) {
-                            "POI" -> visited = handleFieldPostOp(opcode, owner, name, desc)
-                            "POD" -> visited = handleFieldPostOp(opcode, owner, name, desc, false)
-                        }
-                        if (visited) {
-                            break
+                            "PRI" -> visited = handleFieldPreOp(opcode, owner, name, desc)
+                            "PRD" -> visited = handleFieldPreOp(opcode, owner, name, desc, false)
                         }
                     }
                 }
+                if (visited) break
             }
             if (!visited) {
                 mv.visitFieldInsn(opcode, owner, name, desc)
             }
+        } else {
+            mv.visitFieldInsn(opcode, owner, name, desc)
         }
-        mv.visitFieldInsn(opcode, owner, name, desc)
     }
 
-    private fun handleFieldPostOp(
+    private fun handleFieldPreOp(
         opcode: Int,
         owner: String,
         name: String,
@@ -254,65 +268,69 @@ class UOIPO(
     ): Boolean {
         // Check if accessing normal object field or static field to perform corresponding instruction visit
         val isNormalField = opcode == Opcodes.GETFIELD
+
         when (desc) {
             "I" -> {
-                if (isNormalField) mv.visitInsn(Opcodes.DUP)
+                if (isNormalField) { mv.visitInsn(Opcodes.DUP) }
                 mv.visitFieldInsn(opcode, owner, name, desc)
-                if (isNormalField) mv.visitInsn(Opcodes.DUP_X1) else mv.visitInsn(Opcodes.DUP)
                 mv.visitInsn(Opcodes.ICONST_1)
                 mv.visitInsn(if (isInc) Opcodes.IADD else Opcodes.ISUB)
-                // PUTFIELD if normal object field, PUTSTATIC if static field
+                if (isNormalField) mv.visitInsn(Opcodes.DUP_X1) else mv.visitInsn(Opcodes.DUP)
                 mv.visitFieldInsn(if (isNormalField) Opcodes.PUTFIELD else Opcodes.PUTSTATIC, owner, name, desc)
                 return true
             }
             "F" -> {
                 if (isNormalField) mv.visitInsn(Opcodes.DUP)
                 mv.visitFieldInsn(opcode, owner, name, desc)
-                if (isNormalField) mv.visitInsn(Opcodes.DUP_X1) else mv.visitInsn(Opcodes.DUP)
                 mv.visitInsn(Opcodes.FCONST_1)
                 mv.visitInsn(if (isInc) Opcodes.FADD else Opcodes.FSUB)
+                if (isNormalField) mv.visitInsn(Opcodes.DUP_X1) else mv.visitInsn(Opcodes.DUP)
                 mv.visitFieldInsn(if (isNormalField) Opcodes.PUTFIELD else Opcodes.PUTSTATIC, owner, name, desc)
                 return true
             }
             "J" -> {
                 if (isNormalField) mv.visitInsn(Opcodes.DUP)
                 mv.visitFieldInsn(opcode, owner, name, desc)
-                if (isNormalField) mv.visitInsn(Opcodes.DUP2_X1) else mv.visitInsn(Opcodes.DUP2)
                 mv.visitInsn(Opcodes.LCONST_1)
                 mv.visitInsn(if (isInc) Opcodes.LADD else Opcodes.LSUB)
+                if (isNormalField) mv.visitInsn(Opcodes.DUP2_X1) else mv.visitInsn(Opcodes.DUP2)
                 mv.visitFieldInsn(if (isNormalField) Opcodes.PUTFIELD else Opcodes.PUTSTATIC, owner, name, desc)
                 return true
             }
             "D" -> {
                 if (isNormalField) mv.visitInsn(Opcodes.DUP)
                 mv.visitFieldInsn(opcode, owner, name, desc)
-                if (isNormalField) mv.visitInsn(Opcodes.DUP2_X1) else mv.visitInsn(Opcodes.DUP2)
                 mv.visitInsn(Opcodes.DCONST_1)
                 mv.visitInsn(if (isInc) Opcodes.DADD else Opcodes.DSUB)
+                if (isNormalField) mv.visitInsn(Opcodes.DUP2_X1) else mv.visitInsn(Opcodes.DUP2)
                 mv.visitFieldInsn(if (isNormalField) Opcodes.PUTFIELD else Opcodes.PUTSTATIC, owner, name, desc)
                 return true
             }
             "B" -> {
                 if (isNormalField) mv.visitInsn(Opcodes.DUP)
                 mv.visitFieldInsn(opcode, owner, name, desc)
-                if (isNormalField) mv.visitInsn(Opcodes.DUP_X1) else mv.visitInsn(Opcodes.DUP)
                 mv.visitInsn(Opcodes.ICONST_1)
                 mv.visitInsn(if (isInc) Opcodes.IADD else Opcodes.ISUB)
                 mv.visitInsn(Opcodes.I2B)
+                if (isNormalField) mv.visitInsn(Opcodes.DUP_X1) else mv.visitInsn(Opcodes.DUP)
                 mv.visitFieldInsn(if (isNormalField) Opcodes.PUTFIELD else Opcodes.PUTSTATIC, owner, name, desc)
                 return true
             }
             "S" -> {
                 if (isNormalField) mv.visitInsn(Opcodes.DUP)
                 mv.visitFieldInsn(opcode, owner, name, desc)
-                if (isNormalField) mv.visitInsn(Opcodes.DUP_X1) else mv.visitInsn(Opcodes.DUP)
                 mv.visitInsn(Opcodes.ICONST_1)
                 mv.visitInsn(if (isInc) Opcodes.IADD else Opcodes.ISUB)
                 mv.visitInsn(Opcodes.I2S)
+                if (isNormalField) mv.visitInsn(Opcodes.DUP_X1) else mv.visitInsn(Opcodes.DUP)
                 mv.visitFieldInsn(if (isNormalField) Opcodes.PUTFIELD else Opcodes.PUTSTATIC, owner, name, desc)
                 return true
             }
             else -> return false
         }
+    }
+
+    override fun visitMaxs(maxStack: Int, maxLocals: Int) {
+        super.visitMaxs(maxStack + 5, maxLocals + 5)
     }
 }

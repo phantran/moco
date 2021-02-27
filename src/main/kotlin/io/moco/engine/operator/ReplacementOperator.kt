@@ -19,8 +19,6 @@
 package io.moco.engine.operator
 
 import io.moco.engine.MethodInfo
-import io.moco.engine.mutator.removal.AORR
-import io.moco.engine.mutator.removal.BLRR
 import io.moco.engine.mutator.replacement.AOR
 import io.moco.engine.mutator.replacement.BLR
 import io.moco.engine.mutator.replacement.ROR
@@ -36,9 +34,9 @@ class ReplacementOperator(override val operatorName: String): Operator {
         delegateMethodVisitor: MethodVisitor
     ): MethodVisitor? {
         return when (operatorName) {
-            "AOR" -> AOR(this, tracker, AORR(this, tracker, methodInfo, delegateMethodVisitor))
+            "AOR" -> AOR(this, tracker, delegateMethodVisitor)
             "ROR" -> ROR(this, tracker, delegateMethodVisitor)
-            "BLR" -> BLR(this, tracker, BLRR(this, tracker, methodInfo, delegateMethodVisitor))
+            "BLR" -> BLR(this, tracker, delegateMethodVisitor)
             else -> null
         }
     }

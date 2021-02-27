@@ -20,6 +20,7 @@ package io.moco.utils
 import mu.KLogger
 import mu.KotlinLogging
 import org.apache.maven.plugin.logging.Log
+import java.time.LocalDateTime
 
 class MoCoLogger {
 
@@ -40,7 +41,7 @@ class MoCoLogger {
             if (useMvnLog) {
                 mvnLogger?.info(m)
             } else {
-                devLogger?.info { "[DEBUG] $m" }
+                devLogger?.info { "${LocalDateTime.now()} [DEBUG] $m" }
             }
         }
     }

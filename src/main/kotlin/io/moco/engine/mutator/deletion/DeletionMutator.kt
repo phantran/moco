@@ -15,7 +15,7 @@
  *
  */
 
-package io.moco.engine.mutator.removal
+package io.moco.engine.mutator.deletion
 
 import io.moco.engine.MethodInfo
 import io.moco.utils.ASMInfoUtil
@@ -23,7 +23,7 @@ import io.moco.utils.MoCoLogger
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.commons.LocalVariablesSorter
 
-open class RemovalMutator(
+open class DeletionMutator(
     methodInfo: MethodInfo,
     delegateMethodVisitor: MethodVisitor
 ) : LocalVariablesSorter(ASMInfoUtil.ASM_VERSION, methodInfo.access, methodInfo.methodDescriptor, delegateMethodVisitor) {

@@ -15,21 +15,21 @@
  *
  */
 
-package io.moco.engine.mutator.removal
+package io.moco.engine.mutator.deletion
 
 import io.moco.engine.MethodInfo
-import io.moco.engine.operator.ReplacementOperator
+import io.moco.engine.operator.DeletionOperator
 import io.moco.engine.tracker.MutatedMethodTracker
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 
-class BLRR(
-    val operator: ReplacementOperator,
+class BLD(
+    val operator: DeletionOperator,
     val tracker: MutatedMethodTracker,
     private val methodInfo: MethodInfo,
     delegateMethodVisitor: MethodVisitor
-) : RemovalMutator(methodInfo, delegateMethodVisitor) {
+) : DeletionMutator(methodInfo, delegateMethodVisitor) {
 
     override val opcodeDesc: Map<Int, Pair<String, String>> = mapOf(
         Opcodes.IAND to Pair("integer AND", "IAND"), Opcodes.IOR to Pair("integer OR", "IOR"),
@@ -56,8 +56,8 @@ class BLRR(
                 logger.debug("Remove second operand after logical operator: $opcode")
                 when (type) {
                     "long" -> mv.visitInsn(Opcodes.POP2)
-                    "int"  -> mv.visitInsn(Opcodes.POP)
-                    else ->  return false
+                    "int" -> mv.visitInsn(Opcodes.POP)
+                    else -> return false
                 }
                 return true
             }
@@ -109,11 +109,9 @@ class BLRR(
                 break
             }
         }
-        var visited = false
+        var visited: Boolean
         if (supported) {
-            if (!visited) {
-                visited = trySecondOperandRemoval(opcode, type)
-            }
+            visited = trySecondOperandRemoval(opcode, type)
             if (!visited) {
                 visited = tryFirstOperandRemoval(opcode, type)
             }

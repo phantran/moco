@@ -27,16 +27,19 @@ interface Operator {
     val operatorName: String
 
     companion object {
-        val supportedOperatorNames = listOf("AOR", "ROR", "BLR", "UOI")
+        val supportedOperatorNames = listOf("AOD", "BLD", "POUOI", "PRUOI", "AOR", "BLR", "ROR")
 
         fun nameToOperator(it: String): Operator? {
             return mapping[it]
         }
         private val mapping: Map<String, Operator> = mapOf(
+            "AOD" to DeletionOperator("AOD"), // Arithmetic operator deletion
+            "BLD" to DeletionOperator("BLD"), // Bitwise logical deletion
+            "POUOI" to InsertionOperator("POUOI"), // Post unary operator insertion
+            "PRUOI" to InsertionOperator("PRUOI"), // Post pre operator insertion
             "AOR" to ReplacementOperator("AOR"), // Arithmetic operator replacement
-            "ROR" to ReplacementOperator("ROR"), // Relational operator replacement
             "BLR" to ReplacementOperator("BLR"), // Bitwise logical replacement
-            "UOI" to InsertionOperator("UOI") // Unary operator insertion
+            "ROR" to ReplacementOperator("ROR"), // Relational operator replacement
         )
     }
 

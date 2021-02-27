@@ -18,13 +18,13 @@
 package io.moco.engine.operator
 
 import io.moco.engine.MethodInfo
-import io.moco.engine.mutator.insertion.POUOI
-import io.moco.engine.mutator.insertion.PRUOI
+import io.moco.engine.mutator.deletion.AOD
+import io.moco.engine.mutator.deletion.BLD
 import io.moco.engine.tracker.MutatedMethodTracker
 import org.objectweb.asm.MethodVisitor
 
 
-class InsertionOperator(override val operatorName: String): Operator {
+class DeletionOperator(override val operatorName: String): Operator {
 
     override fun generateVisitor(
         tracker: MutatedMethodTracker,
@@ -32,8 +32,8 @@ class InsertionOperator(override val operatorName: String): Operator {
         delegateMethodVisitor: MethodVisitor
     ): MethodVisitor? {
         return when (operatorName) {
-            "POUOI" -> POUOI(this, tracker, delegateMethodVisitor)
-            "PRUOI" -> PRUOI(this, tracker, delegateMethodVisitor)
+            "AOD" -> AOD(this, tracker, methodInfo, delegateMethodVisitor)
+            "BLD" -> BLD(this, tracker, methodInfo, delegateMethodVisitor)
             else -> null
         }
     }

@@ -25,7 +25,7 @@ import io.moco.engine.operator.Operator
 
 class MutatedMethodTracker(
     val mutatedClassTracker: MutatedClassTracker,
-    private val mutatedMethodLocation: MutatedMethodLocation
+    val mutatedMethodLocation: MutatedMethodLocation
 ) {
 
     var instructionIndex = 0
@@ -37,6 +37,9 @@ class MutatedMethodTracker(
         val newMutationID = MutationID(mutatedMethodLocation, mutableListOf(instructionIndex),
                                        operator.operatorName, mutatorUniqueID)
         if (mutatedClassTracker.mutationAlreadyCollected(newMutationID)) {
+            return null
+        }
+        if (mutatedMethodLocation.methodName.name == "<init>" || mutatedMethodLocation.methodName.name == "<clinit>") {
             return null
         }
         val newMutation = Mutation(

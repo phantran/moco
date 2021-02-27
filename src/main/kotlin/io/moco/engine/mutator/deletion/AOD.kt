@@ -15,21 +15,22 @@
  *
  */
 
-package io.moco.engine.mutator.removal
+package io.moco.engine.mutator.deletion
 
 import io.moco.engine.MethodInfo
-import io.moco.engine.operator.ReplacementOperator
+import io.moco.engine.operator.DeletionOperator
 import io.moco.engine.tracker.MutatedMethodTracker
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 
-class AORR(
-    val operator: ReplacementOperator,
+
+class AOD(
+    val operator: DeletionOperator,
     val tracker: MutatedMethodTracker,
     private val methodInfo: MethodInfo,
     delegateMethodVisitor: MethodVisitor
-) : RemovalMutator(methodInfo, delegateMethodVisitor) {
+) : DeletionMutator(methodInfo, delegateMethodVisitor) {
 
     override val opcodeDesc: Map<Int, Pair<String, String>> = mapOf(
         Opcodes.IADD to Pair("integer addition", "IADD"), Opcodes.ISUB to Pair("integer subtraction", "ISUB"),
@@ -70,12 +71,17 @@ class AORR(
                 tracker.mutatedClassTracker.setTargetMutation(newMutation)
                 logger.debug("Remove second operand after arithmetic operator: $opcode")
 
-                when (type) {
-                    "int", "float" -> mv.visitInsn(Opcodes.POP)
-                    "long", "double" -> mv.visitInsn(Opcodes.POP2)
-                    else -> return false
+                return when (type) {
+                    "int", "float" -> {
+                        mv.visitInsn(Opcodes.POP)
+                        true
+                    }
+                    "long", "double" -> {
+                        mv.visitInsn(Opcodes.POP2)
+                        true
+                    }
+                    else -> false
                 }
-                return true
             }
         }
         return false
@@ -101,28 +107,32 @@ class AORR(
                         mv.visitVarInsn(Opcodes.ISTORE, temp)
                         mv.visitInsn(Opcodes.POP)
                         mv.visitVarInsn(Opcodes.ILOAD, temp)
+                        return true
                     }
                     "float" -> {
                         val temp = newLocal(Type.FLOAT_TYPE)
                         mv.visitVarInsn(Opcodes.FSTORE, temp)
                         mv.visitInsn(Opcodes.POP)
                         mv.visitVarInsn(Opcodes.FLOAD, temp)
+                        return true
                     }
                     "long" -> {
                         val temp = newLocal(Type.LONG_TYPE)
                         mv.visitVarInsn(Opcodes.LSTORE, temp)
                         mv.visitInsn(Opcodes.POP2)
                         mv.visitVarInsn(Opcodes.LLOAD, temp)
+                        return true
                     }
                     "double" -> {
                         val temp = newLocal(Type.DOUBLE_TYPE)
                         mv.visitVarInsn(Opcodes.DSTORE, temp)
                         mv.visitInsn(Opcodes.POP2)
                         mv.visitVarInsn(Opcodes.DLOAD, temp)
+
+                        return true
                     }
                     else -> return false
                 }
-                return true
             }
         }
         return false
@@ -138,18 +148,12 @@ class AORR(
                 break
             }
         }
-        var visited = false
+        var visited: Boolean = false
         if (supported) {
-            if (!visited) {
-                visited = tryFirstOperandRemoval(opcode, type)
-            }
-            if (!visited) {
-                visited = trySecondOperandRemoval(opcode, type)
-            }
-            if (!visited) {
-                // Go on without mutating bytecode after collecting all possible mutations
-                mv.visitInsn(opcode)
-            }
+            visited = tryFirstOperandRemoval(opcode, type)
+//            if (!visited) visited = trySecondOperandRemoval(opcode, type)
+            // Go on without mutating bytecode after collecting all possible mutations
+            if (!visited) mv.visitInsn(opcode)
         } else {
             mv.visitInsn(opcode)
         }

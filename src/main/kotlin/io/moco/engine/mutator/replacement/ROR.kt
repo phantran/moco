@@ -37,8 +37,8 @@ class ROR(
     operator: ReplacementOperator, tracker: MutatedMethodTracker, delegateMethodVisitor: MethodVisitor
 ) : ReplacementMutator(operator, tracker, delegateMethodVisitor) {
 
-    override val opcodeDesc: Map<Int, Pair<String,String>> = mapOf(
-        Opcodes.IFLT to Pair("less than operator", "IFLT") ,
+    override val opcodeDesc: Map<Int, Pair<String, String>> = mapOf(
+        Opcodes.IFLT to Pair("less than operator", "IFLT"),
         Opcodes.IFLE to Pair("less than or equal operator", "IFLE"),
         Opcodes.IFGT to Pair("greater than operator", "IFGT"),
         Opcodes.IFGE to Pair("greater than or equal operator", "IFGE"),
@@ -57,7 +57,7 @@ class ROR(
 
         Opcodes.IF_ACMPEQ to Pair("equal operator", "IF_ACMPEQ"),
         Opcodes.IF_ACMPNE to Pair("not equal operator", "IF_ACMPNE"),
-        )
+    )
 
     override val supportedOpcodes = mapOf(
         "zero" to listOf(Opcodes.IFLT, Opcodes.IFLE, Opcodes.IFNE, Opcodes.IFEQ, Opcodes.IFGT, Opcodes.IFGE),
@@ -71,7 +71,7 @@ class ROR(
 
 
     override fun visitJumpInsn(opcode: Int, label: Label?) {
-        var supported : Boolean = false
+        var supported: Boolean = false
         var type = ""
         for (key in supportedOpcodes.keys) {
             if (supportedOpcodes[key]!!.contains(opcode)) {
@@ -85,8 +85,10 @@ class ROR(
             for (newOpcode in supportedOpcodes[type]!!) {
                 if (newOpcode != opcode) {
                     // Collect mutation information
-                    val newMutation = tracker.registerMutation(operator,
-                                    createDesc(opcode, newOpcode), createUniqueID(opcode, newOpcode)) ?: continue
+                    val newMutation = tracker.registerMutation(
+                        operator,
+                        createDesc(opcode, newOpcode), createUniqueID(opcode, newOpcode)
+                    ) ?: continue
                     if (tracker.mutatedClassTracker.targetMutationID != null) {
                         // In mutant creation phase, visit corresponding instruction to mutate it
                         if (tracker.isTargetMutation(newMutation.mutationID)) {

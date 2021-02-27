@@ -25,6 +25,7 @@ import io.moco.engine.tracker.MutatedClassTracker
 import io.moco.utils.MoCoLogger
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.util.CheckClassAdapter
 import org.objectweb.asm.util.TraceClassVisitor
 import java.io.PrintWriter
 import java.lang.Exception
@@ -73,7 +74,6 @@ class MutationGenerator(
         return tracker.getCollectedMutations()
     }
 
-
     /**
      * Create actual mutant`
      *
@@ -85,9 +85,11 @@ class MutationGenerator(
         val cr = ClassReader(byteArray)
         val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
 //        val cv = TraceClassVisitor(cw, PrintWriter(System.out))
+        val ca = CheckClassAdapter(cw, true)
+
         val filter = listOf<String>()
         val mcv = MutatedClassVisitor(
-            cw, tracker, filter, operators?.filter { it.operatorName == mutationID.operatorName }
+            ca, tracker, filter, operators?.filter { it.operatorName == mutationID.operatorName }
         )
         try {
             cr.accept(mcv, ClassReader.EXPAND_FRAMES)

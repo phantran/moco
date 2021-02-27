@@ -129,11 +129,10 @@ class MutationTestWorker(
     ): MutationTestResult {
         val mtr: MutationTestResult
         val t0 = System.currentTimeMillis()
-        if (mutantIntroducer.introduce(mutation.mutationID.location.className, clsLoader, mutatedClass.byteArray)
-        ) {
+        if (mutantIntroducer.introduce(mutation.mutationID.location.className, clsLoader, mutatedClass.byteArray)) {
             logger.debug("Introduce mutant in " + (System.currentTimeMillis() - t0) + " ms")
             logger.debug("Mutation at line ${mutation.lineOfCode}")
-            logger.debug("Mutation operator ${mutation.description}")
+            logger.debug("Mutation operator: ${mutation.description}")
             mtr = executeTestAndGetResult(tests)
         } else {
             return MutationTestResult(0, MutationTestStatus.RUN_ERROR)
