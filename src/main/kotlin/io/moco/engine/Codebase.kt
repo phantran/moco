@@ -15,11 +15,25 @@
  *
  */
 
-
 package io.moco.engine
 
 import java.io.File
 
+/**
+ * Codebase
+ * This class represents target classes to be mutated. Two important attributes of an instance of this class are
+ * sourceClassNames and testClassesNames. These two attributes are used to determine which tests to be run on which
+ * classes in the preprocessing phase.
+ * @constructor
+ *
+ * @param codePath
+ * @param testPath
+ * @param excludedSourceClasses
+ * @param excludedSourceFolders
+ * @param excludedTestClasses
+ * @param excludedTestFolders
+ * @param filterByGitCommit
+ */
 class Codebase(
     codePath: String,
     testPath: String,
@@ -39,6 +53,17 @@ class Codebase(
 
     private var curRoot: File = File("")
 
+    /**
+     * Get all class names
+     * Depends on the argument of roots parameter, This function will collect all classes in the corresponding roots
+     * Here we collect all classes in the compiled source classes folder when roots argument is codeRoots and
+     * all classes in the compiled test classes folder when roots argument is testRoots
+     * @param roots
+     * @param filter
+     * @param folderFilter
+     * @param filterByGitCommit
+     * @return
+     */
     private fun getAllClassNames(
         roots: List<File>, filter: List<String>, folderFilter: List<String>, filterByGitCommit: List<String>? = null
     ): MutableList<ClassName> {
@@ -50,6 +75,15 @@ class Codebase(
         return res
     }
 
+    /**
+     * Get class names
+     * Recursively collect all class names in folders and files of given root
+     * @param curRoot
+     * @param filter
+     * @param folderFilter
+     * @param filterByGitCommit
+     * @return
+     */
     private fun getClassNames(
         curRoot: File, filter: List<String>, folderFilter: List<String>, filterByGitCommit: List<String>? = null
     ): MutableList<ClassName> {
@@ -71,6 +105,18 @@ class Codebase(
         return clsNames
     }
 
+    /**
+     * File to class name
+     *
+     * Source and test filters that we specify in mojo configuration are used to filter class names here in this
+     * method. If Git change mode is ON, it will also be considered in this method.
+     *
+     * @param file
+     * @param filter
+     * @param folderFilter
+     * @param filterByGitCommit
+     * @return
+     */
     private fun fileToClassName(
         file: File, filter: List<String>, folderFilter: List<String>, filterByGitCommit: List<String>? = null
     ): ClassName? {

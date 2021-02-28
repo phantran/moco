@@ -20,7 +20,7 @@ package io.moco.engine.mutation
 
 import io.moco.engine.ClassName
 import io.moco.engine.MocoAgent
-import io.moco.engine.io.ByteArrayLoader
+import io.moco.utils.ByteArrayLoader
 
 
 class MutantIntroducer(private val byteArrayLoader: ByteArrayLoader) {

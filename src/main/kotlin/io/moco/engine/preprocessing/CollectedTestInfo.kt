@@ -15,23 +15,9 @@
  *
  */
 
+package io.moco.engine.preprocessing
 
-package io.moco.engine.tracker
-
-import io.moco.utils.JavaInfo
-import org.objectweb.asm.Label
-import org.objectweb.asm.MethodVisitor
-
-
-class LineVisitor(
-    delegateMethodVisitor: MethodVisitor?,
-    private val mutatedMethodTracker: MutatedMethodTracker,
-) :
-    MethodVisitor(JavaInfo.ASM_VERSION, delegateMethodVisitor) {
-
-    override fun visitLineNumber(line: Int, start: Label) {
-        mutatedMethodTracker.currConsideredLineNumber = line
-        mv.visitLineNumber(line, start)
-    }
-
-}
+data class CollectedTestInfo(
+    val testClassName: String,
+    val executionTime: Long?,
+)

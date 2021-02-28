@@ -17,7 +17,7 @@
 
 package io.moco.engine.mutation
 
-import io.moco.engine.io.ByteArrayLoader
+import io.moco.utils.ByteArrayLoader
 import io.moco.engine.operator.Operator
 import io.moco.engine.test.TestItem
 import io.moco.engine.test.TestItemWrapper

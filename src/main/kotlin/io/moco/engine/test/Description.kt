@@ -23,7 +23,7 @@ import java.io.Serializable
 
 data class Description constructor(val name: String, val testCls: String?) :
     Serializable {
-    val testClass: String? = testCls?.intern()
+    private val testClass: String? = testCls?.intern()
 
     val qualifiedName: String
         get() = if (testClass != null && testClass != name) {

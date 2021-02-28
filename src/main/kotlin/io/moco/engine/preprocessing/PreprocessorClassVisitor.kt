@@ -22,7 +22,7 @@ import io.moco.utils.JavaInfo
 import org.objectweb.asm.*
 
 
-class PreprocessorClassVisitor(val cw: ClassVisitor?) :
+class PreprocessorClassVisitor(cw: ClassVisitor?) :
     ClassVisitor(JavaInfo.ASM_VERSION, cw) {
 
     private var className: String? = null
@@ -55,18 +55,12 @@ class PreprocessorClassVisitor(val cw: ClassVisitor?) :
                 hasStaticInitializer = true
             }
             return PreprocessorMethodVisitor(
-                this, className!!,
-                methodVisitor, access,
-                name, desc, signature, exceptions
+                className!!, methodVisitor,
+                access, name,
+                desc, signature, exceptions
             )
         } else {
             methodVisitor
         }
-    }
-
-    //TODO: check whether a class is already processed or not -> will be handled in preprocessorTracker
-
-    fun shouldVisit(className: String?): Boolean {
-        return true
     }
 }

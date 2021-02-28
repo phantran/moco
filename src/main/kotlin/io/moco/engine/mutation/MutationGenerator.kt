@@ -17,9 +17,8 @@
 
 package io.moco.engine.mutation
 
-import io.moco.engine.ClassName
 import io.moco.engine.DefaultClassVisitor
-import io.moco.engine.io.ByteArrayLoader
+import io.moco.utils.ByteArrayLoader
 import io.moco.engine.operator.Operator
 import io.moco.engine.tracker.MutatedClassTracker
 import io.moco.utils.JavaInfo
@@ -27,10 +26,7 @@ import io.moco.utils.MoCoLogger
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.util.CheckClassAdapter
-import org.objectweb.asm.util.TraceClassVisitor
-import java.io.PrintWriter
 import java.lang.Exception
-import kotlin.experimental.and
 
 /**
  * Mutation finder
@@ -49,22 +45,18 @@ class MutationGenerator(
     /**
      * Find possible mutations
      *
-     * @param clsToMutate
-     * @return
+     * @param clsNameToMutate
+     * @param coveredLines
+     * @return Collected possible mutations
      *///TODO: add filter as a property of this class to excluded classes and functions specify by users
-    fun findPossibleMutationsOfClass(
-        clsToMutate: ClassName
-    ): List<Mutation> {
-        val tracker = MutatedClassTracker()
-        val bytesArray: ByteArray? = bytesArrayLoader.getByteArray(
-            clsToMutate.name
-        )
+    fun findPossibleMutationsOfClass(clsNameToMutate: String, coveredLines: Set<Int>?): List<Mutation> {
+        val tracker = MutatedClassTracker(coveredLines = coveredLines)
+        val bytesArray: ByteArray? = bytesArrayLoader.getByteArray(clsNameToMutate)
         if (bytesArray != null) {
             return visitAndCollectMutations(tracker, bytesArray)
         }
         return listOf()
     }
-
 
     private fun visitAndCollectMutations(
         tracker: MutatedClassTracker, clsToMutate: ByteArray
@@ -89,7 +81,7 @@ class MutationGenerator(
         val cwOption =
             if (JavaInfo.bytecodeJVersion(byteArray) > java7Version)
                 ClassWriter.COMPUTE_FRAMES else ClassWriter.COMPUTE_MAXS
-        val tracker = MutatedClassTracker(mutationID)
+        val tracker = MutatedClassTracker(targetMutationID = mutationID)
         val cr = ClassReader(byteArray)
         val cw = ClassWriter(cwOption)
 //        val cv = TraceClassVisitor(cw, PrintWriter(System.out))

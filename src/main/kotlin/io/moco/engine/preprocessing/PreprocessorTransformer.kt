@@ -49,21 +49,17 @@ class PreprocessorTransformer(private val filteredSourceClasses: List<ClassName>
             try {
                 val cr = ClassReader(classfileBuffer)
                 val cw = ClassWriter(cr, COMPUTE_MAXS);
-//                val cv = TraceClassVisitor(cw, PrintWriter(System.out))
-                return try {
-                    cr.accept(
-                        PreprocessorClassVisitor(cw),
-                        ClassReader.EXPAND_FRAMES
-                    )
-                    cw.toByteArray()
-                } catch (e: Exception) {
-                    // Log exception here
-                    null
-                }
+//              val cv = TraceClassVisitor(cw, PrintWriter(System.out))
+                cr.accept(
+                    PreprocessorClassVisitor(cw),
+                    ClassReader.EXPAND_FRAMES
+                )
+                cw.toByteArray()
+
             } catch (t: RuntimeException) {
                 logger.error("Error while transforming and preprocessing $className")
                 t.printStackTrace()
-                throw t
+                return null
             }
         } else {
             null

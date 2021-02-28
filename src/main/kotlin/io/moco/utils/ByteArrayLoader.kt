@@ -15,13 +15,12 @@
  *
  */
 
-package io.moco.engine.io
+package io.moco.utils
 
 import java.io.*
 import java.lang.RuntimeException
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
-
 
 class ByteArrayLoader(cp: String?) {
     private val clsPaths: Set<File>
@@ -97,5 +96,3 @@ class ByteArrayLoader(cp: String?) {
         }
     }
 }
-
-

@@ -18,25 +18,24 @@
 
 package io.moco.engine.preprocessing
 
-import io.moco.engine.tracker.Block
 import io.moco.utils.JavaInfo
+import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodNode
 
 
 class PreprocessorMethodVisitor(
-    val parent: PreprocessorClassVisitor, val className: String,
-    val mv: MethodVisitor?, access: Int,
-    val name: String?, desc: String?, signature: String?,
-    exceptions: Array<String?>?
+    val className: String, val mv: MethodVisitor?,
+    access: Int, val name: String?,
+    desc: String?, signature: String?, exceptions: Array<String?>?
 ) : MethodNode(JavaInfo.ASM_VERSION, access, name, desc, signature, exceptions) {
 
     override fun visitEnd() {
         // collect blocks info
-        val blocks: MutableList<Block> = MethodAnalyser.analyse(this)
+//        val blocks: MutableList<Block> = MethodAnalyser.analyse(this)
         // TODO: record blocks of method here
-        PreprocessorTracker.registerBlock(className, blocks)
+//        PreprocessorTracker.registerBlock(className, blocks)
 
         // call method of preprocessorTracker to register cut name to test
         mv.visitLdcInsn(className)
@@ -44,5 +43,18 @@ class PreprocessorMethodVisitor(
             "registerCUT", "(Ljava/lang/String;)V", false)
 
         accept(mv)
+    }
+
+    override fun visitLineNumber(line: Int, start: Label) {
+        // call method of preprocessorTracker to register line
+        mv.visitLdcInsn(className)
+        if (line < 128) {
+            mv.visitIntInsn(Opcodes.BIPUSH, line)
+        } else {
+            mv.visitIntInsn(Opcodes.SIPUSH, line)
+        }
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, PreprocessorTracker.internalClsName,
+            "registerLine", "(Ljava/lang/String;I)V", false)
+        mv.visitLineNumber(line, start)
     }
 }

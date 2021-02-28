@@ -18,7 +18,7 @@
 
 package io.moco.engine
 
-import io.moco.engine.io.ByteArrayLoader
+import io.moco.utils.ByteArrayLoader
 import io.moco.engine.mutation.*
 import io.moco.engine.operator.Operator
 import io.moco.engine.preprocessing.PreprocessStorage
@@ -26,14 +26,10 @@ import io.moco.engine.preprocessing.PreprocessingFilterByGit
 import io.moco.utils.JsonConverter
 import io.moco.engine.preprocessing.PreprocessorWorker
 import io.moco.engine.test.RelatedTestRetriever
+import io.moco.utils.JarUtil
 import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
 import java.net.ServerSocket
 
-import java.util.jar.Attributes
-import java.util.jar.JarOutputStream
-import java.util.jar.Manifest
 import io.moco.utils.MoCoLogger
 import kotlin.system.measureTimeMillis
 
@@ -45,7 +41,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
     private val logger = MoCoLogger()
     private val classPath: String
     private var byteArrLoader: ByteArrayLoader
-    private var createdAgentLocation: String?
+    private var createdAgentLocation: String? = null
     private val filteredMutationOperatorNames: List<String>
     private val mutationStorage: MutationStorage = MutationStorage(mutableMapOf())
     private var filteredClsByGit: List<String>? = mutableListOf()
@@ -55,27 +51,24 @@ class MocoEntryPoint(private val configuration: Configuration) {
         val cp = configuration.classPath.joinToString(separator = File.pathSeparatorChar.toString())
         classPath = "$cp:${configuration.codeRoot}:${configuration.testRoot}:${configuration.buildRoot}"
         byteArrLoader = ByteArrayLoader(cp)
-        createdAgentLocation = createTemporaryAgentJar()
         filteredMutationOperatorNames = Operator.supportedOperatorNames.filter {
             !configuration.excludedMutationOperatorNames.contains(it)
         }
-        logger.info("Selected mutation operators: ${filteredMutationOperatorNames.joinToString(", ")}")
-        if (configuration.gitChangedClassesMode) {
-            filteredClsByGit = PreprocessingFilterByGit.getChangedClsSinceLastStoredCommit(
-                configuration.artifactId.replace(".", "/"), configuration.baseDir
-            )
-        }
+        logger.info(
+            "${filteredMutationOperatorNames.size} selected mutation operators: " +
+                    filteredMutationOperatorNames.joinToString(", ")
+        )
     }
 
     fun execute() {
         val executionTime = measureTimeMillis {
-            if (createdAgentLocation == null) {
+            if (!initMoCoOK()) {
+                logger.info("EXIT: Nothing to do")
                 return
             }
 
-            // Skip preprocessing if no detected changed classes in git based mode
             logger.info("Preprocessing started...")
-             preprocessing()
+            preprocessing()
             logger.info("Preprocessing completed")
 
             logger.info("Mutation Test started...")
@@ -83,25 +76,46 @@ class MocoEntryPoint(private val configuration: Configuration) {
             logger.info("Mutation Test completed")
 
             // Remove generated agent after finishing
-            removeTemporaryAgentJar(createdAgentLocation)
+            JarUtil.removeTemporaryAgentJar(createdAgentLocation)
         }
         logger.info("\n")
-        logger.info("Execution done after ${executionTime/1000}s" )
+        logger.info("Execution done after ${executionTime / 1000}s")
         logger.info("DONE")
     }
 
-    private fun preprocessing() {
-        if (configuration.gitChangedClassesMode) {
-            if (filteredClsByGit.isNullOrEmpty()) {
-                logger.info("Preprocessing: Git mode: No changed files found by git commits diff")
-                // skip preprocessing in git mode and no detected changed class
-                return
-            }
-            logger.info("Preprocessing: Git mode - ${filteredClsByGit!!.size} changed classes by git commits diff")
-            logger.debug("Classes found: $filteredClsByGit" )
+    private fun initMoCoOK(): Boolean {
+        if (filteredMutationOperatorNames.isEmpty()) {
+            return false
         }
+        if (configuration.gitChangedClassesMode) {
+            logger.info("Git mode: on")
+            filteredClsByGit = PreprocessingFilterByGit.getChangedClsSinceLastStoredCommit(
+                configuration.artifactId.replace(".", "/"), configuration.baseDir
+            )
+            if (configuration.gitChangedClassesMode) {
+                if (filteredClsByGit.isNullOrEmpty()) {
+                    logger.info("Preprocessing: Git mode: No changed files found by git commits diff")
+                    // skip preprocessing in git mode and no detected changed class
+                    return false
+                }
+                logger.info("Preprocessing: Git mode - ${filteredClsByGit!!.size} changed classes by git commits diff")
+                logger.debug("Classes found: $filteredClsByGit")
+            }
+        } else {
+            logger.info("Git mode: off")
+        }
+        createdAgentLocation = JarUtil.createTemporaryAgentJar()
+        if (createdAgentLocation == null) {
+            logger.info("Error while creating MoCo Agent Jar")
+            return false
+        }
+        return true
+    }
+
+    private fun preprocessing() {
         val processWorkerArguments = configuration.getPreprocessProcessArgs()
         processWorkerArguments.add(filteredClsByGit!!.joinToString(","))
+
         val preprocessWorkerProcess = WorkerProcess(
             PreprocessorWorker.javaClass,
             getProcessArguments(),
@@ -112,35 +126,37 @@ class MocoEntryPoint(private val configuration: Configuration) {
     }
 
     private fun mutationTest() {
+        val preprocessedStorage = PreprocessStorage.getStoredPreprocessStorage(configuration.buildRoot)
+        if (preprocessedStorage.classRecord.isNullOrEmpty()) {
+            logger.info("No changed classes detected, skip mutation testing...")
+            return
+        }
         // Mutations collecting
         logger.debug("Start mutation collecting")
 
-        val preprocessedStorage = PreprocessStorage.getStoredPreprocessStorage(configuration.buildRoot)
-        if (preprocessedStorage.classRecord.isNullOrEmpty()) {
-            logger.info("No new ")
-            return
-        }
-        val toBeMutatedClasses: List<ClassName> =
-            preprocessedStorage.classRecord.map { ClassName(it.classUnderTestName) }
         val mGen =
             MutationGenerator(byteArrLoader, filteredMutationOperatorNames.mapNotNull { Operator.nameToOperator(it) })
-        var foundMutations: Map<ClassName, List<Mutation>> =
-            toBeMutatedClasses.associateWith { mGen.findPossibleMutationsOfClass(it).distinct() }
-        foundMutations = foundMutations.filter { it.value.isNotEmpty() }
-        logger.debug("Found ${foundMutations.size} possible mutations")
+        val foundMutations: MutableMap<ClassName, List<Mutation>> = mutableMapOf()
+        for (item in preprocessedStorage.classRecord) {
+            foundMutations[ClassName(item.classUnderTestName)] =
+                mGen.findPossibleMutationsOfClass(item.classUnderTestName, item.coveredLines).distinct()
+        }
+        val filteredFoundMutations = foundMutations.filter { it.value.isNotEmpty() }
+        logger.debug("Found ${filteredFoundMutations.size} possible mutations")
         logger.debug("Complete mutation collecting step")
 
         // Mutants generation and tests execution
         val testRetriever = RelatedTestRetriever(configuration.buildRoot)
         logger.debug("Start mutation testing")
-        foundMutations.forEach label@{ (className, mutationList) ->
+        filteredFoundMutations.forEach label@{ (className, mutationList) ->
             logger.info("Handle ${mutationList.size} mutants of class ${className.getJavaName()}")
-            val processArgs = getMutationPreprocessArgs()
-            val relatedTests: List<ClassName> = testRetriever.retrieveRelatedTest(className)
-            if (relatedTests.isEmpty()) {
+            val processArgs = getProcessArguments()
+            val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(className)
+            if (relatedTestClasses.isEmpty()) {
                 return@label
             }
-            val mutationTestWorkerProcess = createMutationTestWorkerProcess(mutationList, relatedTests, processArgs)
+            val mutationTestWorkerProcess =
+                createMutationTestWorkerProcess(mutationList, relatedTestClasses, processArgs)
             executeMutationTestingProcess(mutationTestWorkerProcess)
         }
         JsonConverter(
@@ -164,8 +180,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
     }
 
     private fun createMutationTestWorkerProcess(
-        mutations: List<Mutation>,
-        tests: List<ClassName>,
+        mutations: List<Mutation>, tests: List<ClassName>,
         processArgs: MutableMap<String, Any>
     ): Pair<WorkerProcess, ResultsReceiverThread> {
 
@@ -188,73 +203,10 @@ class MocoEntryPoint(private val configuration: Configuration) {
         return Pair(mutationTestWorkerProcess, comThread)
     }
 
-    private fun getMutationPreprocessArgs(): MutableMap<String, Any> {
-        return getProcessArguments()
-    }
-
     private fun getProcessArguments(): MutableMap<String, Any> {
         return mutableMapOf(
             "port" to ServerSocket(0), "javaExecutable" to configuration.jvm,
             "javaAgentJarPath" to "-javaagent:$createdAgentLocation", "classPath" to classPath
         )
     }
-
-    @Throws(IOException::class)
-    private fun createTemporaryAgentJar(): String? {
-        return try {
-            val jarName = File.createTempFile(
-                System.currentTimeMillis()
-                    .toString() + ("" + Math.random()).replace("\\.".toRegex(), ""),
-                ".jar"
-            )
-
-            val outputStream = FileOutputStream(jarName)
-            val jarFile = File(jarName.absolutePath)
-            val manifest = Manifest()
-            manifest.clear()
-            val temp = manifest.mainAttributes
-            if (temp.getValue(Attributes.Name.MANIFEST_VERSION) == null) {
-                temp[Attributes.Name.MANIFEST_VERSION] = "1.0"
-            }
-            temp.putValue(
-                "Boot-Class-Path",
-                jarFile.absolutePath.replace('\\', '/')
-            )
-            temp.putValue(
-                "Agent-Class",
-                MocoAgent::class.java.name
-            )
-            temp.putValue("Can-Redefine-Classes", "true")
-            temp.putValue("Can-Retransform-Classes", "true")
-            temp.putValue(
-                "Premain-Class",
-                MocoAgent::class.java.name
-            )
-            temp.putValue("Can-Set-Native-Method-Prefix", "true")
-            JarOutputStream(outputStream, manifest).use {}
-
-            jarName.absolutePath
-        } catch (e: IOException) {
-            throw e
-        }
-    }
-
-    private fun removeTemporaryAgentJar(location: String?) {
-        if (location != null) {
-            val f = File(location)
-            f.delete()
-        }
-    }
-
-//    @Throws(IOException::class)
-//    private fun addClass(clazz: Class<*>, jos: JarOutputStream) {
-//        val className = clazz.name
-//        val ze = ZipEntry(className.replace(".", "/") + ".class")
-//        jos.putNextEntry(ze)
-//        val temp = byteArrLoader.getByteCodeArray(className)
-//        if (temp != null) {
-//            jos.write(temp)
-//        }
-//        jos.closeEntry()
-//    }
 }

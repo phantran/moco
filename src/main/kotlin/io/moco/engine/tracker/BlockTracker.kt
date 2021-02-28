@@ -25,21 +25,4 @@ class BlockTracker {
         private set
     var isWithinFinallyBlock = false
         private set
-
-    fun detectBlock() {
-        currBlockOfClass++
-        currBlockOfMethod++
-    }
-
-    fun detectFinallyStart() {
-        isWithinFinallyBlock = true
-    }
-
-    fun detectFinallyEnd() {
-        isWithinFinallyBlock = false
-    }
-
-    fun detectStartMethod() {
-        currBlockOfMethod = 0
-    }
 }

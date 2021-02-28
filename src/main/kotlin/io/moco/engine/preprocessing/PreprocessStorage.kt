@@ -32,7 +32,7 @@ data class PreprocessStorage(
 ) {
 
     companion object {
-        var storedStorage: PreprocessStorage? = null
+        private var storedStorage: PreprocessStorage? = null
 
         fun getStoredPreprocessStorage(buildRoot: String): PreprocessStorage {
             return if (storedStorage == null) {

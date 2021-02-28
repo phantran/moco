@@ -15,20 +15,22 @@
  *
  */
 
+package io.moco.engine.mutation
 
-package io.moco.engine
+import io.moco.engine.tracker.MutatedMethodTracker
+import io.moco.utils.JavaInfo
+import org.objectweb.asm.Label
+import org.objectweb.asm.MethodVisitor
 
-import java.util.*
+class LineVisitor(
+    delegateMethodVisitor: MethodVisitor?,
+    private val mutatedMethodTracker: MutatedMethodTracker,
+) :
+    MethodVisitor(JavaInfo.ASM_VERSION, delegateMethodVisitor) {
 
-
-data class TestCaseInfo(
-    val enclosingClass: String?,
-    val name: String,
-    val time: Int,
-    val clsUnderTest: Optional<ClassName?>,
-    val coveredBlocks: Int
-) {
-    fun sameClsUnderTest(targetClass: ClassName?): Boolean {
-        return this.clsUnderTest.equals(targetClass)
+    override fun visitLineNumber(line: Int, start: Label) {
+        mutatedMethodTracker.currConsideredLineNumber = line
+        mv.visitLineNumber(line, start)
     }
+
 }

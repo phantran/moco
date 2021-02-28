@@ -54,15 +54,15 @@ class Preprocessor(
                 for (test: TestItemWrapper? in wrappedTests) {
                     try {
                         test?.call()
-                        test?.testItem?.let { PreprocessorTracker.registerMappingTestToCUT(it) }
                         PreprocessorTracker.clearTracker()
                     } catch (e: Exception) {
                         logger.error("Error while executing test ${test?.testItem?.desc?.name}")
                     } finally {
+                        test?.testItem?.let { PreprocessorTracker.registerMappingTestToCUT(it) }
                     }
                 }
             }
         }
-        logger.debug("[MoCo] Preprocessing: Testing and Collecting Done in $time ms")
+        logger.debug("[MoCo] Preprocessing: Testing and collecting done in $time ms")
     }
 }

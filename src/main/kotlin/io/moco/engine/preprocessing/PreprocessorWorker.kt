@@ -57,8 +57,8 @@ object PreprocessorWorker {
         TestItemWrapper.configuredTestTimeOut = if (args[9].toIntOrNull() != null) args[9].toLong() else -1
         // this list is null of empty if git mode changed classes if off or no changed classes are detected
         val filteredClsByGitCommit =
-            if (args[10] != "") args[10].split(",").map { it.trim() } else null
-        MoCoLogger.debugEnabled = args[11] == "true"
+            if (args[11] != "") args[11].split(",").map { it.trim() } else null
+        MoCoLogger.debugEnabled = args[10] == "true"
         MoCoLogger.useKotlinLog()
         val logger = MoCoLogger()
 

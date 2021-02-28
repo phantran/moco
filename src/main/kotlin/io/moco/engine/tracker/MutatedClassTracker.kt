@@ -23,7 +23,7 @@ import io.moco.engine.mutation.Mutation
 import io.moco.engine.mutation.MutationID
 
 
-class MutatedClassTracker(val targetMutationID: MutationID? = null) {
+class MutatedClassTracker(val targetMutationID: MutationID? = null, val coveredLines: Set<Int>? = null) {
     private var mutations: MutableList<Mutation> = mutableListOf()
     private var targetMutation: Mutation? = null
     private var clsInfo: ClassInfo? = null

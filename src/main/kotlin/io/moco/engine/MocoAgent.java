@@ -23,7 +23,6 @@ import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
-import java.util.Arrays;
 
 
 public class MocoAgent {
@@ -56,6 +55,4 @@ public class MocoAgent {
                                  final Instrumentation inst) {
         instrumentation = inst;
     }
-
-
 }

@@ -22,8 +22,6 @@ import io.moco.engine.ClassName
 import io.moco.engine.MethodInfo
 import io.moco.engine.MethodName
 import io.moco.engine.operator.Operator
-import io.moco.engine.tracker.InstructionVisitor
-import io.moco.engine.tracker.LineVisitor
 import io.moco.engine.tracker.MutatedClassTracker
 import io.moco.engine.tracker.MutatedMethodTracker
 import io.moco.utils.JavaInfo
