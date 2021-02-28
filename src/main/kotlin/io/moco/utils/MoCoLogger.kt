@@ -39,7 +39,7 @@ class MoCoLogger {
     fun debug(m: String) {
         if (debugEnabled) {
             if (useMvnLog) {
-                mvnLogger?.info(m)
+                mvnLogger?.debug(m)
             } else {
                 devLogger?.info { "${LocalDateTime.now()} [DEBUG] $m" }
             }

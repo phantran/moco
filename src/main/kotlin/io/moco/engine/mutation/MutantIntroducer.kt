@@ -21,6 +21,7 @@ package io.moco.engine.mutation
 import io.moco.engine.ClassName
 import io.moco.engine.MocoAgent
 import io.moco.utils.ByteArrayLoader
+import io.moco.utils.MoCoLogger
 
 
 class MutantIntroducer(private val byteArrayLoader: ByteArrayLoader) {
@@ -28,7 +29,7 @@ class MutantIntroducer(private val byteArrayLoader: ByteArrayLoader) {
     private lateinit var previousByteArr: ByteArray
     private var previousClass: ClassName? = null
     private var previousLoader: ClassLoader? = null
-
+    val logger = MoCoLogger()
     fun introduce(
         clsName: ClassName?, loader: ClassLoader, byteArr: ByteArray?
     ): Boolean {
@@ -48,6 +49,7 @@ class MutantIntroducer(private val byteArrayLoader: ByteArrayLoader) {
 
             MocoAgent.introduceMutant(Class.forName(clsName?.getJavaName(), false, loader), byteArr)
         } catch (e: ClassNotFoundException) {
+            logger.error("Error while replacing a class under test by its mutant " + clsName?.getJavaName())
             throw e
         }
     }

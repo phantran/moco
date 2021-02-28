@@ -21,6 +21,7 @@ import java.io.*
 import java.lang.RuntimeException
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
+import java.util.zip.ZipFile
 
 class ByteArrayLoader(cp: String?) {
     private val clsPaths: Set<File>
@@ -63,13 +64,18 @@ class ByteArrayLoader(cp: String?) {
 
     @Throws(IOException::class)
     fun getByteArray(className: String?): ByteArray? {
+        val fn = className?.replace('.', File.separatorChar) + ".class"
         for (root in this.clsPaths) {
-            val fn = className?.replace('.', File.separatorChar) + ".class"
-            val f = File(root, fn)
-            if (f.exists() && f.canRead()) {
-                return streamToByteArr(FileInputStream(f))
+            if (root.isDirectory) {
+                val f = File(root, fn)
+                if (f.exists() && f.canRead()) {
+                    return streamToByteArr(FileInputStream(f))
+                }
+            } else if (root.isFile) {
+                val temp = ZipFile(root)
+                val entry = temp.getEntry(fn) ?: continue
+                return streamToByteArr(temp.getInputStream(entry))
             }
-            //TODO: Add support for jar file later and logging action here
         }
         return null
     }

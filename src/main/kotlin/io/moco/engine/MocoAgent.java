@@ -28,14 +28,12 @@ import java.lang.instrument.UnmodifiableClassException;
 public class MocoAgent {
 
     public static boolean introduceMutant(final Class<?> toBeReplacedCls, final byte[] bytes) {
-        MoCoLogger logger = new MoCoLogger();
         final ClassDefinition[] definitions = {new ClassDefinition(toBeReplacedCls, bytes)};
         try {
             instrumentation.redefineClasses(definitions);
             return true;
         } catch (final ClassNotFoundException | UnmodifiableClassException | VerifyError | InternalError ex) {
             ex.printStackTrace();
-            logger.error("Error while replacing a class under test by its mutant " + toBeReplacedCls.toString());
         }
         return false;
     }

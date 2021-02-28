@@ -47,6 +47,9 @@ class MocoEntryPoint(private val configuration: Configuration) {
     private var filteredClsByGit: List<String>? = mutableListOf()
 
     init {
+        logger.info("-----------------------------------------------------------------------")
+        logger.info("                               M O C O")
+        logger.info("-----------------------------------------------------------------------")
         logger.info("START")
         val cp = configuration.classPath.joinToString(separator = File.pathSeparatorChar.toString())
         classPath = "$cp:${configuration.codeRoot}:${configuration.testRoot}:${configuration.buildRoot}"
@@ -70,16 +73,16 @@ class MocoEntryPoint(private val configuration: Configuration) {
             logger.info("Preprocessing started......")
             preprocessing()
             logger.info("Preprocessing completed")
-            logger.info("\n")
-
+            println("")
             logger.info("Mutation Test started......")
             mutationTest()
+            println("")
             logger.info("Mutation Test completed")
 
             // Remove generated agent after finishing
             JarUtil.removeTemporaryAgentJar(createdAgentLocation)
         }
-        logger.info("\n")
+        println("")
         logger.info("Execution done after ${executionTime / 1000}s")
         logger.info("DONE")
     }
@@ -88,12 +91,12 @@ class MocoEntryPoint(private val configuration: Configuration) {
         if (filteredMutationOperatorNames.isEmpty()) {
             return false
         }
-        if (configuration.gitChangedClassesMode) {
+        if (configuration.gitMode) {
             logger.info("Git mode: on")
             filteredClsByGit = PreprocessingFilterByGit.getChangedClsSinceLastStoredCommit(
                 configuration.artifactId.replace(".", "/"), configuration.baseDir
             )
-            if (configuration.gitChangedClassesMode) {
+            if (configuration.gitMode) {
                 if (filteredClsByGit.isNullOrEmpty()) {
                     logger.info("Preprocessing: Git mode: No changed files found by git commits diff")
                     // skip preprocessing in git mode and no detected changed class
@@ -105,7 +108,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
         } else {
             logger.info("Git mode: off")
         }
-        createdAgentLocation = JarUtil.createTemporaryAgentJar()
+        createdAgentLocation = JarUtil.createTemporaryAgentJar(byteArrLoader)
         if (createdAgentLocation == null) {
             logger.info("Error while creating MoCo Agent Jar")
             return false

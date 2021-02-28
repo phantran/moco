@@ -82,8 +82,8 @@ class Moco : AbstractMojo() {
      * This value of test time out is only used in case timeout cannot be automatically calculated by using
      * recorded execution time of that test.
      */
-    @Parameter(defaultValue = "0", property = "testTimeOut", required = false)
-    private val testTimeOut: String = "0"
+    @Parameter(defaultValue = "-1", property = "testTimeOut", required = false)
+    private val testTimeOut: String = "-1"
 
     /**
      * Excluded tests classes, comma separated string, specify as class name with "/", example: io/moco/TestExample
@@ -106,14 +106,20 @@ class Moco : AbstractMojo() {
     /**
      * Set to true to tell MoCo to only generate mutation only for changed classes based on git commit information
      */
-    @Parameter(defaultValue = "true", property = "gitChangedClassesMode", required = false)
-    private val gitChangedClassesMode: Boolean = true
+    @Parameter(defaultValue = "true", property = "gitMode", required = false)
+    private val gitMode: Boolean = true
 
     /**
      * Set to true to tell MoCo to only generate mutation only for changed classes based on git commit information
      */
     @Parameter(defaultValue = "5", property = "mutationPerClass", required = false)
     private val mutationPerClass: Int = 5
+
+    /**
+     * Set to true to tell MoCo to only generate mutation only for changed classes based on git commit information
+     */
+    @Parameter(defaultValue = "false", property = "debugEnabled", required = false)
+    private val debugEnabled: Boolean = false
 
 
     @Throws(MojoExecutionException::class)
@@ -149,9 +155,10 @@ class Moco : AbstractMojo() {
                 project?.basedir.toString(),
                 project?.compileSourceRoots,
                 project?.artifactId!!,
-                gitChangedClassesMode,
+                gitMode,
                 testTimeOut,
-                mutationPerClass
+                mutationPerClass,
+                debugEnabled
             )
 
             Configuration.currentConfig = configuration

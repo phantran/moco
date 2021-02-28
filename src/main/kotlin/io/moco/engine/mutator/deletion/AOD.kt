@@ -158,10 +158,10 @@ class AOD(
                 break
             }
         }
-        var visited: Boolean = false
+        var visited: Boolean
         if (supported) {
             visited = tryFirstOperandRemoval(opcode, type)
-//            if (!visited) visited = trySecondOperandRemoval(opcode, type)
+            if (!visited) visited = trySecondOperandRemoval(opcode, type)
             // Go on without mutating bytecode after collecting all possible mutations
             if (!visited) mv.visitInsn(opcode)
         } else {

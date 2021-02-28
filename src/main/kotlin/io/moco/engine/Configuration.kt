@@ -36,9 +36,10 @@ data class Configuration(
     val baseDir: String,
     val compileSourceRoots: List<String>?,
     val artifactId: String,
-    val gitChangedClassesMode: Boolean,
+    val gitMode: Boolean,
     val testTimeOut: String,
-    val mutationPerClass: Int
+    val mutationPerClass: Int,
+    val debugEnabled: Boolean
 ) {
     companion object {
         var currentConfig: Configuration? = null
@@ -47,7 +48,7 @@ data class Configuration(
     fun getPreprocessProcessArgs(): MutableList<String> {
         return mutableListOf(buildRoot, codeRoot, testRoot, excludedSourceClasses, excludedSourceFolders,
             excludedTestClasses, excludedTestFolders, preprocessResultFileName,
-            testTimeOut, MoCoLogger.debugEnabled.toString()
+            testTimeOut, debugEnabled.toString()
         )
     }
 }

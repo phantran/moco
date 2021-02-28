@@ -24,13 +24,14 @@ import java.io.IOException
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
+import java.util.zip.ZipEntry
 
 class JarUtil {
     companion object {
         val logger = MoCoLogger()
 
         @Throws(IOException::class)
-        fun createTemporaryAgentJar(): String? {
+        fun createTemporaryAgentJar(byteLoader: ByteArrayLoader): String? {
             return try {
                 val jarName = File.createTempFile(
                     System.currentTimeMillis()
@@ -56,17 +57,15 @@ class JarUtil {
                 )
                 temp.putValue("Can-Redefine-Classes", "true")
                 temp.putValue("Can-Retransform-Classes", "true")
-                temp.putValue(
-                    "Premain-Class",
-                    MocoAgent::class.java.name
-                )
+                temp.putValue("Premain-Class", MocoAgent::class.java.name)
                 temp.putValue("Can-Set-Native-Method-Prefix", "true")
-                JarOutputStream(outputStream, manifest).use {}
-
+                JarOutputStream(outputStream, manifest).use { jos ->
+                    addClass(MocoAgent::class.java.name, jos, byteLoader)
+                }
                 jarName.absolutePath
-            } catch (e: IOException) {
-                logger.error("Cannot create MoCo Agent Jar - ${e.printStackTrace()}")
-                throw e
+            } catch (ex: IOException) {
+                logger.error("Cannot create MoCo Agent Jar")
+                throw ex
             }
         }
 
@@ -75,6 +74,14 @@ class JarUtil {
                 val f = File(location)
                 f.delete()
             }
+        }
+
+        @Throws(IOException::class)
+        private fun addClass(clsName: String, jarOutputStream: JarOutputStream, byteLoader: ByteArrayLoader) {
+            jarOutputStream.putNextEntry(ZipEntry(clsName.replace(".", "/") + ".class"))
+            val temp = byteLoader.getByteArray(clsName) ?: throw Exception()
+            jarOutputStream.write(temp)
+            jarOutputStream.closeEntry()
         }
     }
 }
