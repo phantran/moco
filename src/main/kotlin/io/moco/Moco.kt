@@ -121,6 +121,12 @@ class Moco : AbstractMojo() {
     @Parameter(defaultValue = "false", property = "debugEnabled", required = false)
     private val debugEnabled: Boolean = false
 
+    /**
+     * Set to false to display succinct console messages during MoCo execution
+     */
+    @Parameter(defaultValue = "true", property = "verbose", required = false)
+    private val verbose: Boolean = true
+
 
     @Throws(MojoExecutionException::class)
     override fun execute() {
@@ -158,7 +164,8 @@ class Moco : AbstractMojo() {
                 gitMode,
                 testTimeOut,
                 mutationPerClass,
-                debugEnabled
+                debugEnabled,
+                verbose
             )
 
             Configuration.currentConfig = configuration

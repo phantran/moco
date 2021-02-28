@@ -39,7 +39,9 @@ data class Configuration(
     val gitMode: Boolean,
     val testTimeOut: String,
     val mutationPerClass: Int,
-    val debugEnabled: Boolean
+    val debugEnabled: Boolean,
+    val verbose: Boolean
+
 ) {
     companion object {
         var currentConfig: Configuration? = null
@@ -48,7 +50,7 @@ data class Configuration(
     fun getPreprocessProcessArgs(): MutableList<String> {
         return mutableListOf(buildRoot, codeRoot, testRoot, excludedSourceClasses, excludedSourceFolders,
             excludedTestClasses, excludedTestFolders, preprocessResultFileName,
-            testTimeOut, debugEnabled.toString()
+            testTimeOut, debugEnabled.toString(), verbose.toString()
         )
     }
 }

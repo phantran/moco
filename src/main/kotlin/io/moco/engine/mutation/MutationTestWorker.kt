@@ -41,12 +41,11 @@ class MutationTestWorker(
     private lateinit var mGen: MutationGenerator
     private lateinit var mutantIntroducer: MutantIntroducer
     private val clsLoader = ClassLoaderUtil.contextClsLoader
-    private val logger = MoCoLogger()
+    private lateinit var logger: MoCoLogger
 
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            MoCoLogger.useKotlinLog()
             val port = Integer.valueOf(args[0])
             var socket: Socket? = null
             try {
@@ -66,10 +65,16 @@ class MutationTestWorker(
             val givenWorkerArgs: ResultsReceiverThread.MutationWorkerArguments =
                 DataStreamUtils.readObject(DataInputStream(socket.getInputStream()))
             MoCoLogger.debugEnabled = givenWorkerArgs.debugEnabled
+            MoCoLogger.verbose = givenWorkerArgs.verbose
+
+            MoCoLogger.useKotlinLog()
+            logger = MoCoLogger()
             classPath = givenWorkerArgs.classPath
+
             val byteArrLoader = ByteArrayLoader(classPath)
             mutantIntroducer = MutantIntroducer(byteArrLoader)
             outputStream = DataOutputStream(socket.getOutputStream())
+
             TestItemWrapper.configuredTestTimeOut = if (givenWorkerArgs.testTimeOut.toIntOrNull() != null)
                 givenWorkerArgs.testTimeOut.toLong() else -1
             mGen = MutationGenerator(
@@ -92,7 +97,6 @@ class MutationTestWorker(
     ) {
         var mutatedClassByteArr: ByteArray? = null
         for (mutation: Mutation in mutations) {
-            logger.debug("\n")
             logger.debug("------- Handle mutation of class ${mutation.mutationID.location.className?.getJavaName()}--------------")
             if (mutatedClassByteArr == null) {
                 val clsJavaName = mutation.mutationID.location.className?.getJavaName()

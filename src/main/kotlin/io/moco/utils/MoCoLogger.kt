@@ -36,6 +36,17 @@ class MoCoLogger {
     }
 
     @Synchronized
+    fun infoVerbose(m: String) {
+        if (verbose) {
+            if (useMvnLog) {
+                mvnLogger?.info(m)
+            } else {
+                devLogger?.info { m }
+            }
+        }
+    }
+
+    @Synchronized
     fun debug(m: String) {
         if (debugEnabled) {
             if (useMvnLog) {
@@ -68,6 +79,7 @@ class MoCoLogger {
         var useMvnLog = false
         var mvnLogger: Log? = null
         var debugEnabled = false
+        var verbose = true
 
         fun useMvnLog(logger: Log? = null) {
             useMvnLog = true

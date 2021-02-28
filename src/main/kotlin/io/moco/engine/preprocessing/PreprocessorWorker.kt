@@ -55,10 +55,13 @@ object PreprocessorWorker {
         val excludedTestFolders = if (args[7] != "") args[7].split(",").map { it.trim() } else listOf()
         val preprocessResultFileName = args[8]
         TestItemWrapper.configuredTestTimeOut = if (args[9].toIntOrNull() != null) args[9].toLong() else -1
+        MoCoLogger.debugEnabled = args[10] == "true"
+        MoCoLogger.verbose = args[11] == "true"
+
         // this list is null of empty if git mode changed classes if off or no changed classes are detected
         val filteredClsByGitCommit =
-            if (args[11] != "") args[11].split(",").map { it.trim() } else null
-        MoCoLogger.debugEnabled = args[10] == "true"
+            if (args[12] != "") args[12].split(",").map { it.trim() } else null
+
         MoCoLogger.useKotlinLog()
         val logger = MoCoLogger()
 

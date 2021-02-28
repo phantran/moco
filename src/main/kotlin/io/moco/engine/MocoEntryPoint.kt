@@ -73,16 +73,13 @@ class MocoEntryPoint(private val configuration: Configuration) {
             logger.info("Preprocessing started......")
             preprocessing()
             logger.info("Preprocessing completed")
-            println("")
             logger.info("Mutation Test started......")
             mutationTest()
-            println("")
             logger.info("Mutation Test completed")
 
             // Remove generated agent after finishing
             JarUtil.removeTemporaryAgentJar(createdAgentLocation)
         }
-        println("")
         logger.info("Execution done after ${executionTime / 1000}s")
         logger.info("DONE")
     }
@@ -148,7 +145,6 @@ class MocoEntryPoint(private val configuration: Configuration) {
         val filteredFoundMutations = foundMutations.filter { it.value.isNotEmpty() }
         logger.debug("Found ${filteredFoundMutations.size} class(es) can be mutated")
         logger.debug("Complete mutation collecting step")
-        println("")
 
         // Mutants generation and tests execution
         val testRetriever = RelatedTestRetriever(configuration.buildRoot)
@@ -197,7 +193,8 @@ class MocoEntryPoint(private val configuration: Configuration) {
                 filteredMutationOperatorNames,
                 "",
                 configuration.testTimeOut,
-                MoCoLogger.debugEnabled
+                configuration.debugEnabled,
+                configuration.verbose
             )
         val mutationTestWorkerProcess = WorkerProcess(
             MutationTestWorker::class.java,

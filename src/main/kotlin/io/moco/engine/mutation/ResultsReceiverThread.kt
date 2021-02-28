@@ -159,6 +159,7 @@ class ResultsReceiverThread(
         val includedOperators: List<String>,
         val filter: String,
         val testTimeOut: String,
-        val debugEnabled: Boolean
+        val debugEnabled: Boolean,
+        val verbose: Boolean
     ) : Serializable
 }
