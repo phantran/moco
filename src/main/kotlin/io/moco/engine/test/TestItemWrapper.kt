@@ -33,6 +33,7 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
             // If still no timeout can be calculated, use a default value of 20 seconds
             timeOut = 30000L
         }
+
         try {
             withTimeout(timeOut) {
                 testItem.execute(testResultAggregator, timeOut)

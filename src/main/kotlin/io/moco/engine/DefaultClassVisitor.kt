@@ -112,7 +112,7 @@ class DefaultClassVisitor : ClassVisitor(JavaInfo.ASM_VERSION) {
 
         override fun visitTryCatchBlock(
             arg0: Label, arg1: Label,
-            arg2: Label, arg3: String
+            arg2: Label, arg3: String?
         ) {
         }
 

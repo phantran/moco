@@ -67,11 +67,12 @@ class MocoEntryPoint(private val configuration: Configuration) {
                 return
             }
 
-            logger.info("Preprocessing started...")
+            logger.info("Preprocessing started......")
             preprocessing()
             logger.info("Preprocessing completed")
+            logger.info("\n")
 
-            logger.info("Mutation Test started...")
+            logger.info("Mutation Test started......")
             mutationTest()
             logger.info("Mutation Test completed")
 
@@ -142,26 +143,27 @@ class MocoEntryPoint(private val configuration: Configuration) {
                 mGen.findPossibleMutationsOfClass(item.classUnderTestName, item.coveredLines).distinct()
         }
         val filteredFoundMutations = foundMutations.filter { it.value.isNotEmpty() }
-        logger.debug("Found ${filteredFoundMutations.size} possible mutations")
+        logger.debug("Found ${filteredFoundMutations.size} class(es) can be mutated")
         logger.debug("Complete mutation collecting step")
+        println("")
 
         // Mutants generation and tests execution
         val testRetriever = RelatedTestRetriever(configuration.buildRoot)
         logger.debug("Start mutation testing")
         filteredFoundMutations.forEach label@{ (className, mutationList) ->
-            logger.info("Handle ${mutationList.size} mutants of class ${className.getJavaName()}")
             val processArgs = getProcessArguments()
             val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(className)
             if (relatedTestClasses.isEmpty()) {
+                logger.debug("Class ${className.getJavaName()} has 0 relevant test")
                 return@label
             }
+            logger.debug("Class ${className.getJavaName()} has ${relatedTestClasses.size} relevant tests")
             val mutationTestWorkerProcess =
                 createMutationTestWorkerProcess(mutationList, relatedTestClasses, processArgs)
             executeMutationTestingProcess(mutationTestWorkerProcess)
         }
         JsonConverter(
-            "${configuration.buildRoot}/moco/mutation/",
-            configuration.mutationResultsFileName
+            "${configuration.buildRoot}/moco/mutation/", configuration.mutationResultsFileName
         ).saveObjectToJson(mutationStorage)
         logger.debug("Complete mutation testing")
 

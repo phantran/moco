@@ -46,9 +46,9 @@ class RelatedTestRetriever(buildRoot: String) {
      */
     fun retrieveRelatedTest(cut: ClassName): List<ClassName> {
         for (item: PreprocessClassResult in store.classRecord) {
-            if (cut.name == item.classUnderTestName) {
+            if (cut.name == item.classUnderTestName && !item.testClasses.isNullOrEmpty()) {
                 // Filter test classes with execution time = -1 and transform to internal class name
-                return item.testClasses.filter { it.executionTime == -1L }
+                return item.testClasses.filter { it.executionTime != -1L }
                     .map { ClassName(it.testClassName.replace(".", "/")) }
             }
         }

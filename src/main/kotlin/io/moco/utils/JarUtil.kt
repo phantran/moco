@@ -27,6 +27,8 @@ import java.util.jar.Manifest
 
 class JarUtil {
     companion object {
+        val logger = MoCoLogger()
+
         @Throws(IOException::class)
         fun createTemporaryAgentJar(): String? {
             return try {
@@ -63,6 +65,7 @@ class JarUtil {
 
                 jarName.absolutePath
             } catch (e: IOException) {
+                logger.error("Cannot create MoCo Agent Jar - ${e.printStackTrace()}")
                 throw e
             }
         }
