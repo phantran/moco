@@ -241,6 +241,20 @@
                     <artifactId>maven-invoker-plugin</artifactId>
                     <version>3.1.0</version>
                 </plugin>
+
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.9.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-project-info-reports-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+
+
             </plugins>
         </pluginManagement>
 
@@ -314,6 +328,12 @@
                 <configuration>
                     <mainClass>com.zetcode.JavaSeH2Server</mainClass>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.9.1</version>
             </plugin>
 
         </plugins>
