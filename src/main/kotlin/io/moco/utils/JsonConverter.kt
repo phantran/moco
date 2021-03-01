@@ -19,6 +19,8 @@ package io.moco.utils
 
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.moco.engine.mutation.MutationStorage
+import io.moco.engine.preprocessing.PreprocessClassResult
 import io.moco.engine.preprocessing.PreprocessStorage
 import java.io.File
 import java.io.IOException
@@ -36,6 +38,7 @@ class JsonConverter(private val dir: String, private val fileName: String) {
 
     private val mapper = jacksonObjectMapper()
     private val logger = MoCoLogger()
+
     init {
         val temp = File(dir)
         if (!temp.exists()) {
@@ -44,26 +47,72 @@ class JsonConverter(private val dir: String, private val fileName: String) {
         mapper.enable(SerializationFeature.INDENT_OUTPUT)
     }
 
+    fun removeJSONFileIfExists() {
+        val temp = File("$dir$fileName.json")
+        if (temp.exists()) {
+            temp.delete()
+            logger.debug("Existing preprocess JSON file was removed")
+        }
+    }
+
     /**
      * Save preprocess result
      *
      * @param results
      */
-    fun saveObjectToJson(results: Any) {
+    fun savePreprocessToJson(results: PreprocessStorage) {
+        try {
+            val existingStorage = retrieveObjectFromJson()
+            if (existingStorage == null) {
+                mapper.writeValue(File("$dir$fileName.json"), results)
+            } else {
+                for ((k, v) in results.testsExecutionTime!!) {
+                    existingStorage.testsExecutionTime!!.putIfAbsent(k, v)
+                }
+
+                for (item in results.classRecord) {
+
+                    val foundIndex = existingStorage.classRecord.indexOfFirst { it.classUnderTestName == item.classUnderTestName }
+                    if (foundIndex != -1) {
+                        existingStorage.classRecord[foundIndex].testClasses.addAll(item.testClasses)
+                        existingStorage.classRecord[foundIndex].coveredLines?.addAll(item.coveredLines!!)
+                    } else {
+                        existingStorage.classRecord.add(item)
+                    }
+                }
+                mapper.writeValue(File("$dir$fileName.json"), existingStorage)
+            }
+        } catch (e: IOException) {
+            logger.error(e.printStackTrace().toString())
+            throw RuntimeException("Error while saving preprocessing results to csv file")
+        }
+    }
+
+    /**
+     * Save mutation results
+     *
+     * @param results
+     */
+    fun saveMutationResultsToJson(results: MutationStorage) {
         try {
             mapper.writeValue(File("$dir$fileName.json"), results)
         } catch (e: IOException) {
             logger.error(e.printStackTrace().toString())
-            throw RuntimeException("Error while saving results to csv file")
+            throw RuntimeException("Error while saving mutation results to csv file")
         }
     }
 
-    fun retrieveObjectFromJson(): PreprocessStorage {
-        try {
-            return mapper.readValue(File("$dir$fileName.json"), PreprocessStorage::class.java)
+
+    fun retrieveObjectFromJson(): PreprocessStorage? {
+        val temp = File("$dir$fileName.json")
+        if (!temp.exists()) {
+            return null
+        }
+        return try {
+            mapper.readValue(temp, PreprocessStorage::class.java)
         } catch (e: Exception) {
-            logger.error(e.printStackTrace().toString())
-            throw RuntimeException("Error while reading preprocess csv store")
+            logger.error("Error while reading JSON file")
+            null
         }
     }
 }

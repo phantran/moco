@@ -18,12 +18,16 @@
 
 package io.moco.engine.preprocessing
 
+import io.moco.engine.ClassName
 import io.moco.engine.Codebase
+import io.moco.engine.MoCoProcessCode
 import io.moco.engine.MocoAgent
+import io.moco.engine.test.TestItem
 import io.moco.engine.test.TestItemWrapper
 import io.moco.utils.JsonConverter
 import io.moco.utils.MoCoLogger
 import java.net.Socket
+import kotlin.system.exitProcess
 
 
 object PreprocessorWorker {
@@ -57,38 +61,46 @@ object PreprocessorWorker {
         TestItemWrapper.configuredTestTimeOut = if (args[9].toIntOrNull() != null) args[9].toLong() else -1
         MoCoLogger.debugEnabled = args[10] == "true"
         MoCoLogger.verbose = args[11] == "true"
-
         // this list is null of empty if git mode changed classes if off or no changed classes are detected
         val filteredClsByGitCommit =
             if (args[12] != "") args[12].split(",").map { it.trim() } else null
+        val isRerun = if (args.getOrNull(13) != null) args[13].toBoolean() else false
+        val jsonConverter = JsonConverter("$buildRoot/moco/preprocess/", preprocessResultFileName)
 
         MoCoLogger.useKotlinLog()
         val logger = MoCoLogger()
 
         try {
             socket = Socket("localhost", args[0].toInt())
+            if (isRerun) logger.info("Continue processing step due to the previous test error")
             val analysedCodeBase = Codebase(
-                codeRoot, testRoot, excludedSourceClasses,
-                excludedSourceFolders, excludedTestClasses,
-                excludedTestFolders,
-                filteredClsByGitCommit
+                codeRoot, testRoot, excludedSourceClasses, excludedSourceFolders,
+                excludedTestClasses, excludedTestFolders, filteredClsByGitCommit
             )
             logger.info("Preprocessing: ${analysedCodeBase.sourceClassNames.size} source classes found")
-            logger.info("Preprocessing: ${analysedCodeBase.testClassesNames.size} test classes left after filtering")
 
             if (analysedCodeBase.testClassesNames.size == 0) {
                 logger.info("Preprocessing: No new tests to run")
                 return
             }
             MocoAgent.addTransformer(PreprocessorTransformer(analysedCodeBase.sourceClassNames))
-            Preprocessor(analysedCodeBase).preprocessing()
-            JsonConverter("$buildRoot/moco/preprocess/", preprocessResultFileName).
-                                                        saveObjectToJson(PreprocessorTracker.getPreprocessResults())
+            Preprocessor(analysedCodeBase).preprocessing(isRerun, jsonConverter)
+
+            jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())
             logger.info("Preprocessing: Data saved and exit")
+            exitProcess(MoCoProcessCode.OK.code)
+
         } catch (ex: Exception) {
-            ex.printStackTrace(System.out)
-        } finally {
+            jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())
+            logger.info("Preprocessing: Data saved and exit")
+            logger.info("Preprocessing: Exit because of error")
             socket?.close()
+            val exitIndex = ex.message!!.toIntOrNull()
+            if (exitIndex != null) {
+                exitProcess(exitIndex)
+            } else {
+                exitProcess(MoCoProcessCode.UNRECOVERABLE_ERROR.code)
+            }
         }
     }
 }

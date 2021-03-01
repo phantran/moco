@@ -65,7 +65,7 @@ class TestItem(
                     logger.warn("Preprocessing: Test ${desc.name} execution TIMEOUT - allowed time $timeOut ms")
                 }
             }
-            throw RuntimeException(e)
+            throw e
         } finally {
             job!!.cancel()
         }
@@ -82,7 +82,7 @@ class TestItem(
             }
         }
 
-         fun testClassesToTestItems(testClassNames: List<ClassName>): List<TestItem> {
+        fun testClassesToTestItems(testClassNames: List<ClassName>): List<TestItem> {
             // convert from test classes to test items so it can be executed
             var testClsNames = testClassNames.mapNotNull { ClassName.clsNameToClass(it)}
             testClsNames = testClsNames.filter { isNotTestSuite(it) }

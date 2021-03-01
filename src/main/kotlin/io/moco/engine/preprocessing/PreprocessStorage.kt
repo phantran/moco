@@ -28,18 +28,22 @@ import io.moco.utils.JsonConverter
  * @constructor Create empty Preprocess storage
  */
 data class PreprocessStorage(
-    val classRecord: List<PreprocessClassResult>
+    val classRecord: MutableList<PreprocessClassResult>,
+    val testsExecutionTime: MutableMap<String, Long>?,
+    val previousRemainingTests: List<String?>,
+    val errorTests: MutableList<String?>,
 ) {
 
     companion object {
         private var storedStorage: PreprocessStorage? = null
 
-        fun getStoredPreprocessStorage(buildRoot: String): PreprocessStorage {
+        fun getStoredPreprocessStorage(buildRoot: String): PreprocessStorage? {
             return if (storedStorage == null) {
-                storedStorage = JsonConverter("$buildRoot/moco/preprocess/",
+                storedStorage = JsonConverter(
+                    "$buildRoot/moco/preprocess/",
                     Configuration.currentConfig?.preprocessResultFileName!!
                 ).retrieveObjectFromJson()
-                storedStorage as PreprocessStorage
+                if (storedStorage != null) storedStorage else null
             } else {
                 storedStorage as PreprocessStorage
             }

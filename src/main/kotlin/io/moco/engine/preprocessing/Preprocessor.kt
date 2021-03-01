@@ -20,49 +20,77 @@ package io.moco.engine.preprocessing
 import io.moco.engine.Codebase
 import io.moco.engine.test.TestItem
 import io.moco.engine.test.TestItemWrapper
+import io.moco.utils.JsonConverter
 import io.moco.utils.MoCoLogger
 import kotlinx.coroutines.*
 import java.io.IOException
 import java.lang.Exception
+import java.lang.RuntimeException
 import java.util.concurrent.ExecutionException
-import kotlin.system.measureTimeMillis
 
 
 class Preprocessor(
     private val codeBase: Codebase,
 ) {
-    private val logger = MoCoLogger()
+
     /**
     This class is responsible for parsing the whole codebase to get the information of
     which test classes are responsible for which classes under test and store this information
     in an XML file. This file will be read in each execution of Gamekins to retrieve this mapping information
      */
 
-    fun preprocessing() {
+    @Throws(IOException::class, InterruptedException::class, ExecutionException::class, RuntimeException::class)
+    fun preprocessing(isRerun: Boolean = false, jsonConverter: JsonConverter) {
         // Codebase is already available
         val testItems = TestItem.testClassesToTestItems(codeBase.testClassesNames)
         val wrapped = TestItemWrapper.wrapTestItem(testItems)
-        collectInfo(wrapped.first)
+        if (isRerun) {
+            val recoveredResult = jsonConverter.retrieveObjectFromJson()
+            val remainingTests = recoveredResult?.previousRemainingTests
+            if (remainingTests.isNullOrEmpty()) {
+                return
+            }
+            PreprocessorTracker.errorTests = recoveredResult.errorTests
+            logger.info("Preprocessing: ${remainingTests.size} test classes to run")
+            collectInfo(wrapped.first, isRerun, remainingTests)
+        } else {
+            logger.info("Preprocessing: ${wrapped.first.size} test classes to run")
+            collectInfo(wrapped.first)
+        }
     }
 
-    @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
-    private fun collectInfo(
-        wrappedTests: Collection<TestItemWrapper?>,
-    ) {
-        val time = measureTimeMillis {
+    companion object {
+        private val logger = MoCoLogger()
+
+        @Throws(IOException::class, InterruptedException::class, ExecutionException::class, RuntimeException::class)
+        fun collectInfo(
+            wrappedTests: List<TestItemWrapper?>, isRerun: Boolean = false, remainingTests: List<String?> = listOf()
+        ) {
+
             runBlocking {
-                for (test: TestItemWrapper? in wrappedTests) {
+                for (i in wrappedTests.indices) {
+                    val testItem = wrappedTests.elementAt(i)
+                    if (isRerun && !remainingTests.contains(testItem?.testItem?.cls?.name)) {
+                        continue
+                    }
+                    PreprocessorTracker.clearTracker()
                     try {
-                        test?.call()
+                        testItem?.call()
+                        PreprocessorTracker.registerMappingCutToTestInfo(testItem!!.testItem)
                         PreprocessorTracker.clearTracker()
                     } catch (e: Exception) {
-                        logger.error("Error while executing test ${test?.testItem?.desc?.name}")
-                    } finally {
-                        test?.testItem?.let { PreprocessorTracker.registerMappingTestToCUT(it) }
+                        if (i == wrappedTests.size - 1) {
+                            return@runBlocking
+                        } else {
+                            val temp = wrappedTests.subList(i + 1, wrappedTests.size)
+                            PreprocessorTracker.previousRemainingTests = temp.map { it?.testItem?.cls?.name }
+                            testItem?.testItem?.cls?.name?.let { PreprocessorTracker.errorTests.add(it) }
+                            throw Exception(i.toString())
+                        }
                     }
                 }
             }
+            PreprocessorTracker.previousRemainingTests = listOf()
         }
-        logger.debug("[MoCo] Preprocessing: Testing and collecting done in $time ms")
     }
 }

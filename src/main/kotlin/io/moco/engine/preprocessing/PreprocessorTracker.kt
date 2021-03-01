@@ -23,24 +23,35 @@ import java.util.concurrent.ConcurrentHashMap
 
 class PreprocessorTracker {
     companion object {
-
-        // Map from test class name to set of classes under test
-        var testToCUTTracker: ConcurrentHashMap<String, MutableSet<String>> = ConcurrentHashMap()
+        // map from class name -> set of covered lines (corresponding to a run of a test class)
         var lineTracker: ConcurrentHashMap<String, MutableSet<Int>> = ConcurrentHashMap()
         var cutRecord: MutableSet<String> = mutableSetOf()
+        val cutToLines: MutableMap<String, MutableSet<Int>> = mutableMapOf()
+        val cutToTest: MutableMap<String, MutableSet<String>> = mutableMapOf()
         // Internal class name of ProcessorTracker to be called by asm method visitor
-        val internalClsName: String = PreprocessorTracker::class.qualifiedName.toString().replace(".", "/")
         private var testExecutionTime = mutableMapOf<String, Long>()
+        val internalClsName: String = PreprocessorTracker::class.qualifiedName.toString().replace(".", "/")
+        var previousRemainingTests: List<String?> = mutableListOf()
+        var errorTests: MutableList<String?> = mutableListOf()
 
-        //        var blockTracker: ConcurrentHashMap<String, MutableList<Block>> = ConcurrentHashMap()
 
         @Synchronized
         @JvmStatic
-        fun registerMappingTestToCUT(testClass: TestItem) {
-            if (testToCUTTracker.containsKey(testClass.cls.name)) {
-                testToCUTTracker[testClass.cls.name]?.addAll(cutRecord)
-            } else {
-                testToCUTTracker[testClass.cls.name] = cutRecord
+        fun registerMappingCutToTestInfo(testClass: TestItem) {
+            for (item in lineTracker.keys()) {
+                if (cutToLines.keys.contains(item)) {
+                    cutToLines[item]?.addAll(lineTracker[item]!!)
+                } else {
+                    cutToLines[item] = lineTracker[item]!!
+                }
+            }
+            for (item in cutRecord) {
+                // cutRecord contains a class name means a test has invoked a method of that class
+                if (!cutToTest.keys.contains(item)) {
+                    cutToTest[item] = mutableSetOf(testClass.cls.name)
+                } else {
+                    cutToTest[item]?.add(testClass.cls.name)
+                }
             }
             if (testExecutionTime.containsKey(testClass.cls.name)) {
                 if (testClass.executionTime > testExecutionTime[testClass.cls.name]!!) {
@@ -67,52 +78,25 @@ class PreprocessorTracker {
             }
         }
 
-
         @Synchronized
         @JvmStatic
         fun clearTracker() {
             cutRecord = mutableSetOf()
+            lineTracker = ConcurrentHashMap()
         }
 
         fun getPreprocessResults(): PreprocessStorage {
-            val res: MutableList<PreprocessClassResult> = mutableListOf()
-            for (cutCls: String in lineTracker.keys) {
-                val recordTestClasses: MutableList<CollectedTestInfo> = mutableListOf()
-                for (testCls in testToCUTTracker.keys) {
-                    if (testToCUTTracker[testCls]?.contains(cutCls) == true) {
-                        val testInfo = CollectedTestInfo(testCls, testExecutionTime[testCls])
-                        recordTestClasses.add(testInfo)
-                    }
+            val classRecord = mutableListOf<PreprocessClassResult>()
+            for (item in cutToTest.keys) {
+                if (cutToLines.keys.contains(item)) {
+                    val testClasses = cutToTest[item]
+                    val coveredLines = cutToLines[item]
+                    classRecord.add(PreprocessClassResult(item, testClasses!!, coveredLines))
+                } else {
+                    continue
                 }
-                res.add(PreprocessClassResult(cutCls, recordTestClasses, lineTracker[cutCls]))
             }
-            return PreprocessStorage(res)
+            return PreprocessStorage(classRecord, testExecutionTime, previousRemainingTests, errorTests)
         }
     }
-
-        //        @Synchronized
-//        @JvmStatic
-//        fun registerBlock(className: String, blocks: List<Block>) {
-//            if (blockTracker.containsKey(className)) {
-//                blockTracker[className]?.addAll(blocks)
-//            } else {
-//                blockTracker[className] = blocks.toMutableList()
-//            }
-//        }
-//        fun getPreprocessResults(): PreprocessStorage {
-//            println(lineTracker)
-//            println("here")
-//            val res: MutableList<PreprocessClassResult> = mutableListOf()
-//            for (cutCls: String in blockTracker.keys) {
-//                val recordTestClasses: MutableList<Pair<String, Long?>> = mutableListOf()
-//                for (testCls: String in testToCUTTracker.keys) {
-//                    if (testToCUTTracker[testCls]?.contains(cutCls) == true) {
-//                        val temp = Pair(testCls, testExecutionTime[testCls])
-//                        recordTestClasses.add(temp)
-//                    }
-//                }
-//                res.add(PreprocessClassResult(cutCls, recordTestClasses, blockTracker[cutCls]))
-//            }
-//            return PreprocessStorage(res)
-//        }
 }

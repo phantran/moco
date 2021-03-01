@@ -66,7 +66,6 @@ class PreprocessorTransformer(private val filteredSourceClasses: List<ClassName>
         }
     }
 
-    // TODO: find a way to choose only source classes -> by using codebase class for instance
     private fun isTargetCUT(className: String): Boolean {
         return filteredSourceClasses.any { it.name == className }
     }

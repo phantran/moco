@@ -42,6 +42,7 @@ class MutationTestWorker(
     private lateinit var mutantIntroducer: MutantIntroducer
     private val clsLoader = ClassLoaderUtil.contextClsLoader
     private lateinit var logger: MoCoLogger
+    private var duplicatedMutantTracker: MutableSet<ByteArray> = mutableSetOf()
 
     companion object {
         @JvmStatic
@@ -78,16 +79,15 @@ class MutationTestWorker(
             TestItemWrapper.configuredTestTimeOut = if (givenWorkerArgs.testTimeOut.toIntOrNull() != null)
                 givenWorkerArgs.testTimeOut.toLong() else -1
             mGen = MutationGenerator(
-                byteArrLoader,
-                givenWorkerArgs.includedOperators.mapNotNull { Operator.nameToOperator(it) })
+                byteArrLoader, givenWorkerArgs.includedOperators.mapNotNull { Operator.nameToOperator(it) })
             val testItems: List<TestItem> = TestItem.testClassesToTestItems(givenWorkerArgs.tests)
             val wrappedTest: Pair<List<TestItemWrapper>, List<TestResultAggregator>> =
                 TestItemWrapper.wrapTestItem(testItems)
             runMutationTests(givenWorkerArgs.mutations, wrappedTest.first)
-            finished(0)
+            finishedMessageToMainProcess(0)
         } catch (ex: Throwable) {
             ex.printStackTrace(System.out)
-            finished(14)
+            finishedMessageToMainProcess(14)
         }
     }
 
@@ -95,15 +95,15 @@ class MutationTestWorker(
     private fun runMutationTests(
         mutations: List<Mutation>, tests: List<TestItemWrapper>
     ) {
-        var mutatedClassByteArr: ByteArray? = null
+        var targetClassByteArr: ByteArray? = null // original class byte array
         for (mutation: Mutation in mutations) {
             logger.debug("------- Handle mutation of class ${mutation.mutationID.location.className?.getJavaName()}--------------")
-            if (mutatedClassByteArr == null) {
+            if (targetClassByteArr == null) {
                 val clsJavaName = mutation.mutationID.location.className?.getJavaName()
-                mutatedClassByteArr = mGen.bytesArrayLoader.getByteArray(clsJavaName)
+                targetClassByteArr = mGen.bytesArrayLoader.getByteArray(clsJavaName)
             }
             val t0 = System.currentTimeMillis()
-            runOneByOne(mutation, tests, mutatedClassByteArr)
+            runOneByOne(mutation, tests, targetClassByteArr)
             logger.debug("------- Done in " + (System.currentTimeMillis() - t0) + " ms -------------")
         }
     }
@@ -115,7 +115,15 @@ class MutationTestWorker(
     ) {
         val mutationId = mutation.mutationID
         val createdMutant = mGen.createMutant(mutationId, byteArray) ?: return
-        register(mutationId)
+
+        // Filter out duplicated mutants which have same byte array (equivalent mutant)
+        if (duplicatedMutantTracker.contains(createdMutant.byteArray)) {
+            return
+        } else {
+            duplicatedMutantTracker.add(createdMutant.byteArray)
+        }
+
+        registerToMainProcess(mutationId)
         val testResult: MutationTestResult = if (tests.isEmpty()) {
             MutationTestResult(0, MutationTestStatus.RUN_ERROR)
         } else {
@@ -123,7 +131,7 @@ class MutationTestWorker(
                 mutation, createdMutant, tests
             )
         }
-        report(mutationId, testResult)
+        reportToMainProcess(mutationId, testResult)
     }
 
 
@@ -198,7 +206,7 @@ class MutationTestWorker(
 
     @Synchronized
     @Throws(IOException::class)
-    fun register(mutationID: MutationID?) {
+    fun registerToMainProcess(mutationID: MutationID?) {
         outputStream.writeByte(ResultsReceiverThread.register.toInt())
         if (mutationID != null) {
             DataStreamUtils.writeObject(outputStream, mutationID)
@@ -208,7 +216,7 @@ class MutationTestWorker(
 
     @Synchronized
     @Throws(IOException::class)
-    fun report(
+    fun reportToMainProcess(
         mutationID: MutationID?,
         mutationTestResult: MutationTestResult?
     ) {
@@ -223,7 +231,8 @@ class MutationTestWorker(
     }
 
     @Synchronized
-    fun finished(exitCode: Int) {
+    @Throws(IOException::class)
+    fun finishedMessageToMainProcess(exitCode: Int) {
         outputStream.writeByte(ResultsReceiverThread.finished.toInt())
         outputStream.writeInt(exitCode)
         outputStream.flush()

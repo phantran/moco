@@ -61,6 +61,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
             "${filteredMutationOperatorNames.size} selected mutation operators: " +
                     filteredMutationOperatorNames.joinToString(", ")
         )
+        MoCoLogger.verbose = configuration.verbose
     }
 
     fun execute() {
@@ -110,26 +111,50 @@ class MocoEntryPoint(private val configuration: Configuration) {
             logger.info("Error while creating MoCo Agent Jar")
             return false
         }
+
+        // Clear preprocessing JSON if exists
+        JsonConverter(
+            "${configuration.buildRoot}/moco/preprocess/", configuration.preprocessResultFileName
+        ).removeJSONFileIfExists()
+
         return true
     }
 
     private fun preprocessing() {
+        var processStatus = MoCoProcessCode.NOT_STARTED.code
+        var previousStatus = MoCoProcessCode.OK.code
         val processWorkerArguments = configuration.getPreprocessProcessArgs()
         processWorkerArguments.add(filteredClsByGit!!.joinToString(","))
-
-        val preprocessWorkerProcess = WorkerProcess(
-            PreprocessorWorker.javaClass,
-            getProcessArguments(),
-            processWorkerArguments
-        )
-        preprocessWorkerProcess.start()
-        preprocessWorkerProcess.getProcess()?.waitFor()
+        while (processStatus != MoCoProcessCode.OK.code) {
+            val preprocessWorkerProcess = WorkerProcess(
+                PreprocessorWorker.javaClass,
+                getProcessArguments(),
+                processWorkerArguments
+            )
+            preprocessWorkerProcess.start()
+            processStatus = preprocessWorkerProcess.getProcess()?.waitFor()!!
+            if (processStatus ==  MoCoProcessCode.UNRECOVERABLE_ERROR.code ||
+                previousStatus == processStatus) {
+                break
+            } else {
+                previousStatus = processStatus
+                // Add more parameter to param to process to signal that this is a rerun because of previous error
+                if (processWorkerArguments.getOrNull(13) == null) processWorkerArguments.add("true")
+            }
+        }
+        if (processStatus != MoCoProcessCode.OK.code) {
+            logger.warn("Please check you test suite because there might be erroneous tests in your test suite")
+        }
     }
 
     private fun mutationTest() {
         val preprocessedStorage = PreprocessStorage.getStoredPreprocessStorage(configuration.buildRoot)
-        if (preprocessedStorage.classRecord.isNullOrEmpty()) {
-            logger.info("No changed classes detected, skip mutation testing...")
+        if (preprocessedStorage == null) {
+            logger.info("No preprocess results, skip mutation testing")
+            return
+        }
+        if (preprocessedStorage.classRecord.isNullOrEmpty() || preprocessedStorage.testsExecutionTime.isNullOrEmpty()) {
+            logger.info("No changed classes detected, skip mutation testing")
             return
         }
         // Mutations collecting
@@ -151,7 +176,10 @@ class MocoEntryPoint(private val configuration: Configuration) {
         logger.debug("Start mutation testing")
         filteredFoundMutations.forEach label@{ (className, mutationList) ->
             val processArgs = getProcessArguments()
-            val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(className)
+            val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(
+                className,
+                preprocessedStorage.testsExecutionTime!!
+            )
             if (relatedTestClasses.isEmpty()) {
                 logger.debug("Class ${className.getJavaName()} has 0 relevant test")
                 return@label
@@ -162,8 +190,9 @@ class MocoEntryPoint(private val configuration: Configuration) {
             executeMutationTestingProcess(mutationTestWorkerProcess)
         }
         JsonConverter(
-            "${configuration.buildRoot}/moco/mutation/", configuration.mutationResultsFileName
-        ).saveObjectToJson(mutationStorage)
+            "${configuration.buildRoot}/moco/mutation/",
+            configuration.mutationResultsFileName
+        ).saveMutationResultsToJson(mutationStorage)
         logger.debug("Complete mutation testing")
 
     }

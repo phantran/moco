@@ -31,7 +31,7 @@ import io.moco.engine.preprocessing.PreprocessStorage
  */
 class RelatedTestRetriever(buildRoot: String) {
 
-    private val store: PreprocessStorage = PreprocessStorage.getStoredPreprocessStorage(buildRoot)
+    private val store: PreprocessStorage = PreprocessStorage.getStoredPreprocessStorage(buildRoot)!!
 
     /**
      * Retrieve related test
@@ -44,12 +44,12 @@ class RelatedTestRetriever(buildRoot: String) {
      * @param cut
      * @return
      */
-    fun retrieveRelatedTest(cut: ClassName): List<ClassName> {
+    fun retrieveRelatedTest(cut: ClassName, executionTimeInfo: Map<String, Long>): List<ClassName> {
         for (item: PreprocessClassResult in store.classRecord) {
             if (cut.name == item.classUnderTestName && !item.testClasses.isNullOrEmpty()) {
                 // Filter test classes with execution time = -1 and transform to internal class name
-                return item.testClasses.filter { it.executionTime != -1L }
-                    .map { ClassName(it.testClassName.replace(".", "/")) }
+                return item.testClasses.filter { executionTimeInfo[it] != -1L }
+                           .map { ClassName(it.replace(".", "/")) }
             }
         }
         return listOf()

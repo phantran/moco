@@ -15,9 +15,8 @@
  *
  */
 
-package io.moco.engine.preprocessing
+package io.moco.engine
 
-data class CollectedTestInfo(
-    val testClassName: String,
-    val executionTime: Long?,
-)
+enum class MoCoProcessCode(val code: Int) {
+    OK(0), UNRECOVERABLE_ERROR(-1), NOT_STARTED(-2)
+}
