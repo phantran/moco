@@ -19,6 +19,7 @@ package io.moco
 
 import io.moco.engine.Configuration
 import io.moco.engine.MocoEntryPoint
+import io.moco.persistence.H2Database
 import io.moco.utils.MoCoLogger
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugin.MojoExecutionException
@@ -48,14 +49,14 @@ class Moco : AbstractMojo() {
     /**
      * Preprocess storage file name
      */
-    @Parameter(defaultValue = "preprocess", property = "preprocessResultFileName", required = false)
-    private val preprocessResultFileName: String = "preprocess"
+    @Parameter(defaultValue = "preprocess", property = "preprocessResultsFolder", required = false)
+    private val preprocessResultsFolder: String = "preprocess"
 
     /**
      * Mutation result storage file name
      */
-    @Parameter(defaultValue = "moco", property = "mutationResultsFileName", required = false)
-    private val mutationResultsFileName: String = "moco"
+    @Parameter(defaultValue = "moco", property = "mutationResultsFolder", required = false)
+    private val mutationResultsFolder: String = "moco"
 
     /**
      * Excluded source classes, comma separated string, specify as class name with "/", example: io/moco/Example
@@ -69,6 +70,11 @@ class Moco : AbstractMojo() {
     @Parameter(defaultValue = "", property = "excludedSourceFolder", required = false)
     private val excludedSourceFolders: String = ""
 
+    /**
+     * Set to false to display succinct console messages during MoCo execution
+     */
+    @Parameter(defaultValue = "moco", property = "mocoRoot", required = false)
+    private val mocoRoot: String = "moco"
 
     /**
      * Because MoCo modifies byte code of class under test during runtime for instrumentation purpose,
@@ -127,6 +133,18 @@ class Moco : AbstractMojo() {
     @Parameter(defaultValue = "true", property = "verbose", required = false)
     private val verbose: Boolean = true
 
+    /**
+     * Set to false to display succinct console messages during MoCo execution
+     */
+    @Parameter(defaultValue = "database", property = "persistenceMode", required = false)
+    private val persistenceMode: String = "database"
+
+    /**
+     * Set to false to display succinct console messages during MoCo execution
+     */
+    @Parameter(defaultValue = "meta", property = "metaRootName", required = false)
+    private val metaRootName: String = "meta"
+
 
     @Throws(MojoExecutionException::class)
     override fun execute() {
@@ -142,21 +160,32 @@ class Moco : AbstractMojo() {
                 project?.build?.testOutputDirectory.toString()
 
             val runtimeCp = project?.runtimeClasspathElements
-            val classPath = runtimeCp?: System.getProperty("java.class.path").split(File.pathSeparatorChar.toString())
+            val compileCp = project?.compileClasspathElements
+
+            val temp = System.getProperty("java.class.path").split(File.pathSeparatorChar.toString())
+            val classPath = temp.union(runtimeCp!!.toSet()).union(compileCp!!.toSet()).toList()
             val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
+            val mocoBuildPath = "$buildRoot${File.separator}$mocoRoot"
+            val metaRootPath = "$mocoBuildPath${File.separator}$metaRootName"
+
+            if (persistenceMode != "database") {
+                log.info("MoCo currently support only database persistence mode")
+                return
+            }
 
             val configuration = Configuration(
                 buildRoot,
                 codeRoot,
                 testRoot,
+                mocoBuildPath,
                 excludedSourceClasses,
                 excludedSourceFolders,
                 excludedTestClasses,
                 excludedTestFolders,
                 classPath,
                 jvm,
-                preprocessResultFileName,
-                mutationResultsFileName,
+                preprocessResultsFolder,
+                mutationResultsFolder,
                 excludedMutationOperatorNames,
                 project?.basedir.toString(),
                 project?.compileSourceRoots,
@@ -165,15 +194,20 @@ class Moco : AbstractMojo() {
                 testTimeOut,
                 mutationPerClass,
                 debugEnabled,
-                verbose
+                verbose,
+                persistenceMode,
+                metaRootPath
             )
 
             Configuration.currentConfig = configuration
             MoCoLogger.useMvnLog(log)
+            H2Database().initDBTablesIfNotExists()
             MocoEntryPoint(configuration).execute()
-
         } catch (e: Exception) {
-            log.info(e.printStackTrace().toString())
+            log.error(e.message)
+        } finally {
+            H2Database.shutDownDB()
         }
     }
 }
+

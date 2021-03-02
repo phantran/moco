@@ -19,7 +19,8 @@
 package io.moco.engine.preprocessing
 
 import io.moco.engine.Configuration
-import io.moco.utils.JsonConverter
+import io.moco.persistence.JsonSource
+import java.io.File
 
 /**
  * Preprocess storage
@@ -37,12 +38,12 @@ data class PreprocessStorage(
     companion object {
         private var storedStorage: PreprocessStorage? = null
 
-        fun getStoredPreprocessStorage(buildRoot: String): PreprocessStorage? {
+        fun getStoredPreprocessStorage(mocoBuildPath: String): PreprocessStorage? {
             return if (storedStorage == null) {
-                storedStorage = JsonConverter(
-                    "$buildRoot/moco/preprocess/",
-                    Configuration.currentConfig?.preprocessResultFileName!!
-                ).retrieveObjectFromJson()
+                storedStorage = JsonSource(
+                    "$mocoBuildPath${File.separator}${Configuration.currentConfig?.preprocessResultsFolder}",
+                    "preprocess"
+                ).getData(PreprocessStorage::class.java) as PreprocessStorage
                 if (storedStorage != null) storedStorage else null
             } else {
                 storedStorage as PreprocessStorage

@@ -18,6 +18,7 @@
 package io.moco.engine.preprocessing
 
 import io.moco.engine.Configuration
+import io.moco.persistence.ProjectMeta
 import io.moco.utils.MoCoLogger
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Constants
@@ -41,13 +42,18 @@ object PreprocessingFilterByGit {
     @JvmStatic
     @Throws(IOException::class)
     fun getChangedClsSinceLastStoredCommit(projectArtifactID: String,
-                                           gitRootPath: String? = Configuration.currentConfig?.baseDir): List<String>? {
-        val lastCommitName = getLastStoredCommit()
+                                           gitRootPath: String? = Configuration.currentConfig?.baseDir,
+                                           projectMeta: MutableMap<String, String>): List<String>? {
+        // Return value meaning
+        // 1. null -> latest stored commit id is not found
+        // 2. empty list -> diff can be calculated, however there's no changed classes detected or no new commits
+        // 3. list with elements -> changed classes detected
+        val lastCommitName = projectMeta["latestStoredCommitID"]!!
         val builder = FileRepositoryBuilder()
         val repo = builder.setGitDir(File("$gitRootPath/.git")).setMustExist(true).build()
         val headCommit = getHead(repo)
         if (headCommit.name == lastCommitName) {
-            return null
+            return listOf()
         }
         Git(repo).use { git ->
             val commits = git.log().all().call()
@@ -60,10 +66,16 @@ object PreprocessingFilterByGit {
         return null
     }
 
-    private fun getLastStoredCommit(): String {
-        // TODO: retrieve from DB
-        return "4f2ca1734321f276804dced80799ce6a2dbc429b"
+    @Throws(IOException::class)
+     fun setHeadCommitMeta(gitRootPath: String? = Configuration.currentConfig?.baseDir,
+                           projectMeta: ProjectMeta) {
+        val builder = FileRepositoryBuilder()
+        val repo = builder.setGitDir(File("$gitRootPath/.git")).setMustExist(true).build()
+        val headCommit = getHead(repo)
+        projectMeta.meta["latestStoredCommitID"] = headCommit.name
+        projectMeta.meta["latestStoredBranchName"] = repo.fullBranch
     }
+
 
     @Throws(IOException::class)
     private fun prepareTreeParser(repository: Repository, objectId: String): AbstractTreeIterator? {

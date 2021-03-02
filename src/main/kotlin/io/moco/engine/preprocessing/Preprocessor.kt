@@ -20,7 +20,7 @@ package io.moco.engine.preprocessing
 import io.moco.engine.Codebase
 import io.moco.engine.test.TestItem
 import io.moco.engine.test.TestItemWrapper
-import io.moco.utils.JsonConverter
+import io.moco.persistence.JsonSource
 import io.moco.utils.MoCoLogger
 import kotlinx.coroutines.*
 import java.io.IOException
@@ -40,13 +40,13 @@ class Preprocessor(
      */
 
     @Throws(IOException::class, InterruptedException::class, ExecutionException::class, RuntimeException::class)
-    fun preprocessing(isRerun: Boolean = false, jsonConverter: JsonConverter) {
+    fun preprocessing(isRerun: Boolean = false, jsonConverter: JsonSource) {
         // Codebase is already available
         val testItems = TestItem.testClassesToTestItems(codeBase.testClassesNames)
         val wrapped = TestItemWrapper.wrapTestItem(testItems)
         if (isRerun) {
-            val recoveredResult = jsonConverter.retrieveObjectFromJson()
-            val remainingTests = recoveredResult?.previousRemainingTests
+            val recoveredResult = jsonConverter.getData(PreprocessStorage::class.java) as PreprocessStorage
+            val remainingTests = recoveredResult.previousRemainingTests
             if (remainingTests.isNullOrEmpty()) {
                 return
             }

@@ -15,12 +15,9 @@
  *
  */
 
-package io.moco.engine.mutation
+package io.moco.persistence
 
-import com.fasterxml.jackson.annotation.JsonProperty
-
-data class MutationStorage(
-    // IMPORTANT: Do not change json property name
-    @JsonProperty("entries")
-    var entries: MutableMap<String, MutableList<Map<String, Any>>>
-)
+abstract class DataSource {
+    open fun save(data: Any){}
+    open fun getData(cls: Class<*>): Any? {return null}
+}

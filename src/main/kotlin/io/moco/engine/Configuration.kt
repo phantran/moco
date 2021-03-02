@@ -17,21 +17,20 @@
 
 package io.moco.engine
 
-import io.moco.utils.MoCoLogger
-
 
 data class Configuration(
     val buildRoot: String,
     val codeRoot: String,
     val testRoot: String,
+    val mocoBuildPath: String,
     val excludedSourceClasses : String,
     val excludedSourceFolders : String,
     val excludedTestClasses : String,
     val excludedTestFolders : String,
     val classPath: List<String>,
     val jvm: String,
-    val preprocessResultFileName: String,
-    val mutationResultsFileName: String,
+    val preprocessResultsFolder: String,
+    val mutationResultsFolder: String,
     val excludedMutationOperatorNames: String,
     val baseDir: String,
     val compileSourceRoots: List<String>?,
@@ -40,7 +39,9 @@ data class Configuration(
     val testTimeOut: String,
     val mutationPerClass: Int,
     val debugEnabled: Boolean,
-    val verbose: Boolean
+    val verbose: Boolean,
+    val persistenceMode: String,
+    val metaRootPath: String
 
 ) {
     companion object {
@@ -48,8 +49,8 @@ data class Configuration(
     }
 
     fun getPreprocessProcessArgs(): MutableList<String> {
-        return mutableListOf(buildRoot, codeRoot, testRoot, excludedSourceClasses, excludedSourceFolders,
-            excludedTestClasses, excludedTestFolders, preprocessResultFileName,
+        return mutableListOf(mocoBuildPath, codeRoot, testRoot, excludedSourceClasses, excludedSourceFolders,
+            excludedTestClasses, excludedTestFolders, preprocessResultsFolder,
             testTimeOut, debugEnabled.toString(), verbose.toString()
         )
     }

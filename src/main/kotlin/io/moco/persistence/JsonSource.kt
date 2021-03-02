@@ -15,32 +15,32 @@
  *
  */
 
-package io.moco.utils
+package io.moco.persistence
 
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.moco.engine.mutation.MutationStorage
-import io.moco.engine.preprocessing.PreprocessClassResult
 import io.moco.engine.preprocessing.PreprocessStorage
+import io.moco.utils.MoCoLogger
 import java.io.File
 import java.io.IOException
 
 /**
- * Preprocess Converter
+ * Json Source
  * This class is responsible for exporting the map of class names to test class names to an JSON file
  * The exported JSON file will be read in each execution to retrieve this mapping information
  * It is also responsible for importing json file to create object of the PreprocessStorage class
  * @constructor Create empty Mapping exporter
  *
- * @param dir
+ * @param folderPath
+ * @param fileName
  */
-class JsonConverter(private val dir: String, private val fileName: String) {
+class JsonSource(private val folderPath: String, private val fileName: String): DataSource() {
 
     private val mapper = jacksonObjectMapper()
     private val logger = MoCoLogger()
 
     init {
-        val temp = File(dir)
+        val temp = File(folderPath)
         if (!temp.exists()) {
             temp.mkdirs()
         }
@@ -48,7 +48,7 @@ class JsonConverter(private val dir: String, private val fileName: String) {
     }
 
     fun removeJSONFileIfExists() {
-        val temp = File("$dir$fileName.json")
+        val temp = File(folderPath)
         if (temp.exists()) {
             temp.delete()
             logger.debug("Existing preprocess JSON file was removed")
@@ -62,10 +62,11 @@ class JsonConverter(private val dir: String, private val fileName: String) {
      */
     fun savePreprocessToJson(results: PreprocessStorage) {
         try {
-            val existingStorage = retrieveObjectFromJson()
+            var existingStorage = getData(PreprocessStorage::class.java)
             if (existingStorage == null) {
-                mapper.writeValue(File("$dir$fileName.json"), results)
+                mapper.writeValue(File("$folderPath${File.separator}$fileName.json"), results)
             } else {
+                existingStorage = existingStorage as PreprocessStorage
                 for ((k, v) in results.testsExecutionTime!!) {
                     existingStorage.testsExecutionTime!!.putIfAbsent(k, v)
                 }
@@ -80,7 +81,7 @@ class JsonConverter(private val dir: String, private val fileName: String) {
                         existingStorage.classRecord.add(item)
                     }
                 }
-                mapper.writeValue(File("$dir$fileName.json"), existingStorage)
+                mapper.writeValue(File("$folderPath${File.separator}$fileName.json"), existingStorage)
             }
         } catch (e: IOException) {
             logger.error(e.printStackTrace().toString())
@@ -89,13 +90,13 @@ class JsonConverter(private val dir: String, private val fileName: String) {
     }
 
     /**
-     * Save mutation results
+     * Store data that need to be persisted
      *
-     * @param results
+     * @param data
      */
-    fun saveMutationResultsToJson(results: MutationStorage) {
+    override fun save(data: Any) {
         try {
-            mapper.writeValue(File("$dir$fileName.json"), results)
+            mapper.writeValue(File("$folderPath${File.separator}$fileName.json"), data)
         } catch (e: IOException) {
             logger.error(e.printStackTrace().toString())
             throw RuntimeException("Error while saving mutation results to csv file")
@@ -103,13 +104,13 @@ class JsonConverter(private val dir: String, private val fileName: String) {
     }
 
 
-    fun retrieveObjectFromJson(): PreprocessStorage? {
-        val temp = File("$dir$fileName.json")
+    override fun getData(cls: Class<*>): Any? {
+        val temp = File("$folderPath${File.separator}$fileName.json")
         if (!temp.exists()) {
             return null
         }
         return try {
-            mapper.readValue(temp, PreprocessStorage::class.java)
+            mapper.readValue(temp, cls)
         } catch (e: Exception) {
             logger.error("Error while reading JSON file")
             null

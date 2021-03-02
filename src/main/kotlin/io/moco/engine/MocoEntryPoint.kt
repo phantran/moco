@@ -23,9 +23,11 @@ import io.moco.engine.mutation.*
 import io.moco.engine.operator.Operator
 import io.moco.engine.preprocessing.PreprocessStorage
 import io.moco.engine.preprocessing.PreprocessingFilterByGit
-import io.moco.utils.JsonConverter
+import io.moco.persistence.JsonSource
 import io.moco.engine.preprocessing.PreprocessorWorker
 import io.moco.engine.test.RelatedTestRetriever
+import io.moco.persistence.MutationStorage
+import io.moco.persistence.ProjectMeta
 import io.moco.utils.JarUtil
 import java.io.File
 import java.net.ServerSocket
@@ -45,12 +47,14 @@ class MocoEntryPoint(private val configuration: Configuration) {
     private val filteredMutationOperatorNames: List<String>
     private val mutationStorage: MutationStorage = MutationStorage(mutableMapOf())
     private var filteredClsByGit: List<String>? = mutableListOf()
+    private var projectMeta: ProjectMeta? = null
 
     init {
         logger.info("-----------------------------------------------------------------------")
         logger.info("                               M O C O")
         logger.info("-----------------------------------------------------------------------")
         logger.info("START")
+        projectMeta = ProjectMeta()
         val cp = configuration.classPath.joinToString(separator = File.pathSeparatorChar.toString())
         classPath = "$cp:${configuration.codeRoot}:${configuration.testRoot}:${configuration.buildRoot}"
         byteArrLoader = ByteArrayLoader(cp)
@@ -65,47 +69,42 @@ class MocoEntryPoint(private val configuration: Configuration) {
     }
 
     fun execute() {
+        println(projectMeta?.meta?.get("latestStoredCommitID"))
         val executionTime = measureTimeMillis {
             if (!initMoCoOK()) {
                 logger.info("EXIT: Nothing to do")
-                return
+            } else {
+                logger.info("Preprocessing started......")
+                preprocessing()
+                logger.info("Preprocessing completed")
+                logger.info("Mutation Test started......")
+//                mutationTest()
+                logger.info("Mutation Test completed")
             }
 
-            logger.info("Preprocessing started......")
-            preprocessing()
-            logger.info("Preprocessing completed")
-            logger.info("Mutation Test started......")
-            mutationTest()
-            logger.info("Mutation Test completed")
-
-            // Remove generated agent after finishing
-            JarUtil.removeTemporaryAgentJar(createdAgentLocation)
         }
         logger.info("Execution done after ${executionTime / 1000}s")
+        cleanBeforeExit()
         logger.info("DONE")
+    }
+
+    private fun cleanBeforeExit() {
+        // Save meta before exit
+        logger.debug("Saving project meta data before exiting")
+        projectMeta?.save()
+        // Remove generated agent after finishing
+        JarUtil.removeTemporaryAgentJar(createdAgentLocation)
+        logger.debug("Remove temporary agent jar successfully")
     }
 
     private fun initMoCoOK(): Boolean {
         if (filteredMutationOperatorNames.isEmpty()) {
             return false
         }
-        if (configuration.gitMode) {
-            logger.info("Git mode: on")
-            filteredClsByGit = PreprocessingFilterByGit.getChangedClsSinceLastStoredCommit(
-                configuration.artifactId.replace(".", "/"), configuration.baseDir
-            )
-            if (configuration.gitMode) {
-                if (filteredClsByGit.isNullOrEmpty()) {
-                    logger.info("Preprocessing: Git mode: No changed files found by git commits diff")
-                    // skip preprocessing in git mode and no detected changed class
-                    return false
-                }
-                logger.info("Preprocessing: Git mode - ${filteredClsByGit!!.size} changed classes by git commits diff")
-                logger.debug("Classes found: $filteredClsByGit")
-            }
-        } else {
-            logger.info("Git mode: off")
-        }
+
+        val gitOK = gitInfoProcessing()
+        if (!gitOK) return false
+
         createdAgentLocation = JarUtil.createTemporaryAgentJar(byteArrLoader)
         if (createdAgentLocation == null) {
             logger.info("Error while creating MoCo Agent Jar")
@@ -113,10 +112,41 @@ class MocoEntryPoint(private val configuration: Configuration) {
         }
 
         // Clear preprocessing JSON if exists
-        JsonConverter(
-            "${configuration.buildRoot}/moco/preprocess/", configuration.preprocessResultFileName
+        JsonSource(
+            "${configuration.mocoBuildPath}${File.separator}${configuration.preprocessResultsFolder}",
+            "preprocess"
         ).removeJSONFileIfExists()
 
+        return true
+    }
+
+    private fun gitInfoProcessing(): Boolean {
+        if (configuration.gitMode) {
+            logger.info("Git mode: on")
+            if (projectMeta?.meta?.get("latestStoredCommitID").isNullOrEmpty()) {
+                PreprocessingFilterByGit.setHeadCommitMeta(configuration.baseDir, projectMeta!!)
+                logger.info("Last commit info does not exist - skip Git commits diff analysis")
+            } else {
+                filteredClsByGit = PreprocessingFilterByGit.getChangedClsSinceLastStoredCommit(
+                    configuration.artifactId.replace(".", "/"), configuration.baseDir, projectMeta?.meta!!
+                )
+                if (filteredClsByGit != null) {
+                    if (filteredClsByGit?.isEmpty() == true) {
+                        logger.info("Preprocessing: Git mode: No changed files found by git commits diff")
+                        // skip preprocessing in git mode and no detected changed class
+                        return false
+                    }
+                    logger.info("Preprocessing: Git mode - ${filteredClsByGit!!.size} changed classes by git commits diff")
+                    logger.debug("Classes found: $filteredClsByGit")
+                } else {
+                    filteredClsByGit = listOf("")
+                    PreprocessingFilterByGit.setHeadCommitMeta(configuration.baseDir, projectMeta!!)
+                    logger.info("Preprocessing: Git mode: last stored commit not found - proceed in normal mode")
+                }
+            }
+        } else {
+            logger.info("Git mode: off")
+        }
         return true
     }
 
@@ -133,8 +163,9 @@ class MocoEntryPoint(private val configuration: Configuration) {
             )
             preprocessWorkerProcess.start()
             processStatus = preprocessWorkerProcess.getProcess()?.waitFor()!!
-            if (processStatus ==  MoCoProcessCode.UNRECOVERABLE_ERROR.code ||
-                previousStatus == processStatus) {
+            if (processStatus == MoCoProcessCode.UNRECOVERABLE_ERROR.code ||
+                previousStatus == processStatus
+            ) {
                 break
             } else {
                 previousStatus = processStatus
@@ -148,7 +179,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
     }
 
     private fun mutationTest() {
-        val preprocessedStorage = PreprocessStorage.getStoredPreprocessStorage(configuration.buildRoot)
+        val preprocessedStorage = PreprocessStorage.getStoredPreprocessStorage(configuration.mocoBuildPath)
         if (preprocessedStorage == null) {
             logger.info("No preprocess results, skip mutation testing")
             return
@@ -178,7 +209,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
             val processArgs = getProcessArguments()
             val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(
                 className,
-                preprocessedStorage.testsExecutionTime!!
+                preprocessedStorage.testsExecutionTime
             )
             if (relatedTestClasses.isEmpty()) {
                 logger.debug("Class ${className.getJavaName()} has 0 relevant test")
@@ -189,10 +220,10 @@ class MocoEntryPoint(private val configuration: Configuration) {
                 createMutationTestWorkerProcess(mutationList, relatedTestClasses, processArgs)
             executeMutationTestingProcess(mutationTestWorkerProcess)
         }
-        JsonConverter(
-            "${configuration.buildRoot}/moco/mutation/",
-            configuration.mutationResultsFileName
-        ).saveMutationResultsToJson(mutationStorage)
+        JsonSource(
+            "${configuration.mocoBuildPath}${File.separator}${configuration.mutationResultsFolder}",
+            "mutation"
+        ).save(mutationStorage)
         logger.debug("Complete mutation testing")
 
     }

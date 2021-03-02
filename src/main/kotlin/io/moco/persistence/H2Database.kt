@@ -17,25 +17,27 @@
 
 package io.moco.persistence
 
+import io.moco.engine.Configuration
 import io.moco.utils.MoCoLogger
 import java.lang.Exception
 import java.sql.ResultSet
 
 
 class H2Database(
-    url: String = "",
-    user: String = "",
-    password: String = ""
+    url: String = "jdbc:h2:file:${Configuration.currentConfig?.mocoBuildPath};mode=MySQL",
+    user: String = "moco",
+    password: String = "oquweb#!2aosijd",
 ) : Database(url, user, password) {
 
     private val logger = MoCoLogger()
 
     override fun createTable(tableName: String, schema: Map<String, String>) {
         try {
-            val schemaText = StringBuilder("")
+            var schemaText = ""
             for (key in schema.keys) {
-                schemaText.append(key + " " + schema[key] + ", ")
+                schemaText = schemaText + key + " " + schema[key] + ","
             }
+            schemaText = schemaText.dropLast(1)
 
             val statement = "CREATE TABLE IF NOT EXISTS $tableName ( $schemaText );"
             connection?.createStatement().use { st -> st?.execute(statement) }
@@ -74,6 +76,33 @@ class H2Database(
 
     }
 
+    override fun insertOrUpdateIfExist(table: String, data: Map<String, String>) {
+        try {
+            val statement = getInsertUpdateOnDuplicateStm(table, data)
+            connection?.createStatement().use { st -> st?.execute(statement) }
+        } catch (ex: Exception) {
+            logger.error( "Error while inserting data $data to $table")
+        }
+    }
+
+    private fun getInsertUpdateOnDuplicateStm(table: String, data: Map<String, String>): String {
+        val columns = "(" + data.keys.joinToString(separator = ",") + ")"
+        val values = "('" + data.values.joinToString(separator = "','") + "')"
+        val onExist = data.map { "${it.key}=\'${it.value}\' " }.joinToString(separator = ",")
+        return "INSERT INTO $table $columns VALUES $values ON DUPLICATE KEY UPDATE $onExist;"
+    }
+
+    override fun multipleInsertOrUpdateIfExist(table: String, data: List<Map<String, String>>) {
+        val temp = data.map { getInsertUpdateOnDuplicateStm(table, it) }
+        val stm = temp.joinToString(" ")
+        try {
+            connection?.createStatement().use { st -> st?.execute(stm) }
+        } catch (ex: Exception) {
+            logger.error( "Error while inserting data $data to $table")
+        }
+    }
+
+
     override fun delete(table: String, condition: String) {
         try {
             val statement = "DELETE FROM $table WHERE $condition;"
@@ -104,7 +133,7 @@ class H2Database(
         }
     }
 
-    override fun fetchAll(table: Any, condition: String, select: List<String>): ResultSet? {
+    override fun fetch(table: Any, condition: String, select: List<String>): ResultSet? {
         val where = if (condition.isNotEmpty()) "WHERE $condition" else ""
         val query = "SELECT ${select.joinToString(separator = ",")} FROM $table " + where + ";"
         return try {
@@ -113,11 +142,12 @@ class H2Database(
         } catch (ex: Exception) {
             logger.error( "Error while fetch all from $table with condition $condition $query")
             null
-
         }
     }
 
     companion object {
+        val MoCoTables = mapOf("ProjectMeta" to ProjectMeta)
+
         fun printResults(rs: ResultSet) {
             val rsMeta = rs.metaData
             val columnsNumber = rsMeta.columnCount
@@ -131,5 +161,18 @@ class H2Database(
             }
 
         }
+
+        fun shutDownDB() {
+            val temp = H2Database()
+            temp.connection.use { con ->
+                con?.createStatement().use { st ->
+                    st?.execute("SHUTDOWN")
+                }
+            }
+        }
+    }
+
+    fun initDBTablesIfNotExists() {
+        MoCoTables.map { createTable(it.key, it.value.schema) }
     }
 }

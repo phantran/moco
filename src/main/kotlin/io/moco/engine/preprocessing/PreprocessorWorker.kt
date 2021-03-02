@@ -18,14 +18,13 @@
 
 package io.moco.engine.preprocessing
 
-import io.moco.engine.ClassName
 import io.moco.engine.Codebase
 import io.moco.engine.MoCoProcessCode
 import io.moco.engine.MocoAgent
-import io.moco.engine.test.TestItem
 import io.moco.engine.test.TestItemWrapper
-import io.moco.utils.JsonConverter
+import io.moco.persistence.JsonSource
 import io.moco.utils.MoCoLogger
+import java.io.File
 import java.net.Socket
 import kotlin.system.exitProcess
 
@@ -50,22 +49,25 @@ object PreprocessorWorker {
     @JvmStatic
     fun main(args: Array<String>) {
         var socket: Socket? = null
-        val buildRoot = args[1]  // path to build or target folder of project
+        val mocoBuildPath = args[1]  // path to build or target folder of project
         val codeRoot = args[2]
         val testRoot = args[3]
         val excludedSourceClasses = if (args[4] != "") args[4].split(",").map { it.trim() } else listOf()
         val excludedSourceFolders = if (args[5] != "") args[5].split(",").map { it.trim() } else listOf()
         val excludedTestClasses = if (args[6] != "") args[6].split(",").map { it.trim() } else listOf()
         val excludedTestFolders = if (args[7] != "") args[7].split(",").map { it.trim() } else listOf()
-        val preprocessResultFileName = args[8]
+        val preprocessResultsFolder = args[8]
         TestItemWrapper.configuredTestTimeOut = if (args[9].toIntOrNull() != null) args[9].toLong() else -1
         MoCoLogger.debugEnabled = args[10] == "true"
         MoCoLogger.verbose = args[11] == "true"
-        // this list is null of empty if git mode changed classes if off or no changed classes are detected
+        // filteredClsByGitCommit is null of empty if
+        // 1. Git mode is off
+        // 2. Project run for the first time and no project meta exists
         val filteredClsByGitCommit =
             if (args[12] != "") args[12].split(",").map { it.trim() } else null
         val isRerun = if (args.getOrNull(13) != null) args[13].toBoolean() else false
-        val jsonConverter = JsonConverter("$buildRoot/moco/preprocess/", preprocessResultFileName)
+        val jsonConverter = JsonSource(
+            "$mocoBuildPath${File.separator}$preprocessResultsFolder", "preprocess")
 
         MoCoLogger.useKotlinLog()
         val logger = MoCoLogger()
