@@ -17,30 +17,22 @@
 
 package io.moco.persistence
 
-import io.moco.engine.Configuration
 import io.moco.utils.MoCoLogger
 import java.lang.Exception
 import java.sql.ResultSet
+import org.h2.jdbcx.JdbcConnectionPool
+import java.sql.Connection
 
-
-class H2Database(
-    url: String = "jdbc:h2:file:${Configuration.currentConfig?.mocoBuildPath};mode=MySQL",
-    user: String = "moco",
-    password: String = "oquweb#!2aosijd",
-) : Database(url, user, password) {
+class H2Database : Database() {
 
     private val logger = MoCoLogger()
 
-    override fun createTable(tableName: String, schema: Map<String, String>) {
+    override fun createTable(tableName: String, schema: String) {
         try {
-            var schemaText = ""
-            for (key in schema.keys) {
-                schemaText = schemaText + key + " " + schema[key] + ","
+            connectionsPool.connection.use { con ->
+                val statement = "CREATE TABLE IF NOT EXISTS $tableName ( $schema );"
+                con?.createStatement().use { st -> st?.execute(statement) }
             }
-            schemaText = schemaText.dropLast(1)
-
-            val statement = "CREATE TABLE IF NOT EXISTS $tableName ( $schemaText );"
-            connection?.createStatement().use { st -> st?.execute(statement) }
         } catch (ex: Exception) {
             logger.error("Cannot create database table $tableName")
         }
@@ -48,40 +40,48 @@ class H2Database(
 
     override fun dropTable(tableName: String) {
         try {
-            val statement = "DROP TABLE IF EXISTS $tableName;"
-            connection?.createStatement().use { st -> st?.execute(statement) }
+            connectionsPool.connection.use { con ->
+                val statement = "DROP TABLE IF EXISTS $tableName;"
+                con?.createStatement().use { st -> st?.execute(statement) }
+            }
         } catch (ex: Exception) {
-            logger.error( "Cannot delete database table $tableName")
+            logger.error("Cannot delete database table $tableName")
         }
     }
 
     override fun dropDatabase(dbName: String) {
         try {
-            val statement = "DROP DATABASE dbName;"
-            connection?.createStatement().use { st -> st?.execute(statement) }
+            connectionsPool.connection.use { con ->
+                val statement = "DROP DATABASE dbName;"
+                con?.createStatement().use { st -> st?.execute(statement) }
+            }
         } catch (ex: Exception) {
-            logger.error( "Cannot drop database $dbName")
+            logger.error("Cannot drop database $dbName")
         }
     }
 
     override fun insert(table: String, data: Map<String, String>) {
         try {
-            val columns = "(" + data.keys.joinToString(separator = ",") + ")"
-            val values = "('" + data.values.joinToString(separator = "','") + "')"
-            val statement = "INSERT INTO $table $columns VALUES $values; "
-            connection?.createStatement().use { st -> st?.execute(statement) }
+            connectionsPool.connection.use { con ->
+                val columns = "(" + data.keys.joinToString(separator = ",") + ")"
+                val values = "('" + data.values.joinToString(separator = "','") + "')"
+                val statement = "INSERT INTO $table $columns VALUES $values; "
+                con?.createStatement().use { st -> st?.execute(statement) }
+            }
         } catch (ex: Exception) {
-            logger.error( "Error while inserting data $data to $table")
+            logger.error("Error while inserting data $data to $table")
         }
 
     }
 
     override fun insertOrUpdateIfExist(table: String, data: Map<String, String>) {
         try {
-            val statement = getInsertUpdateOnDuplicateStm(table, data)
-            connection?.createStatement().use { st -> st?.execute(statement) }
+            connectionsPool.connection.use { con ->
+                val statement = getInsertUpdateOnDuplicateStm(table, data)
+                con?.createStatement().use { st -> st?.execute(statement) }
+            }
         } catch (ex: Exception) {
-            logger.error( "Error while inserting data $data to $table")
+            logger.error("Error while inserting data $data to $table")
         }
     }
 
@@ -96,57 +96,85 @@ class H2Database(
         val temp = data.map { getInsertUpdateOnDuplicateStm(table, it) }
         val stm = temp.joinToString(" ")
         try {
-            connection?.createStatement().use { st -> st?.execute(stm) }
+            connectionsPool.connection.use { con ->
+                con?.createStatement().use { st -> st?.execute(stm) }
+            }
         } catch (ex: Exception) {
-            logger.error( "Error while inserting data $data to $table")
+            logger.error("Error while inserting data $data to $table")
         }
     }
 
 
     override fun delete(table: String, condition: String) {
         try {
-            val statement = "DELETE FROM $table WHERE $condition;"
-            connection?.createStatement().use { st -> st?.execute(statement) }
+            connectionsPool.connection.use { con ->
+                val statement = "DELETE FROM $table WHERE $condition;"
+                con?.createStatement().use { st -> st?.execute(statement) }
+            }
         } catch (ex: Exception) {
-            logger.error( "Error while deleting data from $table with condition $condition")
+            logger.error("Error while deleting data from $table with condition $condition")
         }
     }
 
     override fun deleteAll(table: String) {
         try {
             val statement = "DELETE FROM $table;"
-            connection?.createStatement().use { st -> st?.execute(statement) }
+            connectionsPool.connection.use { con ->
+                con.createStatement().use { st -> st?.execute(statement) }
+            }
         } catch (ex: Exception) {
-            logger.error( "Error while deleting all rows of $table")
+            logger.error("Error while deleting all rows of $table")
         }
     }
 
-    override fun fetchOne(table: Any, condition: String, select: List<String>): ResultSet? {
+    override fun fetchOne(connection: Connection, table: Any, condition: String, select: List<String>): ResultSet? {
         val query = "SELECT ${select.joinToString(separator = ",")} FROM $table WHERE $condition LIMIT 1;"
         return try {
-            val stm = connection?.createStatement()
+            val stm = connection.createStatement()
             return stm?.executeQuery(query)
         } catch (ex: Exception) {
             logger.error(ex.printStackTrace().toString())
-            logger.error( "Error while fetch one from $table with condition $condition $query")
+            logger.error("Error while fetch one from $table with condition $condition $query")
             null
         }
     }
 
-    override fun fetch(table: Any, condition: String, select: List<String>): ResultSet? {
+    override fun fetch(connection: Connection, table: Any, condition: String, select: List<String>): ResultSet? {
         val where = if (condition.isNotEmpty()) "WHERE $condition" else ""
         val query = "SELECT ${select.joinToString(separator = ",")} FROM $table " + where + ";"
         return try {
-            val stm = connection?.createStatement()
+            val stm = connection.createStatement()
             stm?.executeQuery(query)
         } catch (ex: Exception) {
-            logger.error( "Error while fetch all from $table with condition $condition $query")
+            logger.error("Error while fetch all from $table with condition $condition $query")
             null
         }
     }
 
     companion object {
-        val MoCoTables = mapOf("ProjectMeta" to ProjectMeta)
+        private lateinit var connectionsPool: JdbcConnectionPool
+        fun initPool(url: String, user: String, password: String ) {
+            connectionsPool = JdbcConnectionPool.create(url, user, password)
+        }
+
+        fun getConnection(): Connection {
+            return connectionsPool.connection
+        }
+
+        val MoCoTables = mapOf(
+            "ProjectMeta" to ProjectMeta.schema,
+            "ProgressClassTest" to ProgressClassTest.schema,
+            "PersistentMutationResult" to PersistentMutationResult.schema,
+            "ProjectTestHistory" to ProjectTestHistory.schema
+        )
+
+        fun shutDownDB() {
+            connectionsPool.connection.use { con ->
+                con?.createStatement().use { st ->
+                    st?.execute("SHUTDOWN")
+                }
+            }
+        }
 
         fun printResults(rs: ResultSet) {
             val rsMeta = rs.metaData
@@ -159,20 +187,11 @@ class H2Database(
                 }
                 println("")
             }
-
         }
 
-        fun shutDownDB() {
-            val temp = H2Database()
-            temp.connection.use { con ->
-                con?.createStatement().use { st ->
-                    st?.execute("SHUTDOWN")
-                }
-            }
-        }
     }
 
     fun initDBTablesIfNotExists() {
-        MoCoTables.map { createTable(it.key, it.value.schema) }
+        MoCoTables.map { createTable(it.key, it.value) }
     }
 }

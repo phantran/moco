@@ -21,11 +21,9 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.ResultSet
 
-open class Database (url: String = "", user: String = "", password: String = ""): DataSource() {
+open class Database: DataSource() {
 
-    open val connection: Connection? = DriverManager.getConnection(url, user, password)
-
-    open fun createTable(tableName: String, schema: Map<String, String>) {}
+    open fun createTable(tableName: String, schema: String) {}
     open fun dropTable(tableName: String) {}
     open fun dropDatabase(dbName: String) {}
 
@@ -35,10 +33,21 @@ open class Database (url: String = "", user: String = "", password: String = "")
 
     open fun delete(table: String, condition: String = "") {}
     open fun deleteAll(table: String) {}
-    open fun fetchOne(table: Any, condition: String, select: List<String> = listOf("*")): ResultSet?  {return null}
-    open fun fetch(table: Any, condition: String = "", select: List<String> = listOf("*")): ResultSet?  {return null}
+    open fun fetchOne(
+        connection: Connection,
+        table: Any,
+        condition: String,
+        select: List<String> = listOf("*")
+    ): ResultSet? {
+        return null
+    }
 
-    fun closeConnection() {
-        connection?.close()
+    open fun fetch(
+        connection: Connection,
+        table: Any,
+        condition: String = "",
+        select: List<String> = listOf("*")
+    ): ResultSet? {
+        return null
     }
 }

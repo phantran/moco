@@ -17,53 +17,40 @@
 
 package io.moco.persistence
 
-import io.moco.engine.Configuration
-import io.moco.utils.MoCoLogger
 
 data class ProjectMeta(
+    override var entry: MutableMap<String, String> = mutableMapOf("meta_key" to "", "meta_value" to ""),
     var meta: MutableMap<String, String> = mutableMapOf("latestStoredCommitID" to "", "latestStoredBranchName" to "")
 ) : MoCoModel() {
 
-    val logger = MoCoLogger()
-    override val persistenceMode = Configuration.currentConfig?.persistenceMode
     override val sourceName = "ProjectMeta"
-    override var source = H2Database()
 
     init {
-        try {
-            getData()
-        } catch (e: Exception) {
-            logger.error("Error while getting $sourceName")
-        }
+        getMetaData()
     }
 
-    override fun getData() {
-        if (source.connection == null) {
-            source = H2Database()
-        }
-        val res = source.fetch(sourceName)
-        while (res?.next() == true) {
-            meta[res.getString("meta_key")] = res.getString("meta_value")
-        }
-    }
-
-    override fun save() {
-        if (source.connection == null) {
-            source = H2Database()
-        }
-        if (persistenceMode == "database") {
-            meta.map {
-                source.multipleInsertOrUpdateIfExist(sourceName, listOf(mapOf("meta_key" to it.key, "meta_value" to it.value)))
+    private fun getMetaData() {
+        val retrieved = this.getData("")
+        for (item in retrieved) {
+            val metaKey: String? = item.entry["meta_key"]
+            if (meta.keys.contains(metaKey)) {
+                meta[metaKey!!] = item.entry["meta_value"]!!
             }
         }
-        source.closeConnection()
+    }
+
+    fun saveMetaData() {
+        val entries: MutableList<MutableMap<String, String>> = mutableListOf()
+        for ((k,v) in meta) {
+            entries.add(mutableMapOf("meta_key" to k, "meta_value" to v))
+        }
+        saveMultipleEntries(sourceName, entries)
     }
 
     companion object {
-        val schema: Map<String, String> = mapOf(
-            "id" to "int NOT NULL AUTO_INCREMENT",
-            "meta_key" to "varchar(255) PRIMARY KEY",
-            "meta_value" to "varchar(255)"
-        )
+        const val schema: String =
+            "id INT NOT NULL AUTO_INCREMENT," +
+            "meta_key VARCHAR(255) PRIMARY KEY," +
+            "meta_value VARCHAR(255)"
     }
 }

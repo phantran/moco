@@ -201,6 +201,12 @@ class Moco : AbstractMojo() {
 
             Configuration.currentConfig = configuration
             MoCoLogger.useMvnLog(log)
+            H2Database.initPool(
+                url = "jdbc:h2:file:${Configuration.currentConfig?.mocoBuildPath}" +
+                        "${File.separator}/persistence/persistence;mode=MySQL;",
+                user = "moco",
+                password = "moco",
+            )
             H2Database().initDBTablesIfNotExists()
             MocoEntryPoint(configuration).execute()
         } catch (e: Exception) {

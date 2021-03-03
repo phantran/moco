@@ -26,7 +26,7 @@ import io.moco.engine.preprocessing.PreprocessingFilterByGit
 import io.moco.persistence.JsonSource
 import io.moco.engine.preprocessing.PreprocessorWorker
 import io.moco.engine.test.RelatedTestRetriever
-import io.moco.persistence.MutationStorage
+import io.moco.persistence.MutationJSONStorage
 import io.moco.persistence.ProjectMeta
 import io.moco.utils.JarUtil
 import java.io.File
@@ -45,7 +45,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
     private var byteArrLoader: ByteArrayLoader
     private var createdAgentLocation: String? = null
     private val filteredMutationOperatorNames: List<String>
-    private val mutationStorage: MutationStorage = MutationStorage(mutableMapOf())
+    private val mutationStorage: MutationJSONStorage = MutationJSONStorage(mutableMapOf())
     private var filteredClsByGit: List<String>? = mutableListOf()
     private var projectMeta: ProjectMeta? = null
 
@@ -69,7 +69,6 @@ class MocoEntryPoint(private val configuration: Configuration) {
     }
 
     fun execute() {
-        println(projectMeta?.meta?.get("latestStoredCommitID"))
         val executionTime = measureTimeMillis {
             if (!initMoCoOK()) {
                 logger.info("EXIT: Nothing to do")
@@ -78,7 +77,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
                 preprocessing()
                 logger.info("Preprocessing completed")
                 logger.info("Mutation Test started......")
-//                mutationTest()
+                mutationTest()
                 logger.info("Mutation Test completed")
             }
 
@@ -91,10 +90,10 @@ class MocoEntryPoint(private val configuration: Configuration) {
     private fun cleanBeforeExit() {
         // Save meta before exit
         logger.debug("Saving project meta data before exiting")
-        projectMeta?.save()
+        projectMeta?.saveMetaData()
         // Remove generated agent after finishing
         JarUtil.removeTemporaryAgentJar(createdAgentLocation)
-        logger.debug("Remove temporary agent jar successfully")
+        logger.debug("Remove temporary moco agent jar successfully")
     }
 
     private fun initMoCoOK(): Boolean {
@@ -110,22 +109,22 @@ class MocoEntryPoint(private val configuration: Configuration) {
             logger.info("Error while creating MoCo Agent Jar")
             return false
         }
-
         // Clear preprocessing JSON if exists
         JsonSource(
             "${configuration.mocoBuildPath}${File.separator}${configuration.preprocessResultsFolder}",
             "preprocess"
         ).removeJSONFileIfExists()
-
         return true
     }
 
     private fun gitInfoProcessing(): Boolean {
         if (configuration.gitMode) {
             logger.info("Git mode: on")
+            logger.info("Latest stored commit ${projectMeta?.meta?.get("latestStoredCommitID")}")
+
             if (projectMeta?.meta?.get("latestStoredCommitID").isNullOrEmpty()) {
                 PreprocessingFilterByGit.setHeadCommitMeta(configuration.baseDir, projectMeta!!)
-                logger.info("Last commit info does not exist - skip Git commits diff analysis")
+                logger.info("Last commit info does not exist - skip Git commits diff analysis - proceed in normal mode")
             } else {
                 filteredClsByGit = PreprocessingFilterByGit.getChangedClsSinceLastStoredCommit(
                     configuration.artifactId.replace(".", "/"), configuration.baseDir, projectMeta?.meta!!
