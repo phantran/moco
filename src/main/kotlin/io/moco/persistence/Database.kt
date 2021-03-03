@@ -18,10 +18,9 @@
 package io.moco.persistence
 
 import java.sql.Connection
-import java.sql.DriverManager
 import java.sql.ResultSet
 
-open class Database: DataSource() {
+open class Database : DataSource() {
 
     open fun createTable(tableName: String, schema: String) {}
     open fun dropTable(tableName: String) {}
@@ -29,7 +28,7 @@ open class Database: DataSource() {
 
     open fun insert(table: String, data: Map<String, String>) {}
     open fun insertOrUpdateIfExist(table: String, data: Map<String, String>) {}
-    open fun multipleInsertOrUpdateIfExist(table: String, data: List<Map<String, String>>) {}
+    open fun multipleInsertOrUpdateIfExist(table: String, data: List<Map<String, String?>>) {}
 
     open fun delete(table: String, condition: String = "") {}
     open fun deleteAll(table: String) {}

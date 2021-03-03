@@ -15,43 +15,42 @@
  *
  */
 
-package io.moco.engine.preprocessing
+package io.moco.utils
 
-import io.moco.engine.Configuration
 import io.moco.persistence.ProjectMeta
-import io.moco.utils.MoCoLogger
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.revwalk.RevTree
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.AbstractTreeIterator
 import org.eclipse.jgit.treewalk.CanonicalTreeParser
 import java.io.File
 import java.io.IOException
-import kotlin.jvm.Throws
-import org.eclipse.jgit.revwalk.RevTree
-import org.eclipse.jgit.api.errors.GitAPIException
 import java.lang.Exception
+import kotlin.jvm.Throws
 
-object PreprocessingFilterByGit {
+class GitProcessor(gitRootPath: String) {
 
     private val logger = MoCoLogger()
+    private val builder = FileRepositoryBuilder()
+    private val repo = builder.setGitDir(File("$gitRootPath/.git")).setMustExist(true).build()
+    var headCommit: RevCommit = getHead(repo)
+    var branch: String = repo.fullBranch
 
-    @JvmStatic
     @Throws(IOException::class)
-    fun getChangedClsSinceLastStoredCommit(projectArtifactID: String,
-                                           gitRootPath: String? = Configuration.currentConfig?.baseDir,
-                                           projectMeta: MutableMap<String, String>): List<String>? {
+    fun getChangedClsSinceLastStoredCommit(
+        projectArtifactID: String,
+        projectMeta: MutableMap<String, String>
+    ): List<String>? {
         // Return value meaning
         // 1. null -> latest stored commit id is not found
         // 2. empty list -> diff can be calculated, however there's no changed classes detected or no new commits
         // 3. list with elements -> changed classes detected
         val lastCommitName = projectMeta["latestStoredCommitID"]!!
-        val builder = FileRepositoryBuilder()
-        val repo = builder.setGitDir(File("$gitRootPath/.git")).setMustExist(true).build()
-        val headCommit = getHead(repo)
         if (headCommit.name == lastCommitName) {
             return listOf()
         }
@@ -67,11 +66,7 @@ object PreprocessingFilterByGit {
     }
 
     @Throws(IOException::class)
-     fun setHeadCommitMeta(gitRootPath: String? = Configuration.currentConfig?.baseDir,
-                           projectMeta: ProjectMeta) {
-        val builder = FileRepositoryBuilder()
-        val repo = builder.setGitDir(File("$gitRootPath/.git")).setMustExist(true).build()
-        val headCommit = getHead(repo)
+    fun setHeadCommitMeta(projectMeta: ProjectMeta) {
         projectMeta.meta["latestStoredCommitID"] = headCommit.name
         projectMeta.meta["latestStoredBranchName"] = repo.fullBranch
     }
@@ -92,9 +87,11 @@ object PreprocessingFilterByGit {
 
 
     @Throws(GitAPIException::class, IOException::class)
-    private fun listDiff(repository: Repository, git: Git,
-                         oldCommit: String, newCommit: String,
-                         artifactID: String) : List<String> {
+    private fun listDiff(
+        repository: Repository, git: Git,
+        oldCommit: String, newCommit: String,
+        artifactID: String
+    ): List<String> {
 
         val diff = git.diff()
             .setOldTree(prepareTreeParser(repository, oldCommit))
@@ -117,13 +114,11 @@ object PreprocessingFilterByGit {
         return res
     }
 
-    @JvmStatic
     @Throws(IOException::class)
     fun getHead(repo: Repository): RevCommit {
         return getCommit(repo, Constants.HEAD)
     }
 
-        @JvmStatic
     @Throws(IOException::class)
     private fun getCommit(repo: Repository, hash: String): RevCommit {
         val walk = RevWalk(repo)

@@ -29,8 +29,8 @@ class H2Database : Database() {
 
     override fun createTable(tableName: String, schema: String) {
         try {
+            val statement = "CREATE TABLE IF NOT EXISTS $tableName ( $schema );"
             connectionsPool.connection.use { con ->
-                val statement = "CREATE TABLE IF NOT EXISTS $tableName ( $schema );"
                 con?.createStatement().use { st -> st?.execute(statement) }
             }
         } catch (ex: Exception) {
@@ -81,18 +81,19 @@ class H2Database : Database() {
                 con?.createStatement().use { st -> st?.execute(statement) }
             }
         } catch (ex: Exception) {
+            println(ex.printStackTrace())
             logger.error("Error while inserting data $data to $table")
         }
     }
 
-    private fun getInsertUpdateOnDuplicateStm(table: String, data: Map<String, String>): String {
+    private fun getInsertUpdateOnDuplicateStm(table: String, data: Map<String, String?>): String {
         val columns = "(" + data.keys.joinToString(separator = ",") + ")"
         val values = "('" + data.values.joinToString(separator = "','") + "')"
         val onExist = data.map { "${it.key}=\'${it.value}\' " }.joinToString(separator = ",")
         return "INSERT INTO $table $columns VALUES $values ON DUPLICATE KEY UPDATE $onExist;"
     }
 
-    override fun multipleInsertOrUpdateIfExist(table: String, data: List<Map<String, String>>) {
+    override fun multipleInsertOrUpdateIfExist(table: String, data: List<Map<String, String?>>) {
         val temp = data.map { getInsertUpdateOnDuplicateStm(table, it) }
         val stm = temp.joinToString(" ")
         try {
@@ -100,6 +101,7 @@ class H2Database : Database() {
                 con?.createStatement().use { st -> st?.execute(stm) }
             }
         } catch (ex: Exception) {
+            println(ex.printStackTrace())
             logger.error("Error while inserting data $data to $table")
         }
     }
@@ -146,6 +148,7 @@ class H2Database : Database() {
             val stm = connection.createStatement()
             stm?.executeQuery(query)
         } catch (ex: Exception) {
+            println(ex.printStackTrace())
             logger.error("Error while fetch all from $table with condition $condition $query")
             null
         }
@@ -166,7 +169,9 @@ class H2Database : Database() {
             "ProgressClassTest" to ProgressClassTest.schema,
             "PersistentMutationResult" to PersistentMutationResult.schema,
             "ProjectTestHistory" to ProjectTestHistory.schema,
-            "MutantsBlackList" to MutantsBlackList.schema
+            "MutantsBlackList" to MutantsBlackList.schema,
+            "TestsCutMapping" to TestsCutMapping.schema
+
         )
 
         fun shutDownDB() {

@@ -29,10 +29,8 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
         } else {
             configuredTestTimeOut
         }
-        if (timeOut == -1L) {
-            // If still no timeout can be calculated, use a default value of 10 seconds
-            timeOut = 10000L
-        }
+        // If still no timeout can be calculated, use a default value of 10 seconds
+        if (timeOut == -1L) timeOut = 10000L
 
         try {
             withTimeout(timeOut) {

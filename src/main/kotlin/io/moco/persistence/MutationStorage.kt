@@ -19,7 +19,7 @@ package io.moco.persistence
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-data class MutationJSONStorage(
+data class MutationStorage(
     // IMPORTANT: Do not change json property name
     @JsonProperty("entries")
     var entries: MutableMap<String, MutableList<Map<String, Any>>>

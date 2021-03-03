@@ -40,9 +40,6 @@ data class Configuration(
     val mutationPerClass: Int,
     val debugEnabled: Boolean,
     val verbose: Boolean,
-    val persistenceMode: String,
-    val metaRootPath: String
-
 ) {
     companion object {
         var currentConfig: Configuration? = null

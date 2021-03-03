@@ -17,7 +17,6 @@
 
 package io.moco.persistence
 
-import io.moco.engine.Configuration
 import io.moco.utils.MoCoLogger
 
 
@@ -26,13 +25,10 @@ open class MoCoModel(
 ) {
     val logger = MoCoLogger()
     open val sourceName: String = ""
-    private val persistenceMode: String? = Configuration.currentConfig?.persistenceMode
 
     open fun save() {
         // This method insert or update (if exists) a PersistentMutationResult record to its table
-        if (persistenceMode == "database") {
-            H2Database().insertOrUpdateIfExist(sourceName, entry)
-        }
+        H2Database().insertOrUpdateIfExist(sourceName, entry)
     }
 
     open fun getData(condition: String): List<MoCoModel> {
@@ -52,7 +48,7 @@ open class MoCoModel(
     }
 
     companion object {
-        fun saveMultipleEntries(sourceName: String, entries: List<MutableMap<String, String>>) {
+        fun saveMultipleEntries(sourceName: String, entries: List<MutableMap<String, String?>>) {
             // This method insert or update (if exists) a PersistentMutationResult record to its table
             H2Database().multipleInsertOrUpdateIfExist(sourceName, entries)
         }

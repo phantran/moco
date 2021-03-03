@@ -133,18 +133,6 @@ class Moco : AbstractMojo() {
     @Parameter(defaultValue = "true", property = "verbose", required = false)
     private val verbose: Boolean = true
 
-    /**
-     * Set to false to display succinct console messages during MoCo execution
-     */
-    @Parameter(defaultValue = "database", property = "persistenceMode", required = false)
-    private val persistenceMode: String = "database"
-
-    /**
-     * Set to false to display succinct console messages during MoCo execution
-     */
-    @Parameter(defaultValue = "meta", property = "metaRootName", required = false)
-    private val metaRootName: String = "meta"
-
 
     @Throws(MojoExecutionException::class)
     override fun execute() {
@@ -166,12 +154,6 @@ class Moco : AbstractMojo() {
             val classPath = temp.union(runtimeCp!!.toSet()).union(compileCp!!.toSet()).toList()
             val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
             val mocoBuildPath = "$buildRoot${File.separator}$mocoRoot"
-            val metaRootPath = "$mocoBuildPath${File.separator}$metaRootName"
-
-            if (persistenceMode != "database") {
-                log.info("MoCo currently support only database persistence mode")
-                return
-            }
 
             val configuration = Configuration(
                 buildRoot,
@@ -195,8 +177,6 @@ class Moco : AbstractMojo() {
                 mutationPerClass,
                 debugEnabled,
                 verbose,
-                persistenceMode,
-                metaRootPath
             )
 
             Configuration.currentConfig = configuration

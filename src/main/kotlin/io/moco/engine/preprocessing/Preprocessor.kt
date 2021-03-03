@@ -17,6 +17,7 @@
 
 package io.moco.engine.preprocessing
 
+import io.moco.engine.ClassName
 import io.moco.engine.Codebase
 import io.moco.engine.test.TestItem
 import io.moco.engine.test.TestItemWrapper
@@ -30,7 +31,7 @@ import java.util.concurrent.ExecutionException
 
 
 class Preprocessor(
-    private val codeBase: Codebase,
+    private val toBeRunTests: List<ClassName>,
 ) {
 
     /**
@@ -42,7 +43,7 @@ class Preprocessor(
     @Throws(IOException::class, InterruptedException::class, ExecutionException::class, RuntimeException::class)
     fun preprocessing(isRerun: Boolean = false, jsonConverter: JsonSource) {
         // Codebase is already available
-        val testItems = TestItem.testClassesToTestItems(codeBase.testClassesNames)
+        val testItems = TestItem.testClassesToTestItems(toBeRunTests)
         val wrapped = TestItemWrapper.wrapTestItem(testItems)
         if (isRerun) {
             val recoveredResult = jsonConverter.getData(PreprocessStorage::class.java) as PreprocessStorage
@@ -51,10 +52,10 @@ class Preprocessor(
                 return
             }
             PreprocessorTracker.errorTests = recoveredResult.errorTests
-            logger.info("Preprocessing: ${remainingTests.size} test classes to run")
+            logger.info("Preprocessing: ${remainingTests.size} test classes to run after filtering")
             collectInfo(wrapped.first, isRerun, remainingTests)
         } else {
-            logger.info("Preprocessing: ${wrapped.first.size} test classes to run")
+            logger.info("Preprocessing: ${wrapped.first.size} test classes to run after filtering")
             collectInfo(wrapped.first)
         }
     }

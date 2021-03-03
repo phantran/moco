@@ -20,7 +20,11 @@ package io.moco.persistence
 
 data class ProjectMeta(
     override var entry: MutableMap<String, String> = mutableMapOf("meta_key" to "", "meta_value" to ""),
-    var meta: MutableMap<String, String> = mutableMapOf("latestStoredCommitID" to "", "latestStoredBranchName" to "")
+    var meta: MutableMap<String, String> = mutableMapOf(
+        "latestStoredCommitID" to "",
+        "latestStoredBranchName" to "",
+        "sourceBuildFolder" to "",
+        "testBuildFolder" to "")
 ) : MoCoModel() {
 
     override val sourceName = "ProjectMeta"
@@ -40,7 +44,7 @@ data class ProjectMeta(
     }
 
     fun saveMetaData() {
-        val entries: MutableList<MutableMap<String, String>> = mutableListOf()
+        val entries: MutableList<MutableMap<String, String?>> = mutableListOf()
         for ((k,v) in meta) {
             entries.add(mutableMapOf("meta_key" to k, "meta_value" to v))
         }

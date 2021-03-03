@@ -49,8 +49,7 @@ public class MocoAgent {
         instrumentation.addTransformer(transformer);
     }
 
-    public static void agentmain(final String agentArguments,
-                                 final Instrumentation inst) {
+    public static void agentmain(final String agentArguments, final Instrumentation inst) {
         instrumentation = inst;
     }
 }

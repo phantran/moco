@@ -26,7 +26,7 @@ data class ProgressClassTest(
         ),
 ) : MoCoModel() {
 
-    override val sourceName = "ClassTestProgress"
+    override val sourceName = "ProgressClassTest"
 
     companion object {
          const val schema: String =
@@ -37,6 +37,6 @@ data class ProgressClassTest(
             "total_mutants MEDIUMINT(8) UNSIGNED NOT NULL," +
             "killed_mutants MEDIUMINT(8) UNSIGNED NOT NULL," +
             "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
-            "UNIQUE KEY unique_class_progress (class_name, commit_id, covered_operators)"
+            "UNIQUE KEY unique_class_progress (class_name, covered_operators)"
     }
 }

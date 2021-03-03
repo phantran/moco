@@ -38,6 +38,6 @@ data class MutantsBlackList(
             "line_of_code INT(8) UNSIGNED NOT NULL," +
             "instruction_indices VARCHAR(255)," +
             "mutator_id VARCHAR(255)," +
-            "created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+            "created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
     }
 }

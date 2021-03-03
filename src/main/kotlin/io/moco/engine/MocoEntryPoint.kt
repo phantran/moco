@@ -17,16 +17,16 @@
 
 package io.moco.engine
 
+import io.moco.engine.Metrics.calculateAccumulatedCoverage
+import io.moco.engine.Metrics.calculateRunCoverage
 import io.moco.utils.ByteArrayLoader
 import io.moco.engine.mutation.*
 import io.moco.engine.operator.Operator
 import io.moco.engine.preprocessing.PreprocessStorage
-import io.moco.engine.preprocessing.PreprocessingFilterByGit
-import io.moco.persistence.JsonSource
+import io.moco.utils.GitProcessor
 import io.moco.engine.preprocessing.PreprocessorWorker
 import io.moco.engine.test.RelatedTestRetriever
-import io.moco.persistence.MutationJSONStorage
-import io.moco.persistence.ProjectMeta
+import io.moco.persistence.*
 import io.moco.utils.JarUtil
 import java.io.File
 import java.net.ServerSocket
@@ -44,9 +44,11 @@ class MocoEntryPoint(private val configuration: Configuration) {
     private var byteArrLoader: ByteArrayLoader
     private var createdAgentLocation: String? = null
     private val filteredMuOpNames: List<String>
-    private val mutationStorage: MutationJSONStorage = MutationJSONStorage(mutableMapOf())
+    private val mutationStorage: MutationStorage = MutationStorage(mutableMapOf())
     private var filteredClsByGit: List<String>? = mutableListOf()
     private var projectMeta: ProjectMeta? = null
+    private var recordedTestMapping: String? = null
+    private var gitProcessor = GitProcessor(configuration.baseDir)
 
     init {
         logger.info("-----------------------------------------------------------------------")
@@ -82,14 +84,40 @@ class MocoEntryPoint(private val configuration: Configuration) {
 
         }
         logger.info("Execution done after ${executionTime / 1000}s")
+        reportResults()
         cleanBeforeExit()
         logger.info("DONE")
+    }
+
+    private fun reportResults() {
+        val runCoverage = calculateRunCoverage(mutationStorage)
+        val accumulatedCoverage = calculateAccumulatedCoverage(filteredMuOpNames.joinToString("','"))
+        logger.info("-----------------------------------------------------------------------")
+        logger.info("Mutation Coverage of this run: $runCoverage")
+        logger.info("Accumulated Coverage for current configuration: $accumulatedCoverage")
+        logger.info("-----------------------------------------------------------------------")
+
+        // persist this run to run history
+        logger.debug("Saving new entry to project history")
+        val temp = ProjectTestHistory()
+        temp.entry = mutableMapOf(
+            "commit_id" to gitProcessor.headCommit.name,
+            "branch" to gitProcessor.branch, "run_operators" to filteredMuOpNames.joinToString(","),
+            "run_coverage" to runCoverage.toString(), "accumulated_coverage" to accumulatedCoverage.toString(),
+            "git_mode" to configuration.gitMode.toString()
+        )
+        temp.save()
     }
 
     private fun cleanBeforeExit() {
         // Save meta before exit
         logger.debug("Saving project meta data before exiting...")
-        projectMeta?.saveMetaData()
+        if (configuration.gitMode) {
+            gitProcessor.setHeadCommitMeta(projectMeta!!)
+            projectMeta!!.meta["sourceBuildFolder"] = configuration.codeRoot
+            projectMeta!!.meta["testBuildFolder"] = configuration.testRoot
+            projectMeta?.saveMetaData()
+        }
         // Remove generated agent after finishing
         JarUtil.removeTemporaryAgentJar(createdAgentLocation)
         logger.debug("Remove temporary moco agent jar successfully")
@@ -119,14 +147,13 @@ class MocoEntryPoint(private val configuration: Configuration) {
     private fun gitInfoProcessing(): Boolean {
         if (configuration.gitMode) {
             logger.info("Git mode: on")
-            logger.info("Latest stored commit ${projectMeta?.meta?.get("latestStoredCommitID")}")
+            logger.info("Latest stored commit: ${projectMeta?.meta?.get("latestStoredCommitID")}")
 
             if (projectMeta?.meta?.get("latestStoredCommitID").isNullOrEmpty()) {
-                PreprocessingFilterByGit.setHeadCommitMeta(configuration.baseDir, projectMeta!!)
                 logger.info("Last commit info does not exist - skip Git commits diff analysis - proceed in normal mode")
             } else {
-                filteredClsByGit = PreprocessingFilterByGit.getChangedClsSinceLastStoredCommit(
-                    configuration.artifactId.replace(".", "/"), configuration.baseDir, projectMeta?.meta!!
+                filteredClsByGit = gitProcessor.getChangedClsSinceLastStoredCommit(
+                    configuration.artifactId.replace(".", "/"), projectMeta?.meta!!
                 )
                 if (filteredClsByGit != null) {
                     if (filteredClsByGit?.isEmpty() == true) {
@@ -136,9 +163,14 @@ class MocoEntryPoint(private val configuration: Configuration) {
                     }
                     logger.info("Preprocessing: Git mode - ${filteredClsByGit!!.size} changed classes by git commits diff")
                     logger.debug("Classes found: $filteredClsByGit")
+                    recordedTestMapping = projectMeta?.meta!!["latestStoredCommitID"]?.let {
+                        TestsCutMapping().getRecordedMapping(
+                            filteredClsByGit!!,
+                            it
+                        )
+                    }
                 } else {
                     filteredClsByGit = listOf("")
-                    PreprocessingFilterByGit.setHeadCommitMeta(configuration.baseDir, projectMeta!!)
                     logger.info("Preprocessing: Git mode: last stored commit not found - proceed in normal mode")
                 }
             }
@@ -153,19 +185,22 @@ class MocoEntryPoint(private val configuration: Configuration) {
         var previousStatus = MoCoProcessCode.OK.code
         val processWorkerArguments = configuration.getPreprocessProcessArgs()
         processWorkerArguments.add(filteredClsByGit!!.joinToString(","))
+        if (recordedTestMapping != null) processWorkerArguments.add(recordedTestMapping!!)
+        else processWorkerArguments.add("")
         while (processStatus != MoCoProcessCode.OK.code) {
-            val preprocessWorkerProcess = WorkerProcess(PreprocessorWorker.javaClass, getProcessArguments(),
+            val preprocessWorkerProcess = WorkerProcess(
+                PreprocessorWorker.javaClass, getProcessArguments(),
                 processWorkerArguments
             )
             preprocessWorkerProcess.start()
             processStatus = preprocessWorkerProcess.getProcess()?.waitFor()!!
             if (processStatus == MoCoProcessCode.UNRECOVERABLE_ERROR.code ||
                 previousStatus == processStatus
-            ) { break }
+            ) break
             else {
                 previousStatus = processStatus
                 // Add more parameter to param to process to signal that this is a rerun because of previous error
-                if (processWorkerArguments.getOrNull(13) == null) processWorkerArguments.add("true")
+                if (processWorkerArguments.getOrNull(14) == null) processWorkerArguments.add("true")
             }
         }
         if (processStatus != MoCoProcessCode.OK.code) {
@@ -180,9 +215,11 @@ class MocoEntryPoint(private val configuration: Configuration) {
             return
         }
         if (preprocessedStorage.classRecord.isNullOrEmpty() || preprocessedStorage.testsExecutionTime.isNullOrEmpty()) {
-            logger.info("No changed classes detected, skip mutation testing")
+            logger.info("No preprocess information available, skip mutation testing")
             return
         }
+        // persist preprocess result to database
+        TestsCutMapping().saveMappingInfo(preprocessedStorage.classRecord, gitProcessor.headCommit.name)
         // Mutations collecting
         logger.debug("Start mutation collecting")
 
@@ -196,45 +233,62 @@ class MocoEntryPoint(private val configuration: Configuration) {
         val filteredMutations = foundMutations.filter { it.value.isNotEmpty() }
         logger.debug("Found ${filteredMutations.size} class(es) can be mutated")
         logger.debug("Complete mutation collecting step")
-        // Mutants generation and tests execution
-        val testRetriever = RelatedTestRetriever(configuration.buildRoot)
-        logger.debug("Start mutation testing")
 
+        // Mutants generation and tests execution
+        logger.debug("Start mutation testing")
+        handleMutations(filteredMutations, preprocessedStorage)
+        persistMutationResults()
+        logger.debug("Complete mutation testing")
+    }
+
+    private fun handleMutations(
+        filteredMutations: Map<ClassName, List<Mutation>>, preprocessedStorage: PreprocessStorage?
+    ) {
         filteredMutations.forEach label@{ (className, mutationList) ->
+            val testRetriever = RelatedTestRetriever(configuration.buildRoot)
             val processArgs = getProcessArguments()
-            val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(className,
-                preprocessedStorage.testsExecutionTime
+            val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(
+                className,
+                preprocessedStorage?.testsExecutionTime!!
             )
             if (relatedTestClasses.isEmpty()) {
                 logger.debug("Class ${className.getJavaName()} has 0 relevant test")
                 return@label
             }
             logger.debug("Class ${className.getJavaName()} has ${relatedTestClasses.size} relevant tests")
-
-            val workerProcess = WorkerProcess(MutationTestWorker::class.java, processArgs,
-                listOf((processArgs["port"] as ServerSocket).localPort.toString()))
-
+            val workerProcess = WorkerProcess(
+                MutationTestWorker::class.java, processArgs,
+                listOf((processArgs["port"] as ServerSocket).localPort.toString())
+            )
             val workerThread = createMutationWorkerThread(mutationList, relatedTestClasses, processArgs)
             workerProcess.execMutationTestProcess(workerThread)
         }
-        JsonSource("${configuration.mocoBuildPath}${File.separator}${configuration.mutationResultsFolder}",
-            "mutation").save(mutationStorage)
-        logger.debug("Complete mutation testing")
-
     }
 
     private fun createMutationWorkerThread(
         mutations: List<Mutation>, tests: List<ClassName>, processArgs: MutableMap<String, Any>
     ): ResultsReceiverThread {
         val mutationWorkerArgs =
-            ResultsReceiverThread.MutationWorkerArguments(mutations, tests, classPath, filteredMuOpNames,
-                "", configuration.testTimeOut, configuration.debugEnabled, configuration.verbose)
+            ResultsReceiverThread.MutationWorkerArguments(
+                mutations, tests, classPath, filteredMuOpNames,
+                "", configuration.testTimeOut, configuration.debugEnabled, configuration.verbose
+            )
         return ResultsReceiverThread(processArgs["port"] as ServerSocket, mutationWorkerArgs, mutationStorage)
     }
 
     private fun getProcessArguments(): MutableMap<String, Any> {
-        return mutableMapOf("port" to ServerSocket(0), "javaExecutable" to configuration.jvm,
+        return mutableMapOf(
+            "port" to ServerSocket(0), "javaExecutable" to configuration.jvm,
             "javaAgentJarPath" to "-javaagent:$createdAgentLocation", "classPath" to classPath
         )
+    }
+
+    private fun persistMutationResults() {
+        logger.debug("Persist mutation test results")
+        JsonSource(
+            "${configuration.mocoBuildPath}${File.separator}${configuration.mutationResultsFolder}",
+            "mutation"
+        ).save(mutationStorage)
+        PersistentMutationResult().saveMutationResult(mutationStorage, gitProcessor.headCommit.name)
     }
 }

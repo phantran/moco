@@ -18,6 +18,7 @@
 
 package io.moco.engine.preprocessing
 
+import io.moco.engine.ClassName
 import io.moco.engine.Codebase
 import io.moco.engine.MoCoProcessCode
 import io.moco.engine.MocoAgent
@@ -25,7 +26,6 @@ import io.moco.engine.test.TestItemWrapper
 import io.moco.persistence.JsonSource
 import io.moco.utils.MoCoLogger
 import java.io.File
-import java.net.Socket
 import kotlin.system.exitProcess
 
 
@@ -48,7 +48,6 @@ object PreprocessorWorker {
      */
     @JvmStatic
     fun main(args: Array<String>) {
-        var socket: Socket? = null
         val mocoBuildPath = args[1]  // path to build or target folder of project
         val codeRoot = args[2]
         val testRoot = args[3]
@@ -65,38 +64,41 @@ object PreprocessorWorker {
         // 2. Project run for the first time and no project meta exists
         val filteredClsByGitCommit =
             if (args[12] != "") args[12].split(",").map { it.trim() } else null
-        val isRerun = if (args.getOrNull(13) != null) args[13].toBoolean() else false
+        val recordedTestMapping = if (args[13] != "") args[13].split(",").map { it.trim() } else null
+        val isRerun = if (args.getOrNull(14) != null) args[14].toBoolean() else false
+
+
         val jsonConverter = JsonSource(
-            "$mocoBuildPath${File.separator}$preprocessResultsFolder", "preprocess")
+            "$mocoBuildPath${File.separator}$preprocessResultsFolder", "preprocess"
+        )
 
         MoCoLogger.useKotlinLog()
         val logger = MoCoLogger()
 
         try {
-            socket = Socket("localhost", args[0].toInt())
             if (isRerun) logger.info("Continue processing step due to the previous test error")
             val analysedCodeBase = Codebase(
-                codeRoot, testRoot, excludedSourceClasses, excludedSourceFolders,
-                excludedTestClasses, excludedTestFolders, filteredClsByGitCommit
+                codeRoot, testRoot, excludedSourceClasses,
+                excludedSourceFolders, excludedTestClasses, excludedTestFolders
             )
-            logger.info("Preprocessing: ${analysedCodeBase.sourceClassNames.size} source classes found")
+            logger.debug("Preprocessing: Code base has ${analysedCodeBase.sourceClassNames.size} source classes")
 
-            if (analysedCodeBase.testClassesNames.size == 0) {
-                logger.info("Preprocessing: No new tests to run")
-                return
+            // Process after filtering
+            if (analysedCodeBase.testClassesNames.size != 0) {
+                // filter by git is null which means proceed in normal processing
+                MocoAgent.addTransformer(PreprocessorTransformer(analysedCodeBase.sourceClassNames))
+                val relevantTests = getRelevantTests(filteredClsByGitCommit, analysedCodeBase, recordedTestMapping)
+                Preprocessor(relevantTests).preprocessing(isRerun, jsonConverter)
+                jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())
+                logger.info("Preprocessing: Data saved and exit")
+            } else {
+                logger.info("Preprocessing: Exit - nothing to run")
             }
-            MocoAgent.addTransformer(PreprocessorTransformer(analysedCodeBase.sourceClassNames))
-            Preprocessor(analysedCodeBase).preprocessing(isRerun, jsonConverter)
-
-            jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())
-            logger.info("Preprocessing: Data saved and exit")
             exitProcess(MoCoProcessCode.OK.code)
-
         } catch (ex: Exception) {
             jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())
             logger.info("Preprocessing: Data saved and exit")
             logger.info("Preprocessing: Exit because of error")
-            socket?.close()
             val exitIndex = ex.message!!.toIntOrNull()
             if (exitIndex != null) {
                 exitProcess(exitIndex)
@@ -104,5 +106,19 @@ object PreprocessorWorker {
                 exitProcess(MoCoProcessCode.UNRECOVERABLE_ERROR.code)
             }
         }
+    }
+
+    private fun getRelevantTests(
+        filteredClsByGitCommit: List<String>?, codebase: Codebase,
+        recordedTestMapping: List<String>?
+    ): MutableList<ClassName> {
+        // Return list of relevant tests to be executed
+        // tests that are changed according to git diff and tests that were mapped before to
+        // corresponding changed source classes
+        val res = codebase.testClassesNames.filter { filteredClsByGitCommit?.contains(it.name) == true }.toMutableList()
+        if (recordedTestMapping != null) {
+            res.addAll(recordedTestMapping.map { ClassName(it) })
+        }
+        return res
     }
 }

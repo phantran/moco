@@ -32,7 +32,6 @@ import java.io.File
  * @param excludedSourceFolders
  * @param excludedTestClasses
  * @param excludedTestFolders
- * @param filterByGitCommit
  */
 class Codebase(
     codePath: String,
@@ -41,7 +40,6 @@ class Codebase(
     excludedSourceFolders: List<String>,
     excludedTestClasses: List<String>,
     excludedTestFolders: List<String>,
-    filterByGitCommit: List<String>?
 ) {
 
     private val codeRoots: List<File> = codePath.split(",").map { File(it) }
@@ -49,7 +47,7 @@ class Codebase(
     val sourceClassNames: MutableList<ClassName> =
         getAllClassNames(codeRoots, excludedSourceClasses, excludedSourceFolders)
     val testClassesNames: MutableList<ClassName> =
-        getAllClassNames(testRoots, excludedTestClasses, excludedTestFolders, filterByGitCommit)
+        getAllClassNames(testRoots, excludedTestClasses, excludedTestFolders)
 
     private var curRoot: File = File("")
 
@@ -61,16 +59,17 @@ class Codebase(
      * @param roots
      * @param filter
      * @param folderFilter
-     * @param filterByGitCommit
      * @return
      */
     private fun getAllClassNames(
-        roots: List<File>, filter: List<String>, folderFilter: List<String>, filterByGitCommit: List<String>? = null
+        roots: List<File>,
+        filter: List<String>,
+        folderFilter: List<String>
     ): MutableList<ClassName> {
         val res: MutableList<ClassName> = mutableListOf()
         for (root: File in roots) {
             curRoot = root
-            res.addAll(getClassNames(root, filter, folderFilter, filterByGitCommit))
+            res.addAll(getClassNames(root, filter, folderFilter))
         }
         return res
     }
@@ -81,21 +80,18 @@ class Codebase(
      * @param curRoot
      * @param filter
      * @param folderFilter
-     * @param filterByGitCommit
      * @return
      */
-    private fun getClassNames(
-        curRoot: File, filter: List<String>, folderFilter: List<String>, filterByGitCommit: List<String>? = null
-    ): MutableList<ClassName> {
+    private fun getClassNames(curRoot: File, filter: List<String>, folderFilter: List<String>): MutableList<ClassName> {
         val clsNames: MutableList<ClassName> = mutableListOf()
         val listOfFiles = curRoot.listFiles()
         if (listOfFiles != null) {
             for (file in listOfFiles) {
                 if (file.isDirectory) {
                     // Recursively call this function to collect all class names
-                    clsNames.addAll(getClassNames(file, filter, folderFilter, filterByGitCommit))
+                    clsNames.addAll(getClassNames(file, filter, folderFilter))
                 } else if (file.name.endsWith(".class")) {
-                    val clsName = fileToClassName(file, filter, folderFilter, filterByGitCommit)
+                    val clsName = fileToClassName(file, filter, folderFilter)
                     if (clsName != null) {
                         clsNames.add(clsName)
                     }
@@ -114,12 +110,9 @@ class Codebase(
      * @param file
      * @param filter
      * @param folderFilter
-     * @param filterByGitCommit
      * @return
      */
-    private fun fileToClassName(
-        file: File, filter: List<String>, folderFilter: List<String>, filterByGitCommit: List<String>? = null
-    ): ClassName? {
+    private fun fileToClassName(file: File, filter: List<String>, folderFilter: List<String>): ClassName? {
         if (folderFilter.any { file.absolutePath.contains(it) }) {
             return null
         }
@@ -137,9 +130,6 @@ class Codebase(
         }
 
         if (filter.contains(clsName)) {
-            return null
-        }
-        if (filterByGitCommit != null && !filterByGitCommit.contains(clsName))  {
             return null
         }
         return ClassName(clsName)
