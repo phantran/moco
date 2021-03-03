@@ -91,6 +91,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
 
     private fun reportResults() {
         val runCoverage = calculateRunCoverage(mutationStorage)
+        println(runCoverage)
         val accumulatedCoverage = calculateAccumulatedCoverage(filteredMuOpNames.joinToString("','"))
         logger.info("-----------------------------------------------------------------------")
         logger.info("Mutation Coverage of this run: $runCoverage")
@@ -150,6 +151,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
             logger.info("Latest stored commit: ${projectMeta?.meta?.get("latestStoredCommitID")}")
 
             if (projectMeta?.meta?.get("latestStoredCommitID").isNullOrEmpty()) {
+                filteredClsByGit = listOf("")
                 logger.info("Last commit info does not exist - skip Git commits diff analysis - proceed in normal mode")
             } else {
                 filteredClsByGit = gitProcessor.getChangedClsSinceLastStoredCommit(

@@ -36,7 +36,7 @@ import java.io.PrintWriter
  * @property filteredSourceClasses
  * @constructor Create empty Preprocessor transformer
  */
-class PreprocessorTransformer(private val filteredSourceClasses: List<ClassName>) : ClassFileTransformer {
+class PreprocessorTransformer(private val filteredSourceClasses: Set<ClassName>) : ClassFileTransformer {
     private val logger = MoCoLogger()
 
     @Throws(IllegalClassFormatException::class)

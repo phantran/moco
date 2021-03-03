@@ -21,28 +21,31 @@ import io.moco.persistence.MutationStorage
 import io.moco.persistence.ProgressClassTest
 
 object Metrics {
-    fun calculateRunCoverage(mutationStorage: MutationStorage): Float {
-        var total = 0
-        var killedMutants = 0
+    fun calculateRunCoverage(mutationStorage: MutationStorage): Double {
+        var total = 0.0
+        var killedMutants = 0.0
         for ((_, value) in mutationStorage.entries) {
             total += value.size
            for (item in value) {
                if (item["result"] as String == "killed") killedMutants += 1
            }
         }
-        return if (total == 0) 0f
-               else (killedMutants/total)*100f
+        var res = 0.0
+         if (total > 0.0) {
+             res = (killedMutants / total) * 100.0
+         }
+        return res
     }
 
-    fun calculateAccumulatedCoverage(configuredOperators: String): Float {
+    fun calculateAccumulatedCoverage(configuredOperators: String): Double {
         val savedProgress = ProgressClassTest().getData("covered_operators IN ('$configuredOperators')")
-        var killedMutants = 0
-        var totalMutants = 0
+        var killedMutants = 0.0
+        var totalMutants = 0.0
         for (item in savedProgress) {
             killedMutants += item.entry["killed_mutants"]?.toIntOrNull() ?: 0
             totalMutants += item.entry["totalMutants"]?.toIntOrNull() ?: 0
         }
-        return if (totalMutants == 0) 0f
-               else (killedMutants/totalMutants)*100f
+        return if (totalMutants == 0.0) 0.0
+               else ((killedMutants / totalMutants) * 100)
     }
 }

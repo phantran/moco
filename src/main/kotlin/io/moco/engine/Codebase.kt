@@ -44,9 +44,9 @@ class Codebase(
 
     private val codeRoots: List<File> = codePath.split(",").map { File(it) }
     private val testRoots: List<File> = testPath.split(",").map { File(it) }
-    val sourceClassNames: MutableList<ClassName> =
+    val sourceClassNames: MutableSet<ClassName> =
         getAllClassNames(codeRoots, excludedSourceClasses, excludedSourceFolders)
-    val testClassesNames: MutableList<ClassName> =
+    val testClassesNames: MutableSet<ClassName> =
         getAllClassNames(testRoots, excludedTestClasses, excludedTestFolders)
 
     private var curRoot: File = File("")
@@ -65,8 +65,8 @@ class Codebase(
         roots: List<File>,
         filter: List<String>,
         folderFilter: List<String>
-    ): MutableList<ClassName> {
-        val res: MutableList<ClassName> = mutableListOf()
+    ): MutableSet<ClassName> {
+        val res: MutableSet<ClassName> = mutableSetOf()
         for (root: File in roots) {
             curRoot = root
             res.addAll(getClassNames(root, filter, folderFilter))
@@ -82,8 +82,8 @@ class Codebase(
      * @param folderFilter
      * @return
      */
-    private fun getClassNames(curRoot: File, filter: List<String>, folderFilter: List<String>): MutableList<ClassName> {
-        val clsNames: MutableList<ClassName> = mutableListOf()
+    private fun getClassNames(curRoot: File, filter: List<String>, folderFilter: List<String>): MutableSet<ClassName> {
+        val clsNames: MutableSet<ClassName> = mutableSetOf()
         val listOfFiles = curRoot.listFiles()
         if (listOfFiles != null) {
             for (file in listOfFiles) {

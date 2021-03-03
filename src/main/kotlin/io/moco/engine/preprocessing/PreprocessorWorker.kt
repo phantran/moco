@@ -88,6 +88,7 @@ object PreprocessorWorker {
                 // filter by git is null which means proceed in normal processing
                 MocoAgent.addTransformer(PreprocessorTransformer(analysedCodeBase.sourceClassNames))
                 val relevantTests = getRelevantTests(filteredClsByGitCommit, analysedCodeBase, recordedTestMapping)
+                logger.info("Preprocessing: ${relevantTests.size} test classes left after filtering")
                 Preprocessor(relevantTests).preprocessing(isRerun, jsonConverter)
                 jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())
                 logger.info("Preprocessing: Data saved and exit")
@@ -111,14 +112,19 @@ object PreprocessorWorker {
     private fun getRelevantTests(
         filteredClsByGitCommit: List<String>?, codebase: Codebase,
         recordedTestMapping: List<String>?
-    ): MutableList<ClassName> {
+    ): List<ClassName> {
         // Return list of relevant tests to be executed
         // tests that are changed according to git diff and tests that were mapped before to
         // corresponding changed source classes
-        val res = codebase.testClassesNames.filter { filteredClsByGitCommit?.contains(it.name) == true }.toMutableList()
+        val res = if (!filteredClsByGitCommit.isNullOrEmpty()) {
+            codebase.testClassesNames.filter { filteredClsByGitCommit.contains(it.name) }.toMutableSet()
+        } else {
+            codebase.testClassesNames
+        }
+
         if (recordedTestMapping != null) {
             res.addAll(recordedTestMapping.map { ClassName(it) })
         }
-        return res
+        return res.toList()
     }
 }
