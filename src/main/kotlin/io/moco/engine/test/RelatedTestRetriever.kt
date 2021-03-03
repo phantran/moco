@@ -49,7 +49,7 @@ class RelatedTestRetriever(buildRoot: String) {
             if (cut.name == item.classUnderTestName && !item.testClasses.isNullOrEmpty()) {
                 // Filter test classes with execution time = -1 and transform to internal class name
                 return item.testClasses.filter { executionTimeInfo[it] != -1L }
-                           .map { ClassName(it.replace(".", "/")) }
+                    .map { ClassName(it.replace(".", "/")) }
             }
         }
         return listOf()

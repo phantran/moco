@@ -15,7 +15,6 @@
  *
  */
 
-
 package io.moco.engine
 
 import io.moco.utils.ByteArrayLoader
@@ -44,7 +43,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
     private val classPath: String
     private var byteArrLoader: ByteArrayLoader
     private var createdAgentLocation: String? = null
-    private val filteredMutationOperatorNames: List<String>
+    private val filteredMuOpNames: List<String>
     private val mutationStorage: MutationJSONStorage = MutationJSONStorage(mutableMapOf())
     private var filteredClsByGit: List<String>? = mutableListOf()
     private var projectMeta: ProjectMeta? = null
@@ -58,12 +57,12 @@ class MocoEntryPoint(private val configuration: Configuration) {
         val cp = configuration.classPath.joinToString(separator = File.pathSeparatorChar.toString())
         classPath = "$cp:${configuration.codeRoot}:${configuration.testRoot}:${configuration.buildRoot}"
         byteArrLoader = ByteArrayLoader(cp)
-        filteredMutationOperatorNames = Operator.supportedOperatorNames.filter {
-            !configuration.excludedMutationOperatorNames.contains(it)
+        filteredMuOpNames = Operator.supportedOperatorNames.filter {
+            !configuration.excludedMuOpNames.contains(it)
         }
         logger.info(
-            "${filteredMutationOperatorNames.size} selected mutation operators: " +
-                    filteredMutationOperatorNames.joinToString(", ")
+            "${filteredMuOpNames.size} selected mutation operators: " +
+                    filteredMuOpNames.joinToString(", ")
         )
         MoCoLogger.verbose = configuration.verbose
     }
@@ -89,7 +88,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
 
     private fun cleanBeforeExit() {
         // Save meta before exit
-        logger.debug("Saving project meta data before exiting")
+        logger.debug("Saving project meta data before exiting...")
         projectMeta?.saveMetaData()
         // Remove generated agent after finishing
         JarUtil.removeTemporaryAgentJar(createdAgentLocation)
@@ -97,7 +96,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
     }
 
     private fun initMoCoOK(): Boolean {
-        if (filteredMutationOperatorNames.isEmpty()) {
+        if (filteredMuOpNames.isEmpty()) {
             return false
         }
 
@@ -155,18 +154,15 @@ class MocoEntryPoint(private val configuration: Configuration) {
         val processWorkerArguments = configuration.getPreprocessProcessArgs()
         processWorkerArguments.add(filteredClsByGit!!.joinToString(","))
         while (processStatus != MoCoProcessCode.OK.code) {
-            val preprocessWorkerProcess = WorkerProcess(
-                PreprocessorWorker.javaClass,
-                getProcessArguments(),
+            val preprocessWorkerProcess = WorkerProcess(PreprocessorWorker.javaClass, getProcessArguments(),
                 processWorkerArguments
             )
             preprocessWorkerProcess.start()
             processStatus = preprocessWorkerProcess.getProcess()?.waitFor()!!
             if (processStatus == MoCoProcessCode.UNRECOVERABLE_ERROR.code ||
                 previousStatus == processStatus
-            ) {
-                break
-            } else {
+            ) { break }
+            else {
                 previousStatus = processStatus
                 // Add more parameter to param to process to signal that this is a rerun because of previous error
                 if (processWorkerArguments.getOrNull(13) == null) processWorkerArguments.add("true")
@@ -191,23 +187,22 @@ class MocoEntryPoint(private val configuration: Configuration) {
         logger.debug("Start mutation collecting")
 
         val mGen =
-            MutationGenerator(byteArrLoader, filteredMutationOperatorNames.mapNotNull { Operator.nameToOperator(it) })
+            MutationGenerator(byteArrLoader, filteredMuOpNames.mapNotNull { Operator.nameToOperator(it) })
         val foundMutations: MutableMap<ClassName, List<Mutation>> = mutableMapOf()
         for (item in preprocessedStorage.classRecord) {
             foundMutations[ClassName(item.classUnderTestName)] =
                 mGen.findPossibleMutationsOfClass(item.classUnderTestName, item.coveredLines).distinct()
         }
-        val filteredFoundMutations = foundMutations.filter { it.value.isNotEmpty() }
-        logger.debug("Found ${filteredFoundMutations.size} class(es) can be mutated")
+        val filteredMutations = foundMutations.filter { it.value.isNotEmpty() }
+        logger.debug("Found ${filteredMutations.size} class(es) can be mutated")
         logger.debug("Complete mutation collecting step")
-
         // Mutants generation and tests execution
         val testRetriever = RelatedTestRetriever(configuration.buildRoot)
         logger.debug("Start mutation testing")
-        filteredFoundMutations.forEach label@{ (className, mutationList) ->
+
+        filteredMutations.forEach label@{ (className, mutationList) ->
             val processArgs = getProcessArguments()
-            val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(
-                className,
+            val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(className,
                 preprocessedStorage.testsExecutionTime
             )
             if (relatedTestClasses.isEmpty()) {
@@ -215,58 +210,30 @@ class MocoEntryPoint(private val configuration: Configuration) {
                 return@label
             }
             logger.debug("Class ${className.getJavaName()} has ${relatedTestClasses.size} relevant tests")
-            val mutationTestWorkerProcess =
-                createMutationTestWorkerProcess(mutationList, relatedTestClasses, processArgs)
-            executeMutationTestingProcess(mutationTestWorkerProcess)
+
+            val workerProcess = WorkerProcess(MutationTestWorker::class.java, processArgs,
+                listOf((processArgs["port"] as ServerSocket).localPort.toString()))
+
+            val workerThread = createMutationWorkerThread(mutationList, relatedTestClasses, processArgs)
+            workerProcess.execMutationTestProcess(workerThread)
         }
-        JsonSource(
-            "${configuration.mocoBuildPath}${File.separator}${configuration.mutationResultsFolder}",
-            "mutation"
-        ).save(mutationStorage)
+        JsonSource("${configuration.mocoBuildPath}${File.separator}${configuration.mutationResultsFolder}",
+            "mutation").save(mutationStorage)
         logger.debug("Complete mutation testing")
 
     }
 
-    private fun executeMutationTestingProcess(p: Pair<WorkerProcess, ResultsReceiverThread>) {
-        val process = p.first
-        val comThread = p.second
-        process.start()
-        comThread.start()
-        try {
-            comThread.waitUntilFinish()
-        } finally {
-            process.destroyProcess()
-        }
-    }
-
-    private fun createMutationTestWorkerProcess(
-        mutations: List<Mutation>, tests: List<ClassName>,
-        processArgs: MutableMap<String, Any>
-    ): Pair<WorkerProcess, ResultsReceiverThread> {
-
+    private fun createMutationWorkerThread(
+        mutations: List<Mutation>, tests: List<ClassName>, processArgs: MutableMap<String, Any>
+    ): ResultsReceiverThread {
         val mutationWorkerArgs =
-            ResultsReceiverThread.MutationWorkerArguments(
-                mutations,
-                tests,
-                classPath,
-                filteredMutationOperatorNames,
-                "",
-                configuration.testTimeOut,
-                configuration.debugEnabled,
-                configuration.verbose
-            )
-        val mutationTestWorkerProcess = WorkerProcess(
-            MutationTestWorker::class.java,
-            processArgs,
-            listOf((processArgs["port"] as ServerSocket).localPort.toString())
-        )
-        val comThread = ResultsReceiverThread(processArgs["port"] as ServerSocket, mutationWorkerArgs, mutationStorage)
-        return Pair(mutationTestWorkerProcess, comThread)
+            ResultsReceiverThread.MutationWorkerArguments(mutations, tests, classPath, filteredMuOpNames,
+                "", configuration.testTimeOut, configuration.debugEnabled, configuration.verbose)
+        return ResultsReceiverThread(processArgs["port"] as ServerSocket, mutationWorkerArgs, mutationStorage)
     }
 
     private fun getProcessArguments(): MutableMap<String, Any> {
-        return mutableMapOf(
-            "port" to ServerSocket(0), "javaExecutable" to configuration.jvm,
+        return mutableMapOf("port" to ServerSocket(0), "javaExecutable" to configuration.jvm,
             "javaAgentJarPath" to "-javaagent:$createdAgentLocation", "classPath" to classPath
         )
     }

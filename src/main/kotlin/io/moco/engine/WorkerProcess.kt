@@ -18,6 +18,7 @@
 
 package io.moco.engine
 
+import io.moco.engine.mutation.ResultsReceiverThread
 import java.io.IOException
 import java.lang.Exception
 import java.net.ServerSocket
@@ -55,11 +56,22 @@ class WorkerProcess(
 
     }
 
-    fun destroyProcess() {
+    private fun destroyProcess() {
         process?.destroy()
     }
 
     fun getProcess(): Process? {
         return process
     }
+
+    fun execMutationTestProcess(rt: ResultsReceiverThread) {
+        this.start()
+        rt.start()
+        try {
+            rt.waitUntilFinish()
+        } finally {
+            this.destroyProcess()
+        }
+    }
+
 }

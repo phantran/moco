@@ -31,7 +31,7 @@ data class Configuration(
     val jvm: String,
     val preprocessResultsFolder: String,
     val mutationResultsFolder: String,
-    val excludedMutationOperatorNames: String,
+    val excludedMuOpNames: String,
     val baseDir: String,
     val compileSourceRoots: List<String>?,
     val artifactId: String,

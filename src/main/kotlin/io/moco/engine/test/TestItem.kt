@@ -84,14 +84,14 @@ class TestItem(
 
         fun testClassesToTestItems(testClassNames: List<ClassName>): List<TestItem> {
             // convert from test classes to test items so it can be executed
-            var testClsNames = testClassNames.mapNotNull { ClassName.clsNameToClass(it)}
+            var testClsNames = testClassNames.mapNotNull { ClassName.clsNameToClass(it) }
             testClsNames = testClsNames.filter { isNotTestSuite(it) }
             return testClsNames.map {
                 TestItem(it)
             }
         }
 
-        private fun isNotTestSuite(cls: Class<*>) : Boolean {
+        private fun isNotTestSuite(cls: Class<*>): Boolean {
             // Ignore test suite class since all normal test classes are recorded.
             if (cls.getAnnotation(Suite.SuiteClasses::class.java) == null) {
                 return true

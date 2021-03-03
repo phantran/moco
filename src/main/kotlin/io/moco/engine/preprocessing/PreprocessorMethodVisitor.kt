@@ -34,8 +34,10 @@ class PreprocessorMethodVisitor(
     override fun visitEnd() {
         // call method of preprocessorTracker to register cut name to test
         mv.visitLdcInsn(className)
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, PreprocessorTracker.internalClsName,
-            "registerCUT", "(Ljava/lang/String;)V", false)
+        mv.visitMethodInsn(
+            Opcodes.INVOKESTATIC, PreprocessorTracker.internalClsName,
+            "registerCUT", "(Ljava/lang/String;)V", false
+        )
         accept(mv)
     }
 
@@ -47,8 +49,10 @@ class PreprocessorMethodVisitor(
         } else {
             mv.visitIntInsn(Opcodes.SIPUSH, line)
         }
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, PreprocessorTracker.internalClsName,
-            "registerLine", "(Ljava/lang/String;I)V", false)
+        mv.visitMethodInsn(
+            Opcodes.INVOKESTATIC, PreprocessorTracker.internalClsName,
+            "registerLine", "(Ljava/lang/String;I)V", false
+        )
         mv.visitLineNumber(line, start)
     }
 }

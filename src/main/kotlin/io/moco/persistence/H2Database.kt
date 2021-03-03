@@ -165,7 +165,8 @@ class H2Database : Database() {
             "ProjectMeta" to ProjectMeta.schema,
             "ProgressClassTest" to ProgressClassTest.schema,
             "PersistentMutationResult" to PersistentMutationResult.schema,
-            "ProjectTestHistory" to ProjectTestHistory.schema
+            "ProjectTestHistory" to ProjectTestHistory.schema,
+            "MutantsBlackList" to MutantsBlackList.schema
         )
 
         fun shutDownDB() {

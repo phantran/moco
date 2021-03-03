@@ -15,20 +15,9 @@
  *
  */
 
-
 package io.moco.engine.test
 
 import java.io.Serializable
 
 
-data class Description constructor(val name: String, val testCls: String?) :
-    Serializable {
-    private val testClass: String? = testCls?.intern()
-
-    val qualifiedName: String
-        get() = if (testClass != null && testClass != name) {
-            "$testClass.$name"
-        } else {
-            name
-        }
-}
+data class Description constructor(val name: String, val testCls: String?) : Serializable

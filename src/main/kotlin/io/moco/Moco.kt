@@ -106,8 +106,8 @@ class Moco : AbstractMojo() {
     /**
      * Excluded mutation operators, comma separated string
      */
-    @Parameter(defaultValue = "", property = "excludedMutationOperatorNames", required = false)
-    private val excludedMutationOperatorNames: String = ""
+    @Parameter(defaultValue = "", property = "excludedMuOpNames", required = false)
+    private val excludedMuOpNames: String = ""
 
     /**
      * Set to true to tell MoCo to only generate mutation only for changed classes based on git commit information
@@ -186,7 +186,7 @@ class Moco : AbstractMojo() {
                 jvm,
                 preprocessResultsFolder,
                 mutationResultsFolder,
-                excludedMutationOperatorNames,
+                excludedMuOpNames,
                 project?.basedir.toString(),
                 project?.compileSourceRoots,
                 project?.artifactId!!,
@@ -203,7 +203,7 @@ class Moco : AbstractMojo() {
             MoCoLogger.useMvnLog(log)
             H2Database.initPool(
                 url = "jdbc:h2:file:${Configuration.currentConfig?.mocoBuildPath}" +
-                        "${File.separator}/persistence/persistence;mode=MySQL;",
+                        "${File.separator}/persistence/moco;mode=MySQL;",
                 user = "moco",
                 password = "moco",
             )
