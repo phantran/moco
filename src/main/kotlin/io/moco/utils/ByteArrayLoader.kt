@@ -27,16 +27,15 @@ class ByteArrayLoader(cp: String?) {
     private val clsPaths: Set<File>
 
     init {
-        clsPaths = cp?.split(File.pathSeparatorChar.toString())?.map { File(it.trim()) }?.toSet() ?: initClsPath()
+        clsPaths = cp?.split(File.pathSeparator)?.map { File(it.trim()) }?.toSet() ?: initClsPath()
     }
 
     private fun initClsPath(): Set<File> {
         val res = mutableSetOf<File>()
         val classPath = System.getProperty("java.class.path")
-        val separator = File.pathSeparator
         var temp = setOf<String>()
         if (classPath != null) {
-            temp = classPath.split(separator.toRegex()).toSet()
+            temp = classPath.split(File.pathSeparator.toRegex()).toSet()
         }
         for (item in temp) {
             res.add(getCanonicalPath(item))

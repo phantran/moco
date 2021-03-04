@@ -21,7 +21,7 @@ package io.moco.engine.preprocessing
 import io.moco.engine.ClassName
 import io.moco.engine.Codebase
 import io.moco.engine.MoCoProcessCode
-import io.moco.engine.MocoAgent
+import io.moco.engine.MoCoAgent
 import io.moco.engine.test.TestItemWrapper
 import io.moco.persistence.JsonSource
 import io.moco.utils.MoCoLogger
@@ -74,7 +74,7 @@ object PreprocessorWorker {
             )
             logger.debug("Preprocessing: Code base has ${analysedCodeBase.sourceClassNames.size} source classes")
 
-            MocoAgent.addTransformer(PreprocessorTransformer(analysedCodeBase.sourceClassNames))
+            MoCoAgent.addTransformer(PreprocessorTransformer(analysedCodeBase.sourceClassNames))
             val relevantTests = getRelevantTests(filteredClsByGitCommit, analysedCodeBase, recordedTestMapping)
 
             // Process after filtering

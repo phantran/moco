@@ -25,7 +25,7 @@ import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 
 
-public class MocoAgent {
+public class MoCoAgent {
 
     public static boolean introduceMutant(final Class<?> toBeReplacedCls, final byte[] bytes) {
         final ClassDefinition[] definitions = {new ClassDefinition(toBeReplacedCls, bytes)};

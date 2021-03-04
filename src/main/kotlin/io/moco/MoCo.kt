@@ -18,7 +18,8 @@
 package io.moco
 
 import io.moco.engine.Configuration
-import io.moco.engine.MocoEntryPoint
+import io.moco.engine.MoCoEntryPoint
+import io.moco.engine.operator.Operator
 import io.moco.persistence.H2Database
 import io.moco.utils.MoCoLogger
 import org.apache.maven.plugin.AbstractMojo
@@ -40,7 +41,7 @@ import java.lang.Exception
     defaultPhase = LifecyclePhase.PROCESS_SOURCES,
     requiresDependencyResolution = ResolutionScope.COMPILE
 )
-class Moco : AbstractMojo() {
+class MoCo : AbstractMojo() {
 
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     var project: MavenProject? = null
@@ -150,10 +151,16 @@ class Moco : AbstractMojo() {
             val runtimeCp = project?.runtimeClasspathElements
             val compileCp = project?.compileClasspathElements
 
-            val temp = System.getProperty("java.class.path").split(File.pathSeparatorChar.toString())
-            val classPath = temp.union(runtimeCp!!.toSet()).union(compileCp!!.toSet()).toList()
+
             val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
             val mocoBuildPath = "$buildRoot${File.separator}$mocoRoot"
+
+            val fOpNames = Operator.supportedOperatorNames.filter { !excludedMuOpNames.contains(it) }
+
+            val temp = System.getProperty("java.class.path").split(File.pathSeparator)
+                .union(runtimeCp!!.toSet()).union(compileCp!!.toSet()).toList()
+                .joinToString(separator = File.pathSeparator)
+            val classPath = "$temp:$codeRoot:${testRoot}:${buildRoot}"
 
             val configuration = Configuration(
                 buildRoot,
@@ -169,6 +176,7 @@ class Moco : AbstractMojo() {
                 preprocessResultsFolder,
                 mutationResultsFolder,
                 excludedMuOpNames,
+                fOpNames,
                 project?.basedir.toString(),
                 project?.compileSourceRoots,
                 project?.artifactId!!,
@@ -188,7 +196,7 @@ class Moco : AbstractMojo() {
                 password = "moco",
             )
             H2Database().initDBTablesIfNotExists()
-            MocoEntryPoint(configuration).execute()
+            MoCoEntryPoint(configuration).execute()
         } catch (e: Exception) {
             log.error(e.message)
         } finally {

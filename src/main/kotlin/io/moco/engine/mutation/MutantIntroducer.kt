@@ -19,7 +19,7 @@
 package io.moco.engine.mutation
 
 import io.moco.engine.ClassName
-import io.moco.engine.MocoAgent
+import io.moco.engine.MoCoAgent
 import io.moco.utils.ByteArrayLoader
 import io.moco.utils.MoCoLogger
 
@@ -39,7 +39,7 @@ class MutantIntroducer(private val byteArrayLoader: ByteArrayLoader) {
                     previousClass?.name, false,
                     loader
                 )
-                MocoAgent.introduceMutant(cls, previousByteArr)
+                MoCoAgent.introduceMutant(cls, previousByteArr)
             }
             if (previousClass == null || previousClass!! != clsName) {
                 previousByteArr = byteArrayLoader.getByteArray(clsName?.getJavaName())!!
@@ -47,7 +47,7 @@ class MutantIntroducer(private val byteArrayLoader: ByteArrayLoader) {
             previousClass = clsName
             previousLoader = loader
 
-            MocoAgent.introduceMutant(Class.forName(clsName?.getJavaName(), false, loader), byteArr)
+            MoCoAgent.introduceMutant(Class.forName(clsName?.getJavaName(), false, loader), byteArr)
         } catch (e: ClassNotFoundException) {
             logger.error("Error while replacing a class under test by its mutant " + clsName?.getJavaName())
             throw e

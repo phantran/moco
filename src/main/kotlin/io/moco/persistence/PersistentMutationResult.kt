@@ -35,20 +35,22 @@ data class PersistentMutationResult(
         val entries: MutableSet<MutableMap<String, String?>> = mutableSetOf()
         for ((key, value) in data.entries) {
             for (item in value) {
-                val mutationDetails = item["mutationDetails"] as Mutation
-                val mutationID = mutationDetails.mutationID
-                entries.add(
-                    mutableMapOf(
-                        "class_name" to key, "commit_id" to commitID,
-                        "file_name" to mutationDetails.fileName,
-                        "line_of_code" to mutationDetails.lineOfCode.toString(),
-                        "instruction_indices" to mutationID.instructionIndices!!.joinToString(","),
-                        "mutator_id" to mutationID.mutatorUniqueID,
-                        "mutation_description" to mutationDetails.description,
-                        "operator_name" to mutationID.operatorName,
-                        "test_status" to item["result"] as String,
+                if (item["result"] as String != "run_error") {
+                    val mutationDetails = item["mutationDetails"] as Mutation
+                    val mutationID = mutationDetails.mutationID
+                    entries.add(
+                        mutableMapOf(
+                            "class_name" to key, "commit_id" to commitID,
+                            "file_name" to mutationDetails.fileName,
+                            "line_of_code" to mutationDetails.lineOfCode.toString(),
+                            "instruction_indices" to mutationID.instructionIndices!!.joinToString(","),
+                            "mutator_id" to mutationID.mutatorUniqueID,
+                            "mutation_description" to mutationDetails.description,
+                            "operator_name" to mutationID.operatorName,
+                            "test_status" to item["result"] as String,
+                        )
                     )
-                )
+                }
             }
         }
         saveMultipleEntries(sourceName, entries.toList())

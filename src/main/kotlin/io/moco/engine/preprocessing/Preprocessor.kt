@@ -52,10 +52,10 @@ class Preprocessor(
                 return
             }
             PreprocessorTracker.errorTests = recoveredResult.errorTests
-            logger.info("Preprocessing: ${remainingTests.size} test classes to run after filtering")
+            logger.info("Preprocessing: ${remainingTests.size} test class(es) to run after filtering")
             collectInfo(wrapped.first, isRerun, remainingTests)
         } else {
-            logger.info("Preprocessing: ${wrapped.first.size} test classes to run after filtering")
+            logger.info("Preprocessing: ${wrapped.first.size} test class(es) to run after filtering")
             collectInfo(wrapped.first)
         }
     }

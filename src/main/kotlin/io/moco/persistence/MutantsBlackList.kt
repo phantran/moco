@@ -17,24 +17,47 @@
 
 package io.moco.persistence
 
+import io.moco.engine.mutation.Mutation
+
 
 data class MutantsBlackList(
     override var entry: MutableMap<String, String> =
         mutableMapOf(
-            "commit_id" to "", "file_name" to "", "class_name" to "", "method_name" to "",
-            "line_of_code" to "", "instruction_indices" to "", "mutator_id" to ""
+            "commit_id" to "", "class_name" to "", "line_of_code" to "",
+            "instruction_indices" to "", "mutator_id" to ""
         ),
 ) : MoCoModel() {
 
-    override val sourceName = "PersistentMutationResult"
+    override val sourceName = "MutantsBlackList"
+
+
+    fun saveErrorMutants(data: MutationStorage, commitID: String) {
+        val entries: MutableSet<MutableMap<String, String?>> = mutableSetOf()
+        for ((key, value) in data.entries) {
+            for (item in value) {
+                if (item["result"] as String == "run_error") {
+                    val mutationDetails = item["mutationDetails"] as Mutation
+                    val mutationID = mutationDetails.mutationID
+                    entries.add(
+                        mutableMapOf(
+                            "commit_id" to commitID,
+                            "class_name" to key,
+                            "line_of_code" to mutationDetails.lineOfCode.toString(),
+                            "instruction_indices" to mutationID.instructionIndices!!.joinToString(","),
+                            "mutator_id" to mutationID.mutatorUniqueID,
+                        )
+                    )
+                }
+            }
+        }
+        saveMultipleEntries(sourceName, entries.toList())
+    }
 
     companion object {
         const val schema: String =
             "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY," +
             "commit_id VARCHAR(255)," +
-            "file_name VARCHAR(255)," +
             "class_name VARCHAR(255)," +
-            "method_name VARCHAR(255)," +
             "line_of_code INT(8) UNSIGNED NOT NULL," +
             "instruction_indices VARCHAR(255)," +
             "mutator_id VARCHAR(255)," +

@@ -17,7 +17,7 @@
 
 package io.moco.utils
 
-import io.moco.engine.MocoAgent
+import io.moco.engine.MoCoAgent
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -53,14 +53,14 @@ class JarUtil {
                 )
                 temp.putValue(
                     "Agent-Class",
-                    MocoAgent::class.java.name
+                    MoCoAgent::class.java.name
                 )
                 temp.putValue("Can-Redefine-Classes", "true")
                 temp.putValue("Can-Retransform-Classes", "true")
-                temp.putValue("Premain-Class", MocoAgent::class.java.name)
+                temp.putValue("Premain-Class", MoCoAgent::class.java.name)
                 temp.putValue("Can-Set-Native-Method-Prefix", "true")
                 JarOutputStream(outputStream, manifest).use { jos ->
-                    addClass(MocoAgent::class.java.name, jos, byteLoader)
+                    addClass(MoCoAgent::class.java.name, jos, byteLoader)
                 }
                 jarName.absolutePath
             } catch (ex: IOException) {

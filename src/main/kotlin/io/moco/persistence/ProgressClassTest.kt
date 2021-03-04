@@ -20,7 +20,7 @@ package io.moco.persistence
 data class ProgressClassTest(
     override var entry: MutableMap<String, String> =
         mutableMapOf(
-            "class_name" to "", "commit_id" to "",  "covered_operators" to "",
+            "class_name" to "", "commit_id" to "", "covered_operators" to "",
             "total_mutants" to "", "killed_mutants" to "",
         ),
 ) : MoCoModel() {
@@ -30,30 +30,28 @@ data class ProgressClassTest(
     fun saveProgress(data: MutationStorage, commitID: String, configuredOperators: String) {
         val entries: MutableSet<MutableMap<String, String?>> = mutableSetOf()
         for ((key, value) in data.entries) {
-            for (item in value) {
-                entries.add(
-                    mutableMapOf(
-                        "class_name" to key,
-                        "commit_id" to commitID,
-                        "covered_operators" to configuredOperators,
-                        "total_mutants" to value.size.toString(),
-                        "killed_mutants" to value.count { it["result"] == "killed" }.toString(),
-                    )
+            entries.add(
+                mutableMapOf(
+                    "class_name" to key,
+                    "commit_id" to commitID,
+                    "covered_operators" to configuredOperators,
+                    "total_mutants" to value.size.toString(),
+                    "killed_mutants" to value.count { it["result"] == "killed" }.toString(),
                 )
-            }
+            )
         }
         saveMultipleEntries(sourceName, entries.toList())
     }
 
     companion object {
-         const val schema: String =
+        const val schema: String =
             "id INT NOT NULL AUTO_INCREMENT," +
-            "class_name VARCHAR(255)," +
-            "commit_id VARCHAR(255)," +
-            "covered_operators VARCHAR(255)," +
-            "total_mutants MEDIUMINT(8) UNSIGNED NOT NULL," +
-            "killed_mutants MEDIUMINT(8) UNSIGNED NOT NULL," +
-            "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
-            "UNIQUE KEY unique_class_progress (class_name, covered_operators)"
+                    "class_name VARCHAR(255)," +
+                    "commit_id VARCHAR(255)," +
+                    "covered_operators VARCHAR(255)," +
+                    "total_mutants MEDIUMINT(8) UNSIGNED NOT NULL," +
+                    "killed_mutants MEDIUMINT(8) UNSIGNED NOT NULL," +
+                    "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                    "UNIQUE KEY unique_class_progress (class_name, covered_operators)"
     }
 }

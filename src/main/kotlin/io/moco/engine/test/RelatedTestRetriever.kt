@@ -31,7 +31,7 @@ import io.moco.engine.preprocessing.PreprocessStorage
  */
 class RelatedTestRetriever(buildRoot: String) {
 
-    private val store: PreprocessStorage = PreprocessStorage.getStoredPreprocessStorage(buildRoot)!!
+    private val store: PreprocessStorage = PreprocessStorage.getPreprocessStorage(buildRoot)!!
 
     /**
      * Retrieve related test

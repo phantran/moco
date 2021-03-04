@@ -38,7 +38,7 @@ data class PreprocessStorage(
     companion object {
         private var storedStorage: PreprocessStorage? = null
 
-        fun getStoredPreprocessStorage(mocoBuildPath: String): PreprocessStorage? {
+        fun getPreprocessStorage(mocoBuildPath: String): PreprocessStorage? {
             return if (storedStorage == null) {
                 storedStorage = JsonSource(
                     "$mocoBuildPath${File.separator}${Configuration.currentConfig?.preprocessResultsFolder}",
