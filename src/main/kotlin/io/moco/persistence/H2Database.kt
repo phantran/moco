@@ -49,6 +49,19 @@ class H2Database : Database() {
         }
     }
 
+    fun dropAllMoCoTables() {
+        for (table in MoCoTables.keys) {
+            try {
+                connectionsPool.connection.use { con ->
+                    val statement = "DROP TABLE IF EXISTS $table;"
+                    con?.createStatement().use { st -> st?.execute(statement) }
+                }
+            } catch (ex: Exception) {
+                logger.error("Cannot delete database table $table")
+            }
+        }
+    }
+
     override fun dropDatabase(dbName: String) {
         try {
             connectionsPool.connection.use { con ->

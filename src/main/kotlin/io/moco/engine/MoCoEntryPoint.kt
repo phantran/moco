@@ -37,15 +37,21 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     private val classPath: String = configuration.classPath
     private var fOpNames = configuration.fOpNames
     private var preprocessResultsFolder = configuration.preprocessResultsFolder
+    private var excludedSourceClasses = configuration.excludedSourceClasses
+    private var excludedTestClasses = configuration.excludedTestClasses
+    private var excludedSourceFolders = configuration.excludedSourceFolders
+    private var excludedTestFolders = configuration.excludedTestFolders
+    private var excludedMuOpNames = configuration.excludedMuOpNames
     private var mocoBuildPath = configuration.mocoBuildPath
     private var gitMode = configuration.gitMode
     private var byteArrLoader: ByteArrayLoader
     private var agentLoc: String? = null
     private val mutationStorage: MutationStorage = MutationStorage(mutableMapOf())
-    private var filteredClsByGit: List<String>? = listOf()
+    private var clsByGit: List<String>? = listOf()
     private var projectMeta: ProjectMeta? = null
     private var recordedTestMapping: String? = null
     private var gitProcessor = GitProcessor(configuration.baseDir)
+    private var newOperatorsSelected: Boolean = false
 
     init {
         MoCoLogger.verbose = configuration.verbose
@@ -62,10 +68,10 @@ class MoCoEntryPoint(private val configuration: Configuration) {
             if (!initMoCoOK()) logger.info("EXIT: Nothing to do")
             else {
                 logger.info("Preprocessing started......")
-                PreprocessEntryPoint().preprocessing(filteredClsByGit!!, recordedTestMapping, agentLoc!!)
+                PreprocessEntryPoint().preprocessing(clsByGit!!, recordedTestMapping, agentLoc!!)
                 logger.info("Preprocessing completed")
                 logger.info("Mutation Test started......")
-                MutationEntryPoint(byteArrLoader, mutationStorage, gitProcessor, agentLoc, classPath).mutationTest()
+                MutationEntryPoint(byteArrLoader, mutationStorage, gitProcessor, agentLoc, clsByGit).mutationTest(newOperatorsSelected)
                 logger.info("Mutation Test completed")
             }
         }
@@ -82,6 +88,10 @@ class MoCoEntryPoint(private val configuration: Configuration) {
             gitProcessor.setHeadCommitMeta(projectMeta!!)
             projectMeta!!.meta["sourceBuildFolder"] = configuration.codeRoot
             projectMeta!!.meta["testBuildFolder"] = configuration.testRoot
+
+            if (newOperatorsSelected) {
+                projectMeta!!.meta["runOperators"] += "-" + fOpNames.joinToString(",")
+            }
             projectMeta?.saveMetaData()
         }
         // Remove generated agent after finishing
@@ -95,6 +105,11 @@ class MoCoEntryPoint(private val configuration: Configuration) {
             return false
         }
         logger.info("${fOpNames.size} selected mutation operators: " + fOpNames.joinToString(", "))
+        if (excludedMuOpNames != "") logger.info("Excluded operators: $excludedMuOpNames")
+        if (excludedSourceClasses != "") logger.info("Excluded sources classes: $excludedSourceClasses")
+        if (excludedSourceFolders != "") logger.info("Excluded source folder: $excludedSourceFolders")
+        if (excludedTestClasses != "") logger.info("Excluded test classes: $excludedTestClasses")
+        if (excludedTestFolders != "") logger.info("Excluded test folder: $excludedTestFolders")
 
         val gitOK = gitInfoProcessing()
         if (!gitOK) return false
@@ -109,41 +124,75 @@ class MoCoEntryPoint(private val configuration: Configuration) {
             "${mocoBuildPath}${File.separator}${preprocessResultsFolder}",
             "preprocess"
         ).removeJSONFileIfExists()
-        return true
-    }
 
-    private fun gitInfoProcessing(): Boolean {
-        if (gitMode) {
-            logger.info("Git mode: on")
-            logger.info("Latest stored commit: ${projectMeta?.meta?.get("latestStoredCommitID")}")
-
-            if (projectMeta?.meta?.get("latestStoredCommitID").isNullOrEmpty()) {
-                filteredClsByGit = listOf("")
-                logger.info("Last commit info does not exist - skip Git commits diff analysis - proceed in normal mode")
-            } else {
-                filteredClsByGit = gitProcessor.getChangedClsSinceLastStoredCommit(
-                    configuration.artifactId.replace(".", "/"), projectMeta?.meta!!
-                )
-                if (filteredClsByGit != null) {
-                    if (filteredClsByGit?.isEmpty() == true) {
-                        logger.info("Preprocessing: Git mode: No changed files found by git commits diff")
-                        // skip preprocessing in git mode and no detected changed class
-                        return false
-                    }
-                    logger.info("Preprocessing: Git mode - ${filteredClsByGit!!.size} changed classes by git commits diff")
-                    logger.debug("Classes found: $filteredClsByGit")
-                    recordedTestMapping = projectMeta?.meta!!["latestStoredCommitID"]?.let {
-                        TestsCutMapping().getRecordedMapping(filteredClsByGit!!, it)
-                    }
-                } else {
-                    filteredClsByGit = listOf("")
-                    logger.info("Preprocessing: Git mode: last stored commit not found - proceed in normal mode")
-                }
-            }
-        } else {
-            logger.info("Git mode: off")
+        if (shouldResetDB()) {
+            H2Database().dropAllMoCoTables()
+            H2Database().initDBTablesIfNotExists()
         }
         return true
     }
 
+    private fun gitInfoProcessing(): Boolean {
+        if (!shouldRunFromScratch()) {
+            logger.info("Git mode: on")
+            logger.info("Latest stored commit: ${projectMeta?.meta?.get("latestStoredCommitID")}")
+
+            if (projectMeta?.meta?.get("latestStoredCommitID").isNullOrEmpty()) {
+                clsByGit = listOf("")
+                logger.info("Last commit info does not exist - skip Git commits diff analysis - proceed in normal mode")
+            } else {
+                clsByGit = gitProcessor.getChangedClsSinceLastStoredCommit(
+                    configuration.artifactId.replace(".", "/"), projectMeta?.meta!!
+                )
+                if (clsByGit != null) {
+                    if (clsByGit?.isEmpty() == true) {
+                        logger.info("Preprocessing: Git mode: No changed files found by git commits diff")
+                        // skip preprocessing in git mode and no detected changed class
+                        return false
+                    }
+                    logger.info("Preprocessing: Git mode - ${clsByGit!!.size} changed classes by git commits diff")
+                    logger.debug("Classes found: $clsByGit")
+                    recordedTestMapping = projectMeta?.meta!!["latestStoredCommitID"]?.let {
+                        TestsCutMapping().getRecordedMapping(clsByGit!!, it)
+                    }
+                } else {
+                    clsByGit = listOf("")
+                    logger.info("Preprocessing: Git mode: last stored commit not found - proceed in normal mode")
+                }
+            }
+        }
+        return true
+    }
+
+    private fun shouldResetDB(): Boolean  {
+        if (!gitMode) {
+            return false
+        }
+        val sourceBuildFolder = projectMeta?.meta?.get("sourceBuildFolder")
+        val recordedTestFolder = projectMeta?.meta?.get("testBuildFolder")
+        if (sourceBuildFolder != Configuration.currentConfig?.buildRoot) {
+            return true
+        }
+        if (recordedTestFolder != Configuration.currentConfig?.testRoot) {
+            return true
+        }
+        return false
+    }
+
+    private fun shouldRunFromScratch(): Boolean {
+        val recordedOps = projectMeta?.meta?.get("runOperators")?.split("-")
+        if (!recordedOps.isNullOrEmpty()) {
+            newOperatorsSelected = !recordedOps.contains(fOpNames.joinToString(","))
+        }
+        if (newOperatorsSelected) {
+            logger.info("New set of operators are chosen, do mutation tests without filtering")
+            return true
+        }
+        if (!gitMode) {
+            logger.info("Git mode: off")
+            return true
+        }
+
+        return false
+    }
 }

@@ -44,7 +44,12 @@ open class MoCoModel(
             }
             res.add(MoCoModel(tempEntry))
         }
+        con.close()
         return res
+    }
+
+    open fun removeData(condition: String) {
+        H2Database().delete(sourceName, condition)
     }
 
     companion object {

@@ -24,7 +24,8 @@ data class ProjectMeta(
         "latestStoredCommitID" to "",
         "latestStoredBranchName" to "",
         "sourceBuildFolder" to "",
-        "testBuildFolder" to "")
+        "testBuildFolder" to "",
+        "runOperators" to "",)
 ) : MoCoModel() {
 
     override val sourceName = "ProjectMeta"

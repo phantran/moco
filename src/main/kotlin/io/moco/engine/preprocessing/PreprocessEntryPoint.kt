@@ -37,7 +37,7 @@ class PreprocessEntryPoint {
         else processWorkerArguments.add("")
         while (processStatus != MoCoProcessCode.OK.code) {
             val workerProcess = WorkerProcess(
-                PreprocessorWorker.javaClass, WorkerProcess.getProcessArguments(agentLoc, classPath),
+                PreprocessorWorker.javaClass, WorkerProcess.processArgs(agentLoc, classPath),
                 processWorkerArguments
             )
             workerProcess.start()

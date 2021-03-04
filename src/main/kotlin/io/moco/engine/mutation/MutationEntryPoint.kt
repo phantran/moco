@@ -36,7 +36,7 @@ class MutationEntryPoint(
     private val mutationStorage: MutationStorage,
     private val gitProcessor: GitProcessor,
     private val createdAgentLocation: String?,
-    private val classPath: String,
+    private val clsByGit: List<String>?,
     private val fOpNames: List<String> = Configuration.currentConfig!!.fOpNames,
     private val mocoBuildPath: String = Configuration.currentConfig!!.mocoBuildPath,
     private val mutationResultsFolder: String = Configuration.currentConfig!!.mutationResultsFolder,
@@ -44,10 +44,9 @@ class MutationEntryPoint(
     private val gitMode: Boolean = Configuration.currentConfig!!.gitMode
 
 ) {
-
     val logger = MoCoLogger()
 
-    fun mutationTest() {
+    fun mutationTest(newOperatorsSelected: Boolean) {
         val preprocessedStorage = PreprocessStorage.getPreprocessStorage(mocoBuildPath)
         if (preprocessedStorage == null) {
             logger.info("No preprocess results, skip mutation testing")
@@ -63,12 +62,12 @@ class MutationEntryPoint(
         logger.debug("Start mutation collecting")
 
         val mGen = MutationGenerator(byteArrLoader, fOpNames.mapNotNull { Operator.nameToOperator(it) })
-        val foundMutations: MutableMap<ClassName, List<Mutation>> = mutableMapOf()
+        val foundMutations: MutableMap<String, List<Mutation>> = mutableMapOf()
         for (item in preprocessedStorage.classRecord) {
-            foundMutations[ClassName(item.classUnderTestName)] =
+            foundMutations[item.classUnderTestName] =
                 mGen.findPossibleMutationsOfClass(item.classUnderTestName, item.coveredLines).distinct()
         }
-        val filteredMutations = foundMutations.filter { it.value.isNotEmpty() }
+        val filteredMutations = filterMutations(foundMutations, newOperatorsSelected)
         logger.debug("Found ${filteredMutations.size} class(es) can be mutated")
         logger.debug("Complete mutation collecting step")
 
@@ -81,12 +80,41 @@ class MutationEntryPoint(
         logger.debug("Complete mutation testing")
     }
 
+    private fun filterMutations(mutations: MutableMap<String, List<Mutation>>,
+                                newOperatorsSelected: Boolean): Map<String, List<Mutation>> {
+        if (gitMode && !newOperatorsSelected) {
+            if (!clsByGit.isNullOrEmpty()) {
+                // Mutants black list UPDATE - REMOVAL
+                // remove black listed mutants of the changed classes by Git because their contents have been changed
+                MutantsBlackList().removeData("class_name IN (\'${clsByGit.joinToString("\',\'")}\')")
+            }
+            val mutationBlackList = MutantsBlackList().getData("")
+            for (item in mutationBlackList) {
+                val bLEntry = item.entry
+                if (mutations.keys.any { it == bLEntry["class_name"] }) {
+                    // Mutants black list USAGE
+                    val mList = mutations[bLEntry["class_name"]]?.toMutableList()
+                    for (m in mList!!) {
+                        if (m.lineOfCode.toString() == bLEntry["line_of_code"]
+                            && m.mutationID.instructionIndices!!.joinToString(",") == bLEntry["instruction_indices"]
+                            && m.mutationID.mutatorUniqueID == bLEntry["mutator_id"]
+                        ) {
+                            mList.remove(m)
+                        }
+                    }
+                }
+            }
+        }
+        return mutations.filter { it.value.isNotEmpty() }
+    }
+
     private fun handleMutations(
-        filteredMutations: Map<ClassName, List<Mutation>>, preprocessedStorage: PreprocessStorage?
+        filteredMutations: Map<String, List<Mutation>>, preprocessedStorage: PreprocessStorage?
     ) {
-        filteredMutations.forEach label@{ (className, mutationList) ->
+        filteredMutations.forEach label@{ (cls, mutationList) ->
+            val className = ClassName(cls)
             val testRetriever = RelatedTestRetriever(buildRoot)
-            val processArgs = WorkerProcess.getProcessArguments(createdAgentLocation, classPath)
+            val processArgs = WorkerProcess.processArgs(createdAgentLocation, Configuration.currentConfig!!.classPath)
             val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(
                 className,
                 preprocessedStorage?.testsExecutionTime!!
@@ -96,6 +124,7 @@ class MutationEntryPoint(
                 return@label
             }
             logger.debug("Class ${className.getJavaName()} has ${relatedTestClasses.size} relevant tests")
+            // Launch a new process for each class to handle the list of its mutants
             val workerProcess = WorkerProcess(
                 MutationTestWorker::class.java, processArgs,
                 listOf((processArgs["port"] as ServerSocket).localPort.toString())
@@ -109,15 +138,13 @@ class MutationEntryPoint(
 
     private fun persistMutationResults() {
         logger.debug("Persist mutation test results")
-        JsonSource(
-            "${mocoBuildPath}${File.separator}$mutationResultsFolder", "mutation"
-        ).save(mutationStorage)
+        JsonSource("${mocoBuildPath}${File.separator}$mutationResultsFolder", "mutation")
+            .save(mutationStorage)
         val gh = gitProcessor.headCommit.name
-        MutantsBlackList().saveErrorMutants(mutationStorage, gh)
-        ProgressClassTest().saveProgress(
-            mutationStorage, gh,
-            fOpNames.joinToString(",")
-        )
+        // Mutants black list UPDATE - ADD (mutation results with status as run_error)
+        MutantsBlackList().saveErrorMutants(mutationStorage)
+        // Progress Class Test UPDATE - ADD (class progress - mutation results with status as survived and killed)
+        ProgressClassTest().saveProgress(mutationStorage, fOpNames.joinToString(","))
         PersistentMutationResult().saveMutationResult(mutationStorage, gh)
     }
 }

@@ -59,16 +59,16 @@ data class PersistentMutationResult(
     companion object {
         const val schema: String =
             "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY," +
-                    "commit_id VARCHAR(255)," +
-                    "file_name VARCHAR(255)," +
-                    "class_name VARCHAR(255)," +
-                    "line_of_code INT(8) UNSIGNED NOT NULL," +
-                    "instruction_indices VARCHAR(255)," +
-                    "mutator_id VARCHAR(255)," +
-                    "mutation_description VARCHAR(255)," +
-                    "operator_name VARCHAR(255)," +
-                    "test_status VARCHAR(255)," +
-                    "created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP," +
-                    "UNIQUE KEY unique_mutation (class_name, line_of_code, instruction_indices, mutator_id, commit_id)"
+            "commit_id VARCHAR(255)," +
+            "file_name VARCHAR(255)," +
+            "class_name VARCHAR(255)," +
+            "line_of_code INT(8) UNSIGNED NOT NULL," +
+            "instruction_indices VARCHAR(255)," +
+            "mutator_id VARCHAR(255)," +
+            "mutation_description VARCHAR(255)," +
+            "operator_name VARCHAR(255)," +
+            "test_status VARCHAR(255)," +
+            "created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+            "UNIQUE KEY unique_mutation (class_name, line_of_code, instruction_indices, mutator_id, commit_id)"
     }
 }

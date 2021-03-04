@@ -94,7 +94,7 @@ class WorkerProcess(
     }
 
     companion object {
-        fun getProcessArguments(createdAgentLocation: String?, classPath: String): MutableMap<String, Any> {
+        fun processArgs(createdAgentLocation: String?, classPath: String): MutableMap<String, Any> {
             return mutableMapOf(
                 "port" to ServerSocket(0), "javaExecutable" to Configuration.currentConfig!!.jvm,
                 "javaAgentJarPath" to "-javaagent:$createdAgentLocation", "classPath" to classPath

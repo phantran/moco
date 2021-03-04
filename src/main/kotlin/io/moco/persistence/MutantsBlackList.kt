@@ -23,7 +23,7 @@ import io.moco.engine.mutation.Mutation
 data class MutantsBlackList(
     override var entry: MutableMap<String, String> =
         mutableMapOf(
-            "commit_id" to "", "class_name" to "", "line_of_code" to "",
+            "class_name" to "", "line_of_code" to "",
             "instruction_indices" to "", "mutator_id" to ""
         ),
 ) : MoCoModel() {
@@ -31,7 +31,7 @@ data class MutantsBlackList(
     override val sourceName = "MutantsBlackList"
 
 
-    fun saveErrorMutants(data: MutationStorage, commitID: String) {
+    fun saveErrorMutants(data: MutationStorage) {
         val entries: MutableSet<MutableMap<String, String?>> = mutableSetOf()
         for ((key, value) in data.entries) {
             for (item in value) {
@@ -40,7 +40,6 @@ data class MutantsBlackList(
                     val mutationID = mutationDetails.mutationID
                     entries.add(
                         mutableMapOf(
-                            "commit_id" to commitID,
                             "class_name" to key,
                             "line_of_code" to mutationDetails.lineOfCode.toString(),
                             "instruction_indices" to mutationID.instructionIndices!!.joinToString(","),
@@ -56,7 +55,6 @@ data class MutantsBlackList(
     companion object {
         const val schema: String =
             "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY," +
-            "commit_id VARCHAR(255)," +
             "class_name VARCHAR(255)," +
             "line_of_code INT(8) UNSIGNED NOT NULL," +
             "instruction_indices VARCHAR(255)," +
