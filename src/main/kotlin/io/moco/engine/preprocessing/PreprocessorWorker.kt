@@ -30,6 +30,22 @@ import kotlin.system.exitProcess
 
 
 object PreprocessorWorker {
+    private lateinit var mocoBuildPath: String
+    private lateinit var codeRoot: String
+    private lateinit var testRoot: String
+    private lateinit var excludedSourceClasses: List<String>
+    private lateinit var excludedSourceFolders: List<String>
+    private lateinit var excludedTestClasses: List<String>
+    private lateinit var excludedTestFolders: List<String>
+    private lateinit var preprocessResultsFolder: String
+    private var recordedTestMapping: List<String>? = null
+    private var isRerun: Boolean = false
+    // filteredClsByGitCommit is null of empty if
+    // 1. Git mode is off
+    // 2. Project run for the first time and no project meta exists
+    private var filteredClsByGitCommit: List<String>? = null
+    private val logger = MoCoLogger()
+    private lateinit var jsonConverter: JsonSource
     /**
      * Main
      *
@@ -46,35 +62,10 @@ object PreprocessorWorker {
      * The final result of this step is stored in preprocess JSON file and store in H2 persistent DB if DB mode is on
      * DB mode is on by default
      */
+
     @JvmStatic
     fun main(args: Array<String>) {
-        val mocoBuildPath = args[1]  // path to build or target folder of project
-        val codeRoot = args[2]
-        val testRoot = args[3]
-        val excludedSourceClasses = if (args[4] != "") args[4].split(",").map { it.trim() } else listOf()
-        val excludedSourceFolders = if (args[5] != "") args[5].split(",").map { it.trim() } else listOf()
-        val excludedTestClasses = if (args[6] != "") args[6].split(",").map { it.trim() } else listOf()
-        val excludedTestFolders = if (args[7] != "") args[7].split(",").map { it.trim() } else listOf()
-        val preprocessResultsFolder = args[8]
-        TestItemWrapper.configuredTestTimeOut = if (args[9].toIntOrNull() != null) args[9].toLong() else -1
-        MoCoLogger.debugEnabled = args[10] == "true"
-        MoCoLogger.verbose = args[11] == "true"
-        // filteredClsByGitCommit is null of empty if
-        // 1. Git mode is off
-        // 2. Project run for the first time and no project meta exists
-        val filteredClsByGitCommit =
-            if (args[12] != "") args[12].split(",").map { it.trim() } else null
-        val recordedTestMapping = if (args[13] != "") args[13].split(",").map { it.trim() } else null
-        val isRerun = if (args.getOrNull(14) != null) args[14].toBoolean() else false
-
-
-        val jsonConverter = JsonSource(
-            "$mocoBuildPath${File.separator}$preprocessResultsFolder", "preprocess"
-        )
-
-        MoCoLogger.useKotlinLog()
-        val logger = MoCoLogger()
-
+        prepareWorker(args)
         try {
             if (isRerun) logger.info("Continue processing step due to the previous test error")
             val analysedCodeBase = Codebase(
@@ -89,7 +80,6 @@ object PreprocessorWorker {
             // Process after filtering
             if (relevantTests.isNotEmpty()) {
                 // filter by git is null which means proceed in normal processing
-                logger.info("Preprocessing: ${relevantTests.size} test classes left after filtering")
                 Preprocessor(relevantTests).preprocessing(isRerun, jsonConverter)
                 jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())
                 logger.info("Preprocessing: Data saved and exit")
@@ -110,6 +100,31 @@ object PreprocessorWorker {
         }
     }
 
+    private fun prepareWorker(args: Array<String>) {
+        mocoBuildPath = args[1]  // path to build or target folder of project
+        codeRoot = args[2]
+        testRoot = args[3]
+        excludedSourceClasses = if (args[4] != "") args[4].split(",").map { it.trim() } else listOf()
+        excludedSourceFolders = if (args[5] != "") args[5].split(",").map { it.trim() } else listOf()
+        excludedTestClasses = if (args[6] != "") args[6].split(",").map { it.trim() } else listOf()
+        excludedTestFolders = if (args[7] != "") args[7].split(",").map { it.trim() } else listOf()
+        preprocessResultsFolder = args[8]
+        TestItemWrapper.configuredTestTimeOut = if (args[9].toIntOrNull() != null) args[9].toLong() else -1
+        MoCoLogger.debugEnabled = args[10] == "true"
+        MoCoLogger.verbose = args[11] == "true"
+        // filteredClsByGitCommit is null of empty if
+        // 1. Git mode is off
+        // 2. Project run for the first time and no project meta exists
+        filteredClsByGitCommit =
+            if (args[12] != "") args[12].split(",").map { it.trim() } else null
+        recordedTestMapping = if (args[13] != "") args[13].split(",").map { it.trim() } else null
+        isRerun = if (args.getOrNull(14) != null) args[14].toBoolean() else false
+        MoCoLogger.useKotlinLog()
+        jsonConverter = JsonSource(
+            "$mocoBuildPath${File.separator}$preprocessResultsFolder", "preprocess"
+        )
+    }
+
     private fun getRelevantTests(
         filteredClsByGitCommit: List<String>?, codebase: Codebase,
         recordedTestMapping: List<String>?
@@ -119,13 +134,8 @@ object PreprocessorWorker {
         // corresponding changed source classes
         val res = if (!filteredClsByGitCommit.isNullOrEmpty()) {
             codebase.testClassesNames.filter { filteredClsByGitCommit.contains(it.name) }.toMutableSet()
-        } else {
-            codebase.testClassesNames
-        }
-
-        if (recordedTestMapping != null) {
-            res.addAll(recordedTestMapping.map { ClassName(it) })
-        }
+        } else codebase.testClassesNames
+        if (recordedTestMapping != null) res.addAll(recordedTestMapping.map { ClassName(it) })
         return res.toList()
     }
 }
