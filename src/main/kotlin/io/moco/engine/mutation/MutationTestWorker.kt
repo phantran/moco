@@ -17,14 +17,11 @@
 
 package io.moco.engine.mutation
 
-import io.moco.engine.Configuration
 import io.moco.utils.ByteArrayLoader
 import io.moco.engine.operator.Operator
 import io.moco.engine.test.TestItem
 import io.moco.engine.test.TestItemWrapper
 import io.moco.engine.test.TestResultAggregator
-import io.moco.persistence.H2Database
-import io.moco.persistence.ProjectTestHistory
 import io.moco.utils.DataStreamUtils
 import io.moco.utils.MoCoLogger
 import java.io.DataInputStream

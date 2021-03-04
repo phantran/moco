@@ -180,6 +180,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     }
 
     private fun shouldRunFromScratch(): Boolean {
+        // MoCo will rerun (execute all tests on all cut when users change mutation operator set configuration
         val recordedOps = projectMeta?.meta?.get("runOperators")?.split("-")
         if (!recordedOps.isNullOrEmpty()) {
             newOperatorsSelected = !recordedOps.contains(fOpNames.joinToString(","))

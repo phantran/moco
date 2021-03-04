@@ -43,12 +43,12 @@ class Metrics(private val mutationStorage: MutationStorage) {
     }
 
     private fun calculateAccumulatedCoverage(configuredOperators: String): Double {
-        val savedProgress = ProgressClassTest().getData("covered_operators IN ('$configuredOperators')")
+        val savedProgress = ProgressClassTest().getData("covered_operators = \'$configuredOperators\'")
         var killedMutants = 0.0
         var totalMutants = 0.0
         for (item in savedProgress) {
             killedMutants += item.entry["killed_mutants"]?.toIntOrNull() ?: 0
-            totalMutants += item.entry["totalMutants"]?.toIntOrNull() ?: 0
+            totalMutants += item.entry["total_mutants"]?.toIntOrNull() ?: 0
         }
         return if (totalMutants == 0.0) 0.0
                else ((killedMutants / totalMutants) * 100)
@@ -59,9 +59,9 @@ class Metrics(private val mutationStorage: MutationStorage) {
         logger.info("-----------------------------------------------------------------------")
         logger.info("Mutation Coverage of this run: $runCoverage%")
         if (Configuration.currentConfig!!.gitMode) {
-            val accumulatedCoverage = calculateAccumulatedCoverage(filteredMuOpNames.joinToString("','"))
+            val accumulatedCoverage = calculateAccumulatedCoverage(filteredMuOpNames.joinToString(","))
             logger.info("Accumulated Coverage for current configuration: $accumulatedCoverage%")
-            // persist this run to run history
+            // save this run to run history
             logger.debug("Saving new entry to project history")
             val temp = ProjectTestHistory()
             temp.entry = mutableMapOf(
