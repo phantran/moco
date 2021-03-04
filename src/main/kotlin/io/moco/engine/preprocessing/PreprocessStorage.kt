@@ -40,11 +40,17 @@ data class PreprocessStorage(
 
         fun getPreprocessStorage(mocoBuildPath: String): PreprocessStorage? {
             return if (storedStorage == null) {
-                storedStorage = JsonSource(
+                val temp = JsonSource(
                     "$mocoBuildPath${File.separator}${Configuration.currentConfig?.preprocessResultsFolder}",
                     "preprocess"
-                ).getData(PreprocessStorage::class.java) as PreprocessStorage
-                if (storedStorage != null) storedStorage else null
+                ).getData(PreprocessStorage::class.java)
+
+                if (temp != null) {
+                    storedStorage = temp as PreprocessStorage
+                    storedStorage
+                } else {
+                    null
+                }
             } else {
                 storedStorage as PreprocessStorage
             }

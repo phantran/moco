@@ -29,9 +29,10 @@ data class TestsCutMapping(
     override val sourceName = "TestsCutMapping"
 
     fun getRecordedMapping(classes: List<String>, commitID: String): String {
-        // This method query filtered classes by git commit and return list of corresponding tests
+        // This method query classes by their names and git commit  id and
+        // return list of corresponding tests
         val queryRes = this.getData(
-            "commit_id = $commitID AND class_name IN (${classes.joinToString(",")})")
+            "commit_id = \'$commitID\' AND class_name IN (\'${classes.joinToString("\',\'")}\')")
         var res = ""
         for (item in queryRes) {
             res += item.entry["test_class"]

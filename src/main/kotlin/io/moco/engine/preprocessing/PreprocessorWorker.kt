@@ -84,6 +84,7 @@ object PreprocessorWorker {
                 jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())
                 logger.info("Preprocessing: Data saved and exit")
             } else {
+                logger.info("Preprocessing: 0 relevant tests left after filtering")
                 logger.info("Preprocessing: Exit - nothing to run")
             }
             exitProcess(MoCoProcessCode.OK.code)
