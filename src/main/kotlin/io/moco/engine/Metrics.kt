@@ -19,9 +19,14 @@ package io.moco.engine
 
 import io.moco.persistence.MutationStorage
 import io.moco.persistence.ProgressClassTest
+import io.moco.persistence.ProjectTestHistory
+import io.moco.utils.GitProcessor
+import io.moco.utils.MoCoLogger
 
-object Metrics {
-    fun calculateRunCoverage(mutationStorage: MutationStorage): Double {
+class Metrics(private val mutationStorage: MutationStorage) {
+    private val logger = MoCoLogger()
+
+    private fun calculateRunCoverage(mutationStorage: MutationStorage): Double {
         var total = 0.0
         var killedMutants = 0.0
         for ((_, value) in mutationStorage.entries) {
@@ -37,7 +42,7 @@ object Metrics {
         return res
     }
 
-    fun calculateAccumulatedCoverage(configuredOperators: String): Double {
+    private fun calculateAccumulatedCoverage(configuredOperators: String): Double {
         val savedProgress = ProgressClassTest().getData("covered_operators IN ('$configuredOperators')")
         var killedMutants = 0.0
         var totalMutants = 0.0
@@ -47,5 +52,28 @@ object Metrics {
         }
         return if (totalMutants == 0.0) 0.0
                else ((killedMutants / totalMutants) * 100)
+    }
+
+    fun reportResults(filteredMuOpNames: List<String>, gitProcessor: GitProcessor) {
+        val runCoverage = calculateRunCoverage(mutationStorage)
+        logger.info("-----------------------------------------------------------------------")
+        logger.info("Mutation Coverage of this run: $runCoverage %")
+        if (Configuration.currentConfig!!.gitMode) {
+            val accumulatedCoverage = calculateAccumulatedCoverage(filteredMuOpNames.joinToString("','"))
+            logger.info("Accumulated Coverage for current configuration: $accumulatedCoverage %")
+            // persist this run to run history
+            logger.debug("Saving new entry to project history")
+            val temp = ProjectTestHistory()
+            temp.entry = mutableMapOf(
+                "commit_id" to gitProcessor.headCommit.name,
+                "branch" to gitProcessor.branch, "run_operators" to filteredMuOpNames.joinToString(","),
+                "run_coverage" to runCoverage.toString(), "accumulated_coverage" to accumulatedCoverage.toString(),
+                "git_mode" to Configuration.currentConfig!!.gitMode.toString()
+            )
+            temp.save()
+        }
+        logger.info("-----------------------------------------------------------------------")
+
+
     }
 }

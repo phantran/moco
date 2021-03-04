@@ -17,8 +17,6 @@
 
 package io.moco.engine
 
-import io.moco.engine.Metrics.calculateAccumulatedCoverage
-import io.moco.engine.Metrics.calculateRunCoverage
 import io.moco.utils.ByteArrayLoader
 import io.moco.engine.mutation.*
 import io.moco.engine.operator.Operator
@@ -84,30 +82,9 @@ class MocoEntryPoint(private val configuration: Configuration) {
 
         }
         logger.info("Execution done after ${executionTime / 1000}s")
-        reportResults()
+        Metrics(mutationStorage).reportResults(filteredMuOpNames, gitProcessor)
         cleanBeforeExit()
         logger.info("DONE")
-    }
-
-    private fun reportResults() {
-        val runCoverage = calculateRunCoverage(mutationStorage)
-        println(runCoverage)
-        val accumulatedCoverage = calculateAccumulatedCoverage(filteredMuOpNames.joinToString("','"))
-        logger.info("-----------------------------------------------------------------------")
-        logger.info("Mutation Coverage of this run: $runCoverage")
-        logger.info("Accumulated Coverage for current configuration: $accumulatedCoverage")
-        logger.info("-----------------------------------------------------------------------")
-
-        // persist this run to run history
-        logger.debug("Saving new entry to project history")
-        val temp = ProjectTestHistory()
-        temp.entry = mutableMapOf(
-            "commit_id" to gitProcessor.headCommit.name,
-            "branch" to gitProcessor.branch, "run_operators" to filteredMuOpNames.joinToString(","),
-            "run_coverage" to runCoverage.toString(), "accumulated_coverage" to accumulatedCoverage.toString(),
-            "git_mode" to configuration.gitMode.toString()
-        )
-        temp.save()
     }
 
     private fun cleanBeforeExit() {
@@ -166,10 +143,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
                     logger.info("Preprocessing: Git mode - ${filteredClsByGit!!.size} changed classes by git commits diff")
                     logger.debug("Classes found: $filteredClsByGit")
                     recordedTestMapping = projectMeta?.meta!!["latestStoredCommitID"]?.let {
-                        TestsCutMapping().getRecordedMapping(
-                            filteredClsByGit!!,
-                            it
-                        )
+                        TestsCutMapping().getRecordedMapping(filteredClsByGit!!, it)
                     }
                 } else {
                     filteredClsByGit = listOf("")
@@ -191,7 +165,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
         else processWorkerArguments.add("")
         while (processStatus != MoCoProcessCode.OK.code) {
             val preprocessWorkerProcess = WorkerProcess(
-                PreprocessorWorker.javaClass, getProcessArguments(),
+                PreprocessorWorker.javaClass, WorkerProcess.getProcessArguments(createdAgentLocation, classPath),
                 processWorkerArguments
             )
             preprocessWorkerProcess.start()
@@ -239,7 +213,9 @@ class MocoEntryPoint(private val configuration: Configuration) {
         // Mutants generation and tests execution
         logger.debug("Start mutation testing")
         handleMutations(filteredMutations, preprocessedStorage)
-        persistMutationResults()
+        if (configuration.gitMode) {
+            persistMutationResults()
+        }
         logger.debug("Complete mutation testing")
     }
 
@@ -248,7 +224,7 @@ class MocoEntryPoint(private val configuration: Configuration) {
     ) {
         filteredMutations.forEach label@{ (className, mutationList) ->
             val testRetriever = RelatedTestRetriever(configuration.buildRoot)
-            val processArgs = getProcessArguments()
+            val processArgs = WorkerProcess.getProcessArguments(createdAgentLocation, classPath)
             val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(
                 className,
                 preprocessedStorage?.testsExecutionTime!!
@@ -262,28 +238,13 @@ class MocoEntryPoint(private val configuration: Configuration) {
                 MutationTestWorker::class.java, processArgs,
                 listOf((processArgs["port"] as ServerSocket).localPort.toString())
             )
-            val workerThread = createMutationWorkerThread(mutationList, relatedTestClasses, processArgs)
+            val workerThread = workerProcess.createMutationWorkerThread(
+                mutationList, relatedTestClasses, filteredMuOpNames, mutationStorage
+            )
             workerProcess.execMutationTestProcess(workerThread)
         }
     }
 
-    private fun createMutationWorkerThread(
-        mutations: List<Mutation>, tests: List<ClassName>, processArgs: MutableMap<String, Any>
-    ): ResultsReceiverThread {
-        val mutationWorkerArgs =
-            ResultsReceiverThread.MutationWorkerArguments(
-                mutations, tests, classPath, filteredMuOpNames,
-                "", configuration.testTimeOut, configuration.debugEnabled, configuration.verbose
-            )
-        return ResultsReceiverThread(processArgs["port"] as ServerSocket, mutationWorkerArgs, mutationStorage)
-    }
-
-    private fun getProcessArguments(): MutableMap<String, Any> {
-        return mutableMapOf(
-            "port" to ServerSocket(0), "javaExecutable" to configuration.jvm,
-            "javaAgentJarPath" to "-javaagent:$createdAgentLocation", "classPath" to classPath
-        )
-    }
 
     private fun persistMutationResults() {
         logger.debug("Persist mutation test results")
@@ -291,6 +252,10 @@ class MocoEntryPoint(private val configuration: Configuration) {
             "${configuration.mocoBuildPath}${File.separator}${configuration.mutationResultsFolder}",
             "mutation"
         ).save(mutationStorage)
+        ProgressClassTest().saveProgress(
+            mutationStorage, gitProcessor.headCommit.name,
+            filteredMuOpNames.joinToString(",")
+        )
         PersistentMutationResult().saveMutationResult(mutationStorage, gitProcessor.headCommit.name)
     }
 }

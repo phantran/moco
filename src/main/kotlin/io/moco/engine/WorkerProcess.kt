@@ -18,10 +18,13 @@
 
 package io.moco.engine
 
+import io.moco.engine.mutation.Mutation
 import io.moco.engine.mutation.ResultsReceiverThread
+import io.moco.persistence.MutationStorage
 import java.io.IOException
 import java.lang.Exception
 import java.net.ServerSocket
+
 
 class WorkerProcess(
     private val toBeExecutedWorker: Class<*>,
@@ -74,4 +77,28 @@ class WorkerProcess(
         }
     }
 
+
+    fun createMutationWorkerThread(
+        mutations: List<Mutation>,
+        tests: List<ClassName>,
+        filteredMuOpNames: List<String>,
+        mutationStorage: MutationStorage
+    ): ResultsReceiverThread {
+        val mutationWorkerArgs =
+            ResultsReceiverThread.MutationWorkerArguments(
+                mutations, tests, processArgs["classPath"] as String, filteredMuOpNames,
+                "", Configuration.currentConfig!!.testTimeOut, Configuration.currentConfig!!.debugEnabled,
+                Configuration.currentConfig!!.verbose
+            )
+        return ResultsReceiverThread(processArgs["port"] as ServerSocket, mutationWorkerArgs, mutationStorage)
+    }
+
+    companion object {
+        fun getProcessArguments(createdAgentLocation: String?, classPath: String): MutableMap<String, Any> {
+            return mutableMapOf(
+                "port" to ServerSocket(0), "javaExecutable" to Configuration.currentConfig!!.jvm,
+                "javaAgentJarPath" to "-javaagent:$createdAgentLocation", "classPath" to classPath
+            )
+        }
+    }
 }

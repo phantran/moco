@@ -17,7 +17,6 @@
 
 package io.moco.persistence
 
-
 data class ProgressClassTest(
     override var entry: MutableMap<String, String> =
         mutableMapOf(
@@ -27,6 +26,24 @@ data class ProgressClassTest(
 ) : MoCoModel() {
 
     override val sourceName = "ProgressClassTest"
+
+    fun saveProgress(data: MutationStorage, commitID: String, configuredOperators: String) {
+        val entries: MutableSet<MutableMap<String, String?>> = mutableSetOf()
+        for ((key, value) in data.entries) {
+            for (item in value) {
+                entries.add(
+                    mutableMapOf(
+                        "class_name" to key,
+                        "commit_id" to commitID,
+                        "covered_operators" to configuredOperators,
+                        "total_mutants" to value.size.toString(),
+                        "killed_mutants" to value.count { it["result"] == "killed" }.toString(),
+                    )
+                )
+            }
+        }
+        saveMultipleEntries(sourceName, entries.toList())
+    }
 
     companion object {
          const val schema: String =

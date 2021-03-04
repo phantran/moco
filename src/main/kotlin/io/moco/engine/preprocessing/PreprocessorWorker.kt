@@ -83,11 +83,12 @@ object PreprocessorWorker {
             )
             logger.debug("Preprocessing: Code base has ${analysedCodeBase.sourceClassNames.size} source classes")
 
+            MocoAgent.addTransformer(PreprocessorTransformer(analysedCodeBase.sourceClassNames))
+            val relevantTests = getRelevantTests(filteredClsByGitCommit, analysedCodeBase, recordedTestMapping)
+
             // Process after filtering
-            if (analysedCodeBase.testClassesNames.size != 0) {
+            if (relevantTests.isNotEmpty()) {
                 // filter by git is null which means proceed in normal processing
-                MocoAgent.addTransformer(PreprocessorTransformer(analysedCodeBase.sourceClassNames))
-                val relevantTests = getRelevantTests(filteredClsByGitCommit, analysedCodeBase, recordedTestMapping)
                 logger.info("Preprocessing: ${relevantTests.size} test classes left after filtering")
                 Preprocessor(relevantTests).preprocessing(isRerun, jsonConverter)
                 jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())

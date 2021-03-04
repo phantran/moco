@@ -48,7 +48,7 @@ class JsonSource(private val folderPath: String, private val fileName: String): 
     }
 
     fun removeJSONFileIfExists() {
-        val temp = File(folderPath)
+        val temp = File("$folderPath${File.separator}$fileName.json")
         if (temp.exists()) {
             temp.delete()
             logger.debug("Existing preprocess JSON file was removed")

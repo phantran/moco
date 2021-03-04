@@ -17,8 +17,6 @@
 
 package io.moco.persistence
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import io.moco.engine.mutation.MutatedMethodLocation
 import io.moco.engine.mutation.Mutation
 
 
