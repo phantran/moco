@@ -81,12 +81,13 @@ class WorkerProcess(
     fun createMutationWorkerThread(
         mutations: List<Mutation>,
         tests: List<ClassName>,
+        testsExecutionTime: MutableMap<String, Long>,
         filteredMuOpNames: List<String>,
         mutationStorage: MutationStorage
     ): ResultsReceiverThread {
         val mutationWorkerArgs =
             ResultsReceiverThread.MutationWorkerArguments(
-                mutations, tests, processArgs["classPath"] as String, filteredMuOpNames,
+                mutations, tests, testsExecutionTime, processArgs["classPath"] as String, filteredMuOpNames,
                 "", Configuration.currentConfig!!.preprocessTestTimeout, Configuration.currentConfig!!.debugEnabled,
                 Configuration.currentConfig!!.verbose
             )

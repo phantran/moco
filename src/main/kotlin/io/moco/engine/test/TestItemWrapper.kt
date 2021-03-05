@@ -27,7 +27,7 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
         val timeOut: Long = if (testItem.executionTime != -1L) {
             // Normally tests executed in mutation tests phase will go into this branch
             // Because all tests with executionTime < 0  are filtered out (recorded from preprocessing step)
-            (testItem.executionTime * 1.5 + 3000).toLong()
+            (testItem.executionTime * 1.5 + 2000).toLong()
         } else if (configuredTestTimeOut != -1L) {
             configuredTestTimeOut
         } else {
@@ -40,7 +40,7 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
                 testItem.execute(testResultAggregator, timeOut)
             }
         } catch (ex: Exception) {
-            logger.warn("Preprocessing: Error while executing test ${testItem.desc.name}")
+            logger.debug("Error while executing test ${testItem.desc.name}")
             throw ex
         }
     }

@@ -79,7 +79,7 @@ object MutationTestExecutor {
                             logger.debug("Ignore this mutant because it causes a lot of errors")
                             break
                         }
-                        logger.info("Error while executing test ${test?.testItem?.desc?.name}")
+                        logger.debug("Error while executing test ${test?.testItem?.desc?.name}")
                     }
                 }
 

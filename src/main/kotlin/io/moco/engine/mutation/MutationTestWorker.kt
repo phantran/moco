@@ -41,6 +41,7 @@ class MutationTestWorker(
     private lateinit var logger: MoCoLogger
     private var duplicatedMutantTracker: MutableSet<ByteArray> = mutableSetOf()
     private val testMonitor = MutationTestMonitor()
+    private lateinit var testsExecutionTime: MutableMap<String, Long>
 
     companion object {
         @JvmStatic
@@ -69,7 +70,7 @@ class MutationTestWorker(
             MoCoLogger.useKotlinLog()
             logger = MoCoLogger()
             classPath = givenWorkerArgs.classPath
-
+            testsExecutionTime = givenWorkerArgs.testsExecutionTime
             val byteArrLoader = ByteArrayLoader(classPath)
             mutantIntroducer = MutantIntroducer(byteArrLoader)
             communicator = Communicator(DataOutputStream(socket.getOutputStream()))
@@ -77,7 +78,7 @@ class MutationTestWorker(
                 givenWorkerArgs.testTimeOut.toLong() else -1
             mGen = MutationGenerator(
                 byteArrLoader, givenWorkerArgs.includedOperators.mapNotNull { Operator.nameToOperator(it) })
-            val testItems: List<TestItem> = TestItem.testClassesToTestItems(givenWorkerArgs.tests)
+            val testItems: List<TestItem> = TestItem.testClassesToTestItems(givenWorkerArgs.tests, testsExecutionTime)
             val wrappedTest: Pair<List<TestItemWrapper>, List<TestResultAggregator>> =
                 TestItemWrapper.wrapTestItem(testItems)
             runMutationTests(givenWorkerArgs.mutations, wrappedTest.first)

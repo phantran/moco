@@ -113,17 +113,24 @@ class MutationEntryPoint(
     private fun handleMutations(
         filteredMutations: Map<String, List<Mutation>>, preprocessedStorage: PreprocessStorage?
     ) {
+
         val chunkedMutationsList: List<Pair<String, List<Mutation>>> = mutationsSplitting(filteredMutations)
+        var curCls = ""  // This curCls var is only used for info logging purpose
         chunkedMutationsList.forEach label@{ (cls, mutationList) ->
             val className = ClassName(cls)
             val testRetriever = RelatedTestRetriever(buildRoot)
+            val testsExecutionTime = preprocessedStorage?.testsExecutionTime!!
             val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(
                 className,
-                preprocessedStorage?.testsExecutionTime!!
+                testsExecutionTime
             )
             if (relatedTestClasses.isEmpty()) {
                 logger.debug("Class ${className.getJavaName()} has 0 relevant test")
                 return@label
+            }
+            if (curCls != cls) {
+                curCls = cls
+                logger.info("Mutation test for class ${className.getJavaName()} - with ${filteredMutations[cls]?.size} mutants")
             }
             logger.debug("Class ${className.getJavaName()} has ${relatedTestClasses.size} relevant tests")
 
@@ -139,20 +146,20 @@ class MutationEntryPoint(
 
                 if (relatedTestClasses.size > 10) {
                     val workerThread = workerProcess.createMutationWorkerThread(
-                        listOf(mutationList[i]), relatedTestClasses, fOpNames, mutationStorage
+                        listOf(mutationList[i]), relatedTestClasses, testsExecutionTime, fOpNames, mutationStorage
                     )
                     workerProcess.execMutationTestProcess(workerThread)
                 } else {
                     temp.add(mutationList[i])
                     if (temp.size * relatedTestClasses.size > 10) {
                         val workerThread = workerProcess.createMutationWorkerThread(
-                            temp, relatedTestClasses, fOpNames, mutationStorage
+                            temp, relatedTestClasses, testsExecutionTime, fOpNames, mutationStorage
                         )
                         workerProcess.execMutationTestProcess(workerThread)
                         temp.clear()
                     } else if (i == mutationList.size - 1) {
                         val workerThread = workerProcess.createMutationWorkerThread(
-                            temp, relatedTestClasses, fOpNames, mutationStorage
+                            temp, relatedTestClasses, testsExecutionTime, fOpNames, mutationStorage
                         )
                         workerProcess.execMutationTestProcess(workerThread)
                     }

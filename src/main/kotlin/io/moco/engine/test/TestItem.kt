@@ -33,15 +33,15 @@ import kotlin.system.measureTimeMillis
 
 class TestItem(
     val cls: Class<*>,
+    var executionTime: Long = -1
 ) {
     val desc: Description = Description(this.cls.name, this.cls.name)
-    var executionTime: Long = -1
     private val logger = MoCoLogger()
 
     suspend fun execute(tra: TestResultAggregator, timeOut: Long = -1) {
         val runner: Runner = createRunner(cls)
         if (runner is ErrorReportingRunner) {
-            logger.error("Error while running test of $cls")
+            logger.debug("Error while running test of $cls")
         }
         var job: Job? = null
         try {
@@ -50,8 +50,11 @@ class TestItem(
             runNotifier.addFirstListener(listener)
             job = GlobalScope.launch {
                 withTimeout(timeOut) {
-                    executionTime = measureTimeMillis {
+                    val temp = measureTimeMillis {
                         runner.run(runNotifier)
+                    }
+                    if (executionTime == -1L) {
+                        executionTime = temp
                     }
                     logger.debug("Test ${desc.name} finished after $executionTime ms")
                 }
@@ -61,7 +64,7 @@ class TestItem(
             when (e) {
                 is TimeoutCancellationException -> {
                     tra.results.add(TestResult(desc, e, TestResult.TestState.TIMEOUT))
-                    logger.warn("Preprocessing: Test ${desc.name} execution TIMEOUT - allowed time $timeOut ms")
+                    logger.debug("Test ${desc.name} execution TIMEOUT - allowed time $timeOut ms")
                 }
             }
             throw e
@@ -81,12 +84,19 @@ class TestItem(
             }
         }
 
-        fun testClassesToTestItems(testClassNames: List<ClassName>): List<TestItem> {
+        fun testClassesToTestItems(testClassNames: List<ClassName>,
+                                   testsExecutionTime: MutableMap<String, Long>? = null): List<TestItem> {
             // convert from test classes to test items so it can be executed
             var testClsNames = testClassNames.mapNotNull { ClassName.clsNameToClass(it) }
             testClsNames = testClsNames.filter { isNotTestSuite(it) }
-            return testClsNames.map {
-                TestItem(it)
+            return if (testsExecutionTime.isNullOrEmpty()) {
+                testClsNames.map {
+                    TestItem(it)
+                }
+            } else {
+                testClsNames.map {
+                    TestItem(it, testsExecutionTime[it.name]!!)
+                }
             }
         }
 
@@ -100,6 +110,6 @@ class TestItem(
     }
 
     override fun toString(): String {
-        return ("TestItem [cls=$cls description=$desc]")
+        return ("TestItem [cls=$cls description=$desc executionTime=$executionTime]")
     }
 }
