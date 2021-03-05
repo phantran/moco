@@ -79,7 +79,6 @@ class MutationEntryPoint(
         handleMutations(filteredMutations, preprocessedStorage)
 
         persistMutationResults()
-
         logger.debug("Complete mutation testing")
     }
 
@@ -116,7 +115,6 @@ class MutationEntryPoint(
     private fun handleMutations(
         filteredMutations: Map<String, List<Mutation>>, preprocessedStorage: PreprocessStorage?
     ) {
-
         val executor = Executors.newFixedThreadPool(Configuration.currentConfig!!.numberOfThreads) as ThreadPoolExecutor
         val chunkedMutationsList: List<Pair<String, List<Mutation>>> = mutationsSplitting(filteredMutations)
         var curCls = ""  // This curCls var is only used for info logging purpose

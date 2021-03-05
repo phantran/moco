@@ -30,10 +30,8 @@ class Metrics(private val mutationStorage: MutationStorage) {
         var total = 0.0
         var killedMutants = 0.0
         for ((_, value) in mutationStorage.entries) {
-            total += value.size
-           for (item in value) {
-               if (item["result"] as String == "killed") killedMutants += 1
-           }
+            total += value.count { it["result"] != "run_error" }
+            killedMutants += value.count { it["result"] == "killed" }
         }
         var res = 0.0
          if (total > 0.0) {
@@ -60,7 +58,7 @@ class Metrics(private val mutationStorage: MutationStorage) {
         logger.info("Mutation Coverage of this run: " + "%.2f".format(runCoverage) + "%")
         if (Configuration.currentConfig!!.gitMode) {
             val accumulatedCoverage = calculateAccumulatedCoverage(filteredMuOpNames.joinToString(","))
-            logger.info("Accumulated Coverage for current configuration: " + "%.2f".format(accumulatedCoverage))
+            logger.info("Accumulated Coverage for current configuration: " + "%.2f".format(accumulatedCoverage) + "%")
             // save this run to run history
             logger.debug("Saving new entry to project history")
             val temp = ProjectTestHistory()
@@ -73,7 +71,5 @@ class Metrics(private val mutationStorage: MutationStorage) {
             temp.save()
         }
         logger.info("-----------------------------------------------------------------------")
-
-
     }
 }
