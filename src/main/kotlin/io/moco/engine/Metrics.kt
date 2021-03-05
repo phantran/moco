@@ -57,10 +57,10 @@ class Metrics(private val mutationStorage: MutationStorage) {
     fun reportResults(filteredMuOpNames: List<String>, gitProcessor: GitProcessor) {
         val runCoverage = calculateRunCoverage(mutationStorage)
         logger.info("-----------------------------------------------------------------------")
-        logger.info("Mutation Coverage of this run: $runCoverage%")
+        logger.info("Mutation Coverage of this run:" + "%.2f".format(runCoverage) + "%")
         if (Configuration.currentConfig!!.gitMode) {
             val accumulatedCoverage = calculateAccumulatedCoverage(filteredMuOpNames.joinToString(","))
-            logger.info("Accumulated Coverage for current configuration: $accumulatedCoverage%")
+            logger.info("Accumulated Coverage for current configuration:" + "%.2f".format(accumulatedCoverage))
             // save this run to run history
             logger.debug("Saving new entry to project history")
             val temp = ProjectTestHistory()

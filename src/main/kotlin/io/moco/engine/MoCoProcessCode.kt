@@ -18,5 +18,5 @@
 package io.moco.engine
 
 enum class MoCoProcessCode(val code: Int) {
-    OK(0), UNRECOVERABLE_ERROR(-1), NOT_STARTED(-2)
+    OK(0), UNRECOVERABLE_ERROR(-1), NOT_STARTED(-2), ERROR(-3)
 }

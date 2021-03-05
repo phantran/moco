@@ -37,7 +37,7 @@ data class Configuration(
     val compileSourceRoots: List<String>?,
     val artifactId: String,
     val gitMode: Boolean,
-    val testTimeOut: String,
+    val preprocessTestTimeout: String,
     val mutationPerClass: Int,
     val debugEnabled: Boolean,
     val verbose: Boolean,
@@ -49,7 +49,7 @@ data class Configuration(
     fun getPreprocessProcessArgs(): MutableList<String> {
         return mutableListOf(mocoBuildPath, codeRoot, testRoot, excludedSourceClasses, excludedSourceFolders,
             excludedTestClasses, excludedTestFolders, preprocessResultsFolder,
-            testTimeOut, debugEnabled.toString(), verbose.toString()
+            preprocessTestTimeout, debugEnabled.toString(), verbose.toString()
         )
     }
 }

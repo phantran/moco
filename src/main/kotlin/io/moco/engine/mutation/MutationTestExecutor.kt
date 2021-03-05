@@ -22,17 +22,20 @@ import io.moco.engine.test.TestResult
 import io.moco.engine.test.TestResultAggregator
 import io.moco.utils.ClassLoaderUtil
 import io.moco.utils.MoCoLogger
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 
 
 object MutationTestExecutor {
     private val clsLoader = ClassLoaderUtil.contextClsLoader
+    lateinit var testMonitor: MutationTestMonitor
+
     val logger = MoCoLogger()
 
     fun introduceMutantThenExec(
         mutantIntroducer: MutantIntroducer,
         mutation: Mutation, mutatedClass: Mutant,
-        tests: List<TestItemWrapper>
+        tests: List<TestItemWrapper>,
     ): MutationTestResult {
         val mtr: MutationTestResult
         val t0 = System.currentTimeMillis()
@@ -40,7 +43,7 @@ object MutationTestExecutor {
             logger.debug("Introduce mutant in " + (System.currentTimeMillis() - t0) + " ms")
             logger.debug("Mutation at line ${mutation.lineOfCode}")
             logger.debug("Mutation operator: ${mutation.description}")
-            mtr = executeTestAndGetResult(tests)
+            mtr = executeTestAndGetResult(tests, mutation)
         } else {
             return MutationTestResult(0, MutationTestStatus.RUN_ERROR)
 
@@ -49,22 +52,34 @@ object MutationTestExecutor {
     }
 
     private fun executeTestAndGetResult(
-        tests: List<TestItemWrapper>
+        tests: List<TestItemWrapper>, mutation: Mutation
     ): MutationTestResult {
         var killed = false
         var numberOfExecutedTests = 0
         var finalStatus: MutationTestStatus
         try {
             runBlocking {
+                var errorCount = 0
                 for (test: TestItemWrapper? in tests) {
                     try {
                         numberOfExecutedTests += 1
                         test?.call()
                         // A mutant is killed if a test is failed
                         killed = checkIfMutantWasKilled(test?.testResultAggregator)
+                        // Early exit when the mutant was killed
                         if (killed) break
                     } catch (e: Exception) {
-                        logger.error("Error while executing test ${test?.testItem?.desc?.name}")
+                        if (e is TimeoutCancellationException) {
+                            testMonitor.markTimeoutMutationType(mutation)
+                            logger.debug("Cancel remaining test of this mutants because of timeout error")
+                            break
+                        }
+                        errorCount += 1
+                        if (errorCount > 3) {
+                            logger.debug("Ignore this mutant because it causes a lot of errors")
+                            break
+                        }
+                        logger.info("Error while executing test ${test?.testItem?.desc?.name}")
                     }
                 }
 
@@ -77,7 +92,7 @@ object MutationTestExecutor {
                         finalStatus = MutationTestStatus.RUN_ERROR
                     }
                 }
-                // Reset test result aggregator of test classes before moving to the next mutant
+                // Reset test result aggregator of test classes before moving on to the next mutant
                 tests.map { it.testResultAggregator.results.clear() }
             }
             return MutationTestResult(numberOfExecutedTests, finalStatus)

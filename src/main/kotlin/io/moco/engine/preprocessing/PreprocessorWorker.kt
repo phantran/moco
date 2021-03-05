@@ -110,7 +110,7 @@ object PreprocessorWorker {
         excludedTestClasses = if (args[6] != "") args[6].split(",").map { it.trim() } else listOf()
         excludedTestFolders = if (args[7] != "") args[7].split(",").map { it.trim() } else listOf()
         preprocessResultsFolder = args[8]
-        TestItemWrapper.configuredTestTimeOut = if (args[9].toIntOrNull() != null) args[9].toLong() else -1
+        TestItemWrapper.configuredTestTimeOut = if (args[9].toIntOrNull() != null) args[9].toLong() else -1L
         MoCoLogger.debugEnabled = args[10] == "true"
         MoCoLogger.verbose = args[11] == "true"
         // filteredClsByGitCommit is null of empty if

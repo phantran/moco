@@ -44,14 +44,14 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     private var excludedMuOpNames = configuration.excludedMuOpNames
     private var mocoBuildPath = configuration.mocoBuildPath
     private var gitMode = configuration.gitMode
-    private var byteArrLoader: ByteArrayLoader
+    private var byteLoader: ByteArrayLoader
     private var agentLoc: String? = null
     private val mutationStorage: MutationStorage = MutationStorage(mutableMapOf())
     private var clsByGit: List<String>? = listOf()
     private var projectMeta: ProjectMeta? = null
     private var recordedTestMapping: String? = null
     private var gitProcessor = GitProcessor(configuration.baseDir)
-    private var newOperatorsSelected: Boolean = false
+    private var newOp: Boolean = false
 
     init {
         MoCoLogger.verbose = configuration.verbose
@@ -60,7 +60,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         logger.info("-----------------------------------------------------------------------")
         logger.info("START")
         projectMeta = ProjectMeta()
-        byteArrLoader = ByteArrayLoader(classPath)
+        byteLoader = ByteArrayLoader(classPath)
     }
 
     fun execute() {
@@ -71,7 +71,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
                 PreprocessEntryPoint().preprocessing(clsByGit!!, recordedTestMapping, agentLoc!!)
                 logger.info("Preprocessing completed")
                 logger.info("Mutation Test started......")
-                MutationEntryPoint(byteArrLoader, mutationStorage, gitProcessor, agentLoc, clsByGit).mutationTest(newOperatorsSelected)
+                MutationEntryPoint(byteLoader, mutationStorage, gitProcessor, agentLoc, clsByGit).mutationTest(newOp)
                 logger.info("Mutation Test completed")
             }
         }
@@ -89,7 +89,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
             projectMeta!!.meta["sourceBuildFolder"] = configuration.codeRoot
             projectMeta!!.meta["testBuildFolder"] = configuration.testRoot
 
-            if (newOperatorsSelected) {
+            if (newOp) {
                 projectMeta!!.meta["runOperators"] += "-" + fOpNames.joinToString(",")
             }
             projectMeta?.saveMetaData()
@@ -114,7 +114,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         val gitOK = gitInfoProcessing()
         if (!gitOK) return false
 
-        agentLoc = JarUtil.createTemporaryAgentJar(byteArrLoader)
+        agentLoc = JarUtil.createTemporaryAgentJar(byteLoader)
         if (agentLoc == null) {
             logger.info("Error while creating MoCo Agent Jar")
             return false
@@ -180,20 +180,19 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     }
 
     private fun shouldRunFromScratch(): Boolean {
-        // MoCo will rerun (execute all tests on all cut when users change mutation operator set configuration
-        val recordedOps = projectMeta?.meta?.get("runOperators")?.split("-")
-        if (!recordedOps.isNullOrEmpty()) {
-            newOperatorsSelected = !recordedOps.contains(fOpNames.joinToString(","))
-        }
-        if (newOperatorsSelected) {
-            logger.info("New set of operators are chosen, do mutation tests without filtering")
-            return true
-        }
-        if (!gitMode) {
+        if (gitMode) {
+            // MoCo will rerun (execute all tests on all cut when users change mutation operator set configuration
+            val recordedOps = projectMeta?.meta?.get("runOperators")?.split("-")
+            if (!recordedOps.isNullOrEmpty()) {
+                if (!recordedOps.contains(fOpNames.joinToString(","))) {
+                    newOp = true
+                    return true
+                }
+            }
+        } else {
             logger.info("Git mode: off")
             return true
         }
-
         return false
     }
 }

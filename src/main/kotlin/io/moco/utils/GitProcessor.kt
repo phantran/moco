@@ -18,7 +18,6 @@
 package io.moco.utils
 
 import io.moco.persistence.ProjectMeta
-import io.moco.persistence.TestsCutMapping
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.lib.Constants

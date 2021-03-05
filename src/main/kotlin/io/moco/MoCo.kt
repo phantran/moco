@@ -82,15 +82,15 @@ class MoCo : AbstractMojo() {
      * There might be cases a test framework can detect infinite loop and exit early, but it cannot detect such
      * cases when MoCo insert some instrumentation instructions to the byte code. MoCo cannot escape the loop and
      * finish its execution. For such cases, please turn on debugging to check which one of your test cases cause
-     * an infinite loop or configure testTimeOut parameter (unit milliseconds), by default testTimeOut parameter is
+     * an infinite loop or configure preprocessTestTimeout parameter (unit milliseconds), by default preprocessTestTimeout parameter is
      * not set. Since it assumes all test cases can function properly before MoCo performing mutation testing.
      *
      * Value of 0 means no time out will be taken into consideration
      * This value of test time out is only used in case timeout cannot be automatically calculated by using
      * recorded execution time of that test.
      */
-    @Parameter(defaultValue = "-1", property = "testTimeOut", required = false)
-    private val testTimeOut: String = "-1"
+    @Parameter(defaultValue = "-1", property = "preprocessTestTimeout", required = false)
+    private val preprocessTestTimeout: String = "-1"
 
     /**
      * Excluded tests classes, comma separated string, specify as class name with "/", example: io/moco/TestExample
@@ -181,7 +181,7 @@ class MoCo : AbstractMojo() {
                 project?.compileSourceRoots,
                 project?.artifactId!!,
                 gitMode,
-                testTimeOut,
+                preprocessTestTimeout,
                 mutationPerClass,
                 debugEnabled,
                 verbose,

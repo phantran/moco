@@ -43,7 +43,6 @@ class TestItem(
         if (runner is ErrorReportingRunner) {
             logger.error("Error while running test of $cls")
         }
-
         var job: Job? = null
         try {
             val runNotifier = RunNotifier()

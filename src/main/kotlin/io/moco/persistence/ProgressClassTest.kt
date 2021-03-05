@@ -34,7 +34,7 @@ data class ProgressClassTest(
                 mutableMapOf(
                     "class_name" to key,
                     "covered_operators" to configuredOperators,
-                    "total_mutants" to value.size.toString(),
+                    "total_mutants" to value.count { it["result"] != "run_error" }.toString(),
                     "killed_mutants" to value.count { it["result"] == "killed" }.toString(),
                 )
             )

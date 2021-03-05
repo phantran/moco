@@ -29,6 +29,7 @@ import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 import java.util.HashSet
 
+
 class MutatedClassVisitor(
     delegateClassVisitor: ClassVisitor?, val tracker: MutatedClassTracker,
     val filter: List<String> = mutableListOf(), operators: List<Operator>?

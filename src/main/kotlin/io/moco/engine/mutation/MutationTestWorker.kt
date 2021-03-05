@@ -17,6 +17,7 @@
 
 package io.moco.engine.mutation
 
+import io.moco.engine.MoCoProcessCode
 import io.moco.utils.ByteArrayLoader
 import io.moco.engine.operator.Operator
 import io.moco.engine.test.TestItem
@@ -39,6 +40,7 @@ class MutationTestWorker(
     private lateinit var communicator: Communicator
     private lateinit var logger: MoCoLogger
     private var duplicatedMutantTracker: MutableSet<ByteArray> = mutableSetOf()
+    private val testMonitor = MutationTestMonitor()
 
     companion object {
         @JvmStatic
@@ -79,10 +81,10 @@ class MutationTestWorker(
             val wrappedTest: Pair<List<TestItemWrapper>, List<TestResultAggregator>> =
                 TestItemWrapper.wrapTestItem(testItems)
             runMutationTests(givenWorkerArgs.mutations, wrappedTest.first)
-            communicator.finishedMessageToMainProcess(0)
+            communicator.finishedMessageToMainProcess(MoCoProcessCode.OK.code)
         } catch (ex: Throwable) {
             ex.printStackTrace(System.out)
-            communicator.finishedMessageToMainProcess(14)
+            communicator.finishedMessageToMainProcess(MoCoProcessCode.ERROR.code)
         }
     }
 
@@ -91,15 +93,19 @@ class MutationTestWorker(
         mutations: List<Mutation>, tests: List<TestItemWrapper>
     ) {
         var targetClassByteArr: ByteArray? = null // original class byte array
+        MutationTestExecutor.testMonitor = testMonitor
         for (mutation: Mutation in mutations) {
+            if (testMonitor.shouldSkipThisMutation(mutation)) {
+                logger.debug("Skip mutation test for mutant at line " +
+                        "${mutation.lineOfCode} - ${mutation.mutationID.mutatorUniqueID}")
+                continue
+            }
             logger.debug("------- Handle mutation of class ${mutation.mutationID.location.className?.getJavaName()}--------------")
             if (targetClassByteArr == null) {
                 val clsJavaName = mutation.mutationID.location.className?.getJavaName()
                 targetClassByteArr = mGen.bytesArrayLoader.getByteArray(clsJavaName)
             }
-            val t0 = System.currentTimeMillis()
             runOneByOne(mutation, tests, targetClassByteArr)
-            logger.debug("------- Done in " + (System.currentTimeMillis() - t0) + " ms -------------")
         }
     }
 
@@ -108,6 +114,7 @@ class MutationTestWorker(
         mutation: Mutation,
         tests: List<TestItemWrapper>, byteArray: ByteArray?
     ) {
+        val t0 = System.currentTimeMillis()
         val mutationId = mutation.mutationID
         val createdMutant = mGen.createMutant(mutationId, byteArray) ?: return
 
@@ -127,5 +134,6 @@ class MutationTestWorker(
             )
         }
         communicator.reportToMainProcess(mutationId, testResult)
+        logger.debug("------- Done in " + (System.currentTimeMillis() - t0) + " ms -------------")
     }
 }

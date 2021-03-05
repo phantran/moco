@@ -24,13 +24,16 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
     private val logger = MoCoLogger()
 
     suspend fun call() = withContext(Dispatchers.Default) {
-        var timeOut: Long = if (testItem.executionTime != -1L) {
-            (testItem.executionTime * 1.5 + 5000).toLong()
-        } else {
+        val timeOut: Long = if (testItem.executionTime != -1L) {
+            // Normally tests executed in mutation tests phase will go into this branch
+            // Because all tests with executionTime < 0  are filtered out (recorded from preprocessing step)
+            (testItem.executionTime * 1.5 + 3000).toLong()
+        } else if (configuredTestTimeOut != -1L) {
             configuredTestTimeOut
+        } else {
+            // If still no timeout can be calculated, use a default value of 10 seconds
+            10000L
         }
-        // If still no timeout can be calculated, use a default value of 10 seconds
-        if (timeOut == -1L) timeOut = 10000L
 
         try {
             withTimeout(timeOut) {

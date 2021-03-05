@@ -74,14 +74,16 @@ class MutationEntryPoint(
         // Mutants generation and tests execution
         logger.debug("Start mutation testing")
         handleMutations(filteredMutations, preprocessedStorage)
-        if (gitMode) {
-            persistMutationResults()
-        }
+
+        persistMutationResults()
+
         logger.debug("Complete mutation testing")
     }
 
-    private fun filterMutations(mutations: MutableMap<String, List<Mutation>>,
-                                newOperatorsSelected: Boolean): Map<String, List<Mutation>> {
+    private fun filterMutations(
+        mutations: MutableMap<String, List<Mutation>>,
+        newOperatorsSelected: Boolean
+    ): Map<String, List<Mutation>> {
         if (gitMode && !newOperatorsSelected) {
             if (!clsByGit.isNullOrEmpty()) {
                 // Mutants black list UPDATE - REMOVAL
@@ -111,10 +113,10 @@ class MutationEntryPoint(
     private fun handleMutations(
         filteredMutations: Map<String, List<Mutation>>, preprocessedStorage: PreprocessStorage?
     ) {
-        filteredMutations.forEach label@{ (cls, mutationList) ->
+        val chunkedMutationsList: List<Pair<String, List<Mutation>>> = mutationsSplitting(filteredMutations)
+        chunkedMutationsList.forEach label@{ (cls, mutationList) ->
             val className = ClassName(cls)
             val testRetriever = RelatedTestRetriever(buildRoot)
-            val processArgs = WorkerProcess.processArgs(createdAgentLocation, Configuration.currentConfig!!.classPath)
             val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(
                 className,
                 preprocessedStorage?.testsExecutionTime!!
@@ -124,27 +126,67 @@ class MutationEntryPoint(
                 return@label
             }
             logger.debug("Class ${className.getJavaName()} has ${relatedTestClasses.size} relevant tests")
-            // Launch a new process for each class to handle the list of its mutants
-            val workerProcess = WorkerProcess(
-                MutationTestWorker::class.java, processArgs,
-                listOf((processArgs["port"] as ServerSocket).localPort.toString())
-            )
-            val workerThread = workerProcess.createMutationWorkerThread(
-                mutationList, relatedTestClasses, fOpNames, mutationStorage
-            )
-            workerProcess.execMutationTestProcess(workerThread)
+
+            val temp = mutableListOf<Mutation>()
+            for (i in mutationList.indices) {
+                // Launch a new process for each class to handle the list of its mutants
+                val processArgs =
+                    WorkerProcess.processArgs(createdAgentLocation, Configuration.currentConfig!!.classPath)
+                val workerProcess = WorkerProcess(
+                    MutationTestWorker::class.java, processArgs,
+                    listOf((processArgs["port"] as ServerSocket).localPort.toString())
+                )
+
+                if (relatedTestClasses.size > 10) {
+                    val workerThread = workerProcess.createMutationWorkerThread(
+                        listOf(mutationList[i]), relatedTestClasses, fOpNames, mutationStorage
+                    )
+                    workerProcess.execMutationTestProcess(workerThread)
+                } else {
+                    temp.add(mutationList[i])
+                    if (temp.size * relatedTestClasses.size > 10) {
+                        val workerThread = workerProcess.createMutationWorkerThread(
+                            temp, relatedTestClasses, fOpNames, mutationStorage
+                        )
+                        workerProcess.execMutationTestProcess(workerThread)
+                        temp.clear()
+                    } else if (i == mutationList.size - 1) {
+                        val workerThread = workerProcess.createMutationWorkerThread(
+                            temp, relatedTestClasses, fOpNames, mutationStorage
+                        )
+                        workerProcess.execMutationTestProcess(workerThread)
+                    }
+                }
+            }
         }
+    }
+
+    private fun mutationsSplitting(mutationsMap: Map<String, List<Mutation>>): MutableList<Pair<String, List<Mutation>>> {
+        // Split 10 tests per process to make sure a process launch does not crash because of memory issue
+        // when there are too many timeout tests
+        val res: MutableList<Pair<String, List<Mutation>>> = mutableListOf()
+        for ((clsName, ml) in mutationsMap) {
+            if (ml.size > 10) {
+                val temp = ml.chunked(10)
+                temp.forEach { res.add(Pair(clsName, it)) }
+            } else {
+                res.add(Pair(clsName, ml))
+            }
+        }
+        return res
     }
 
     private fun persistMutationResults() {
         logger.debug("Persist mutation test results")
         JsonSource("${mocoBuildPath}${File.separator}$mutationResultsFolder", "mutation")
             .save(mutationStorage)
-        val gh = gitProcessor.headCommit.name
-        // Mutants black list UPDATE - ADD (mutation results with status as run_error)
-        MutantsBlackList().saveErrorMutants(mutationStorage)
-        // Progress Class Test UPDATE - ADD (class progress - mutation results with status as survived and killed)
-        ProgressClassTest().saveProgress(mutationStorage, fOpNames.joinToString(","))
-        PersistentMutationResult().saveMutationResult(mutationStorage, gh)
+        if (gitMode) {
+            val gh = gitProcessor.headCommit.name
+            // Mutants black list UPDATE - ADD (mutation results with status as run_error)
+            MutantsBlackList().saveErrorMutants(mutationStorage)
+            // Progress Class Test UPDATE - ADD (class progress - mutation results with status as survived and killed)
+            ProgressClassTest().saveProgress(mutationStorage, fOpNames.joinToString(","))
+            PersistentMutationResult().saveMutationResult(mutationStorage, gh)
+        }
     }
 }

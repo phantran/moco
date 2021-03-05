@@ -126,7 +126,7 @@ class ResultsReceiverThread(
                         MutationTestStatus.SURVIVED -> "survived"
                         else -> "run_error"
                     }
-                    // storage already contain class name entry
+                    // storage already contains class name entry
                     if (mutationStorage.entries.containsKey(clsName)) {
                         // NOTE: do not change map keys because of the consistency between moco and gamekins
                         mutationStorage.entries[clsName]?.add(
