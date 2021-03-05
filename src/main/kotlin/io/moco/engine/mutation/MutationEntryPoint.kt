@@ -29,6 +29,9 @@ import io.moco.utils.GitProcessor
 import io.moco.utils.MoCoLogger
 import java.io.File
 import java.net.ServerSocket
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 
 class MutationEntryPoint(
@@ -114,9 +117,41 @@ class MutationEntryPoint(
         filteredMutations: Map<String, List<Mutation>>, preprocessedStorage: PreprocessStorage?
     ) {
 
+        val executor = Executors.newFixedThreadPool(Configuration.currentConfig!!.numberOfThreads) as ThreadPoolExecutor
         val chunkedMutationsList: List<Pair<String, List<Mutation>>> = mutationsSplitting(filteredMutations)
         var curCls = ""  // This curCls var is only used for info logging purpose
         chunkedMutationsList.forEach label@{ (cls, mutationList) ->
+            if (curCls != cls) {
+                curCls = cls
+                logger.info("Mutation test for class ${cls} - with ${filteredMutations[cls]?.size} mutants")
+            }
+            executor.execute(
+                Executor(
+                    preprocessedStorage, buildRoot, cls, logger, mutationList,
+                    fOpNames, mutationStorage, createdAgentLocation!!
+                )
+            )
+        }
+        executor.shutdown()
+        try {
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (e: InterruptedException) {
+            logger.error(e.toString())
+        }
+    }
+
+    internal class Executor(
+        private val preprocessedStorage: PreprocessStorage?,
+        private val buildRoot: String,
+        private val cls: String,
+        private val logger: MoCoLogger,
+        private val mutationList: List<Mutation>,
+        private val fOpNames: List<String>,
+        private val mutationStorage: MutationStorage,
+        private val createdAgentLocation: String
+
+    ) : Runnable {
+        override fun run() {
             val className = ClassName(cls)
             val testRetriever = RelatedTestRetriever(buildRoot)
             val testsExecutionTime = preprocessedStorage?.testsExecutionTime!!
@@ -126,12 +161,9 @@ class MutationEntryPoint(
             )
             if (relatedTestClasses.isEmpty()) {
                 logger.debug("Class ${className.getJavaName()} has 0 relevant test")
-                return@label
+                return
             }
-            if (curCls != cls) {
-                curCls = cls
-                logger.info("Mutation test for class ${className.getJavaName()} - with ${filteredMutations[cls]?.size} mutants")
-            }
+
             logger.debug("Class ${className.getJavaName()} has ${relatedTestClasses.size} relevant tests")
 
             val temp = mutableListOf<Mutation>()
@@ -165,12 +197,13 @@ class MutationEntryPoint(
                     }
                 }
             }
+            return
         }
     }
 
     private fun mutationsSplitting(mutationsMap: Map<String, List<Mutation>>): MutableList<Pair<String, List<Mutation>>> {
-        // Split 10 tests per process to make sure a process launch does not crash because of memory issue
-        // when there are too many timeout tests
+        // Split 10 mutants per class entry (1 class can have many entry in the map)
+        // to make sure a process launch does not crash because of memory issue
         val res: MutableList<Pair<String, List<Mutation>>> = mutableListOf()
         for ((clsName, ml) in mutationsMap) {
             if (ml.size > 10) {

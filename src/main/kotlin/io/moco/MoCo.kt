@@ -134,6 +134,12 @@ class MoCo : AbstractMojo() {
     @Parameter(defaultValue = "true", property = "verbose", required = false)
     private val verbose: Boolean = true
 
+    /**
+     * Set to false to display succinct console messages during MoCo execution
+     */
+    @Parameter(defaultValue = "2", property = "numberOfThreads", required = false)
+    private val numberOfThreads: Int = 2
+
 
     @Throws(MojoExecutionException::class)
     override fun execute() {
@@ -185,6 +191,7 @@ class MoCo : AbstractMojo() {
                 mutationPerClass,
                 debugEnabled,
                 verbose,
+                numberOfThreads
             )
 
             Configuration.currentConfig = configuration

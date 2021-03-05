@@ -17,8 +17,6 @@
 
 package io.moco.engine;
 
-import io.moco.utils.MoCoLogger;
-
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;

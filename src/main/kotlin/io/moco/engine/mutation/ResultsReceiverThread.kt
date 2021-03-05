@@ -66,11 +66,13 @@ class ResultsReceiverThread(
         }
     }
 
+    @Synchronized
     private fun register(stream: DataInputStream) {
         val mutation: MutationID = DataStreamUtils.readObject(stream)
         this.resultMapping[mutation] = MutationTestResult(1, MutationTestStatus.STARTED)
     }
 
+    @Synchronized
     private fun report(stream: DataInputStream) {
         val mutation: MutationID = DataStreamUtils.readObject(stream)
         val result: MutationTestResult = DataStreamUtils.readObject(stream)

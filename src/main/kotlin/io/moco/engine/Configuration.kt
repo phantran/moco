@@ -41,6 +41,7 @@ data class Configuration(
     val mutationPerClass: Int,
     val debugEnabled: Boolean,
     val verbose: Boolean,
+    val numberOfThreads: Int
 ) {
     companion object {
         var currentConfig: Configuration? = null
