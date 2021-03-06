@@ -80,9 +80,9 @@ class POUOI(
                     createDesc(operatorType.first, opcode), createUniqueID(operatorType.second, opcode)
                 ) ?: continue
                 // But only do visiting to create actual mutant if in creating phase
-                if (tracker.mutatedClassTracker.targetMutationID != null) {
-                    if (tracker.isTargetMutation(newMutation.mutationID)) {
-                        tracker.mutatedClassTracker.setTargetMutation(newMutation)
+                if (tracker.mutatedClassTracker.targetMutation != null) {
+                    if (tracker.isTargetMutation(newMutation)) {
+                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
                         logger.debug("${operatorType.first} of variable : $v")
                         when (operatorType.second) {
                             "POI" -> handleVarPostOp(opcode, v)
@@ -134,9 +134,9 @@ class POUOI(
                     createDesc(operatorType.first, opcode), createUniqueID(operatorType.second, opcode)
                 ) ?: continue
                 // But only do visiting to create actual mutant if still in creating phase
-                if (tracker.mutatedClassTracker.targetMutationID != null) {
-                    if (tracker.isTargetMutation(newMutation.mutationID)) {
-                        tracker.mutatedClassTracker.setTargetMutation(newMutation)
+                if (tracker.mutatedClassTracker.targetMutation != null) {
+                    if (tracker.isTargetMutation(newMutation)) {
+                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
                         logger.debug("${operatorType.first} of array element")
                         when (operatorType.second) {
                             "POI" -> visited = handleArrPostOp(opcode)
@@ -235,10 +235,10 @@ class POUOI(
                 ) ?: continue
 
                 // But only do visiting to create actual mutant if still in creating phase
-                if (tracker.mutatedClassTracker.targetMutationID != null) {
+                if (tracker.mutatedClassTracker.targetMutation != null) {
 
-                    if (tracker.isTargetMutation(newMutation.mutationID)) {
-                        tracker.mutatedClassTracker.setTargetMutation(newMutation)
+                    if (tracker.isTargetMutation(newMutation)) {
+                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
                         logger.debug("${operatorType.first} of ${opcodeDesc[opcode]?.first}")
 
                         when (operatorType.second) {

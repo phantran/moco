@@ -49,7 +49,6 @@ class ByteArrayLoader(cp: String?) {
         return res
     }
 
-
     private fun getCanonicalPath(path: String): File {
         try {
             return File(path).canonicalFile
@@ -59,7 +58,6 @@ class ByteArrayLoader(cp: String?) {
             )
         }
     }
-
 
     @Throws(IOException::class)
     fun getByteArray(className: String?): ByteArray? {
@@ -78,7 +76,6 @@ class ByteArrayLoader(cp: String?) {
         }
         return null
     }
-
 
     @Throws(IOException::class)
     fun streamToByteArr(inp: InputStream?): ByteArray? {

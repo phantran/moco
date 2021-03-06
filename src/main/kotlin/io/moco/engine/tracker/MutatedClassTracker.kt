@@ -23,9 +23,9 @@ import io.moco.engine.mutation.Mutation
 import io.moco.engine.mutation.MutationID
 
 
-class MutatedClassTracker(val targetMutationID: MutationID? = null, val coveredLines: Set<Int>? = null) {
+class MutatedClassTracker(val targetMutation: Mutation? = null, val coveredLines: Set<Int>? = null) {
     private var mutations: MutableList<Mutation> = mutableListOf()
-    private var targetMutation: Mutation? = null
+    private var generatedTargetMutation: Mutation? = null
     private var clsInfo: ClassInfo? = null
     private var fileName: String? = null
 
@@ -41,12 +41,12 @@ class MutatedClassTracker(val targetMutationID: MutationID? = null, val coveredL
         return mutations
     }
 
-    fun setTargetMutation(mutation: Mutation) {
-        targetMutation = mutation
+    fun setGeneratedTargetMutation(mutation: Mutation) {
+        generatedTargetMutation = mutation
     }
 
-    fun getTargetMutation(): Mutation? {
-        return targetMutation
+    fun getGeneratedTargetMutation(): Mutation? {
+        return generatedTargetMutation
     }
 
     fun setClsInfo(info: ClassInfo) {

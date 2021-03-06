@@ -35,8 +35,8 @@ class MutationTestMonitor {
         } else {
             timeoutMutationTypeList.add(
                 TimeoutMutationType(
-                    mutation.lineOfCode,
-                    mutation.mutationID.operatorName, mutation.mutationID.location.className!!, 1
+                    mutation.lineOfCode, mutation.mutationID.operatorName,
+                    mutation.mutationID.location.className!!, 1
                 )
             )
         }

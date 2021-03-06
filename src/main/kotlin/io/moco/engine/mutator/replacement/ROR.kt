@@ -89,10 +89,10 @@ class ROR(
                         operator,
                         createDesc(opcode, newOpcode), createUniqueID(opcode, newOpcode)
                     ) ?: continue
-                    if (tracker.mutatedClassTracker.targetMutationID != null) {
+                    if (tracker.mutatedClassTracker.targetMutation != null) {
                         // In mutant creation phase, visit corresponding instruction to mutate it
-                        if (tracker.isTargetMutation(newMutation.mutationID)) {
-                            tracker.mutatedClassTracker.setTargetMutation(newMutation)
+                        if (tracker.isTargetMutation(newMutation)) {
+                            tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
                             logger.debug("Old Opcode: $opcode")
                             logger.debug("New Opcode: $newOpcode")
                             mv.visitJumpInsn(newOpcode, label)

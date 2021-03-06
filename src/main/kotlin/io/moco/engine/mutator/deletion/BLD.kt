@@ -60,10 +60,10 @@ class BLD(
                         "${opcodeDesc[opcode]?.second?.substring(1)}",
                 "KEEP_F_${opcodeDesc[opcode]?.second}"
             ) ?: return false
-        if (tracker.mutatedClassTracker.targetMutationID != null) {
+        if (tracker.mutatedClassTracker.targetMutation != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it
-            if (tracker.isTargetMutation(newMutation.mutationID)) {
-                tracker.mutatedClassTracker.setTargetMutation(newMutation)
+            if (tracker.isTargetMutation(newMutation)) {
+                tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
                 logger.debug("Delete second operand after logical operator: $opcode")
                 when (type) {
                     "long" -> mv.visitInsn(Opcodes.POP2)
@@ -85,10 +85,10 @@ class BLD(
                         "${opcodeDesc[opcode]?.second?.substring(1)}",
                 "KEEP_S_${opcodeDesc[opcode]?.second}"
             ) ?: return false
-        if (tracker.mutatedClassTracker.targetMutationID != null) {
+        if (tracker.mutatedClassTracker.targetMutation != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it
-            if (tracker.isTargetMutation(newMutation.mutationID)) {
-                tracker.mutatedClassTracker.setTargetMutation(newMutation)
+            if (tracker.isTargetMutation(newMutation)) {
+                tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
                 logger.debug("Delete first operand before logical operator: $opcode")
                 when (type) {
                     "long" -> {

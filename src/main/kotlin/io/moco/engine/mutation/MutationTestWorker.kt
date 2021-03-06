@@ -101,7 +101,8 @@ class MutationTestWorker(
                         "${mutation.lineOfCode} - ${mutation.mutationID.mutatorUniqueID}")
                 continue
             }
-            logger.debug("------- Handle mutation of class ${mutation.mutationID.location.className?.getJavaName()}--------------")
+            logger.debug("------- Handle mutation of class " +
+                    "${mutation.mutationID.location.className?.getJavaName()} --------------")
             if (targetClassByteArr == null) {
                 val clsJavaName = mutation.mutationID.location.className?.getJavaName()
                 targetClassByteArr = mGen.bytesArrayLoader.getByteArray(clsJavaName)
@@ -112,19 +113,15 @@ class MutationTestWorker(
 
     @Throws(IOException::class)
     private fun runOneByOne(
-        mutation: Mutation,
-        tests: List<TestItemWrapper>, byteArray: ByteArray?
+        mutation: Mutation, tests: List<TestItemWrapper>, byteArray: ByteArray?
     ) {
         val t0 = System.currentTimeMillis()
+        val createdMutant = mGen.createMutant(mutation, byteArray) ?: return
         val mutationId = mutation.mutationID
-        val createdMutant = mGen.createMutant(mutationId, byteArray) ?: return
-
         // Filter out duplicated mutants which have same byte array (equivalent mutant)
-        if (duplicatedMutantTracker.contains(createdMutant.byteArray)) {
-            return
-        } else {
-            duplicatedMutantTracker.add(createdMutant.byteArray)
-        }
+        if (duplicatedMutantTracker.contains(createdMutant.byteArray)) return
+        else duplicatedMutantTracker.add(createdMutant.byteArray)
+
 
         communicator.registerToMainProcess(mutationId)
         val testResult: MutationTestResult = if (tests.isEmpty()) {

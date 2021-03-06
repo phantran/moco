@@ -135,7 +135,7 @@ class MoCo : AbstractMojo() {
     private val verbose: Boolean = true
 
     /**
-     * Set to false to display succinct console messages during MoCo execution
+     * Number of max threads to use by the main process of MoCo
      */
     @Parameter(defaultValue = "2", property = "numberOfThreads", required = false)
     private val numberOfThreads: Int = 2

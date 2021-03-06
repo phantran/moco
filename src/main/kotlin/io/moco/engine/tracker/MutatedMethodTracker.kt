@@ -83,7 +83,7 @@ class MutatedMethodTracker(
      * @param newMutationID
      * @return
      */
-    fun isTargetMutation(newMutationID: MutationID): Boolean {
-        return newMutationID == mutatedClassTracker.targetMutationID
+    fun isTargetMutation(newMutation: Mutation): Boolean {
+        return newMutation == mutatedClassTracker.targetMutation!!
     }
 }

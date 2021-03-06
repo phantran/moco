@@ -118,6 +118,7 @@ class MutationEntryPoint(
         val executor = Executors.newFixedThreadPool(Configuration.currentConfig!!.numberOfThreads) as ThreadPoolExecutor
         val chunkedMutationsList: List<Pair<String, List<Mutation>>> = mutationsSplitting(filteredMutations)
         var curCls = ""  // This curCls var is only used for info logging purpose
+        if (chunkedMutationsList.isEmpty()) logger.info("No mutations to run")
         chunkedMutationsList.forEach label@{ (cls, mutationList) ->
             if (curCls != cls) {
                 curCls = cls

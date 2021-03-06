@@ -79,9 +79,9 @@ class PRUOI(
                     createDesc(operatorType.first, opcode), createUniqueID(operatorType.second, opcode)
                 ) ?: continue
                 // But only do visiting to create actual mutant if in creating phase
-                if (tracker.mutatedClassTracker.targetMutationID != null) {
-                    if (tracker.isTargetMutation(newMutation.mutationID)) {
-                        tracker.mutatedClassTracker.setTargetMutation(newMutation)
+                if (tracker.mutatedClassTracker.targetMutation != null) {
+                    if (tracker.isTargetMutation(newMutation)) {
+                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
                         logger.debug("${operatorType.first} of variable : $v")
                         when (operatorType.second) {
                             "PRI" -> visited = handleVarPreOp(opcode, v)
@@ -148,9 +148,9 @@ class PRUOI(
                     createDesc(operatorType.first, opcode), createUniqueID(operatorType.second, opcode)
                 ) ?: continue
                 // But only do visiting to create actual mutant if still in creating phase
-                if (tracker.mutatedClassTracker.targetMutationID != null) {
-                    if (tracker.isTargetMutation(newMutation.mutationID)) {
-                        tracker.mutatedClassTracker.setTargetMutation(newMutation)
+                if (tracker.mutatedClassTracker.targetMutation != null) {
+                    if (tracker.isTargetMutation(newMutation)) {
+                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
                         logger.debug("${operatorType.first} of array element")
                         when (operatorType.second) {
                             "PRI" -> visited = handleArrPreOp(opcode)
@@ -247,10 +247,10 @@ class PRUOI(
                     createDesc(operatorType.first, opcode), createUniqueID("${operatorType.second}_$desc", opcode)
                 ) ?: continue
                 // But only do visiting to create actual mutant if still in creating phase
-                if (tracker.mutatedClassTracker.targetMutationID != null) {
-                    if (tracker.isTargetMutation(newMutation.mutationID)) {
+                if (tracker.mutatedClassTracker.targetMutation != null) {
+                    if (tracker.isTargetMutation(newMutation)) {
 
-                        tracker.mutatedClassTracker.setTargetMutation(newMutation)
+                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
                         logger.debug("${operatorType.first} of ${opcodeDesc[opcode]?.first}")
                         when (operatorType.second) {
                             "PRI" -> visited = handleFieldPreOp(opcode, owner, name, desc)
