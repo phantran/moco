@@ -133,7 +133,6 @@ class MutationTestWorker(
             )
         }
 
-        println(mutation)
         communicator.reportToMainProcess(mutation, testResult)
         logger.debug("------- Done in " + (System.currentTimeMillis() - t0) + " ms -------------")
     }

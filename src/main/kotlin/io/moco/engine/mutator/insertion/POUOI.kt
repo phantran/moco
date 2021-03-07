@@ -77,25 +77,25 @@ class POUOI(
         }
         mv.visitVarInsn(opcode, v)
         if (supported) {
-            val i = Random.nextInt(0, operatorTypes.size)
-            val operatorType = operatorTypes[i]
-            // Always collect mutation information in both collecting and creating phase
-            val newMutation = tracker.registerMutation(
-                operator,
-                createDesc(operatorType.first, opcode),
-                createUniqueID(opcode, tracker.currConsideredLineNumber),
-                opcodeDesc[opcode]?.second, mutableMapOf("varIndex" to v)
-            ) ?: return
-            // But only do visiting to create actual mutant if in creating phase
-            if (tracker.mutatedClassTracker.targetMutation != null) {
-                if (tracker.isTargetMutation(newMutation)) {
-                    tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
-                    logger.debug("${operatorType.first} of variable : $v")
-                    when (operatorType.second) {
-                        "POI" -> handleVarPostOp(opcode, v)
-                        "POD" -> handleVarPostOp(opcode, v, false)
+            for (operatorType in operatorTypes) {
+                // Always collect mutation information in both collecting and creating phase
+                val newMutation = tracker.registerMutation(
+                    operator,
+                    createDesc(operatorType.first, opcode),
+                    createUniqueID(opcode, tracker.currConsideredLineNumber),
+                    opcodeDesc[opcode]?.second, mutableMapOf("varIndex" to v)
+                ) ?: return
+                // But only do visiting to create actual mutant if in creating phase
+                if (tracker.mutatedClassTracker.targetMutation != null) {
+                    if (tracker.isTargetMutation(newMutation)) {
+                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
+                        logger.debug("${operatorType.first} of variable : $v")
+                        when (operatorType.second) {
+                            "POI" -> handleVarPostOp(opcode, v)
+                            "POD" -> handleVarPostOp(opcode, v, false)
+                        }
+                        return
                     }
-                    return
                 }
             }
         }
@@ -132,23 +132,23 @@ class POUOI(
         }
         var visited = false
         if (supported) {
-            val i = Random.nextInt(0, operatorTypes.size)
-            val operatorType = operatorTypes[i]
-            // Always collect mutation information in both collecting and creating phase
-            val newMutation = tracker.registerMutation(
-                operator,
-                createDesc(operatorType.first, opcode),
-                createUniqueID(opcode, tracker.currConsideredLineNumber),
-                opcodeDesc[opcode]?.second
-            )
-            // But only do visiting to create actual mutant if still in creating phase
-            if (tracker.mutatedClassTracker.targetMutation != null) {
-                if (tracker.isTargetMutation(newMutation)) {
-                    tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation!!)
-                    logger.debug("${operatorType.first} of array element")
-                    when (operatorType.second) {
-                        "POI" -> visited = handleArrPostOp(opcode)
-                        "POD" -> visited = handleArrPostOp(opcode, false)
+            for (operatorType in operatorTypes) {
+                // Always collect mutation information in both collecting and creating phase
+                val newMutation = tracker.registerMutation(
+                    operator,
+                    createDesc(operatorType.first, opcode),
+                    createUniqueID(opcode, tracker.currConsideredLineNumber),
+                    opcodeDesc[opcode]?.second
+                )
+                // But only do visiting to create actual mutant if still in creating phase
+                if (tracker.mutatedClassTracker.targetMutation != null) {
+                    if (tracker.isTargetMutation(newMutation)) {
+                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation!!)
+                        logger.debug("${operatorType.first} of array element")
+                        when (operatorType.second) {
+                            "POI" -> visited = handleArrPostOp(opcode)
+                            "POD" -> visited = handleArrPostOp(opcode, false)
+                        }
                     }
                 }
             }
@@ -232,25 +232,25 @@ class POUOI(
         }
         var visited = false
         if (supported) {
-            val i = Random.nextInt(0, operatorTypes.size)
-            val operatorType = operatorTypes[i]
-            // Always collect mutation information in both collecting and creating phase
-            val newMutation = tracker.registerMutation(
-                operator,
-                createDesc(operatorType.first, opcode),
-                createUniqueID(opcode, tracker.currConsideredLineNumber),
-                opcodeDesc[opcode]?.second
-            )
-            // But only do visiting to create actual mutant if still in creating phase
-            if (tracker.mutatedClassTracker.targetMutation != null) {
+            for (operatorType in operatorTypes) {
+                // Always collect mutation information in both collecting and creating phase
+                val newMutation = tracker.registerMutation(
+                    operator,
+                    createDesc(operatorType.first, opcode),
+                    createUniqueID(opcode, tracker.currConsideredLineNumber),
+                    opcodeDesc[opcode]?.second
+                )
+                // But only do visiting to create actual mutant if still in creating phase
+                if (tracker.mutatedClassTracker.targetMutation != null) {
 
-                if (tracker.isTargetMutation(newMutation)) {
-                    tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation!!)
-                    logger.debug("${operatorType.first} of ${opcodeDesc[opcode]?.first}")
+                    if (tracker.isTargetMutation(newMutation)) {
+                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation!!)
+                        logger.debug("${operatorType.first} of ${opcodeDesc[opcode]?.first}")
 
-                    when (operatorType.second) {
-                        "POI" -> visited = handleFieldPostOp(opcode, owner, name, desc)
-                        "POD" -> visited = handleFieldPostOp(opcode, owner, name, desc, false)
+                        when (operatorType.second) {
+                            "POI" -> visited = handleFieldPostOp(opcode, owner, name, desc)
+                            "POD" -> visited = handleFieldPostOp(opcode, owner, name, desc, false)
+                        }
                     }
                 }
             }
