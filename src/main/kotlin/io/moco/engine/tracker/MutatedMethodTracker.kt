@@ -103,7 +103,7 @@ class MutatedMethodTracker(
 
     private fun collectInstructionsOrder(opcode: String?, newMutationID: MutationID) {
         // Order of opcodes is collected so we can reconstruct the mutated line of code by using
-        // mutation.json in a third party tool such as Gamekins
+        // moco.json in a third party tool such as Gamekins
         // same line of code as target mutation
         if (currConsideredLineNumber == mutatedClassTracker.targetMutation?.lineOfCode && !opcode.isNullOrEmpty()) {
             val newInstructionIndices = newMutationID.instructionIndices!!.joinToString(",")

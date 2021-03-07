@@ -216,7 +216,7 @@ class MutationEntryPoint(
     }
 
     private fun persistMutationResults() {
-        JsonSource("${mocoBuildPath}${File.separator}$mutationResultsFolder", "mutation")
+        JsonSource("${mocoBuildPath}${File.separator}$mutationResultsFolder", "moco")
             .save(mutationStorage)
         if (gitMode) {
             logger.debug("Persist mutation test results")
