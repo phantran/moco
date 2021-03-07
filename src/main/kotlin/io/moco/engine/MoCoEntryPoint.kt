@@ -83,8 +83,8 @@ class MoCoEntryPoint(private val configuration: Configuration) {
 
     private fun cleanBeforeExit() {
         // Save meta before exit
-        logger.debug("Saving project meta data before exiting...")
         if (gitMode) {
+            logger.debug("Saving project meta data before exiting...")
             gitProcessor.setHeadCommitMeta(projectMeta!!)
             projectMeta!!.meta["sourceBuildFolder"] = configuration.codeRoot
             projectMeta!!.meta["testBuildFolder"] = configuration.testRoot
@@ -190,7 +190,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
                 }
             }
         } else {
-            logger.info("Git mode: off")
+            logger.info("Git mode: OFF")
             return true
         }
         return false

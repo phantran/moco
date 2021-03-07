@@ -32,7 +32,7 @@ import java.util.HashSet
 
 class MutatedClassVisitor(
     delegateClassVisitor: ClassVisitor?, val tracker: MutatedClassTracker,
-    val filter: List<String> = mutableListOf(), operators: List<Operator>?
+    val filter: List<String> = mutableListOf(), operators: List<Operator>?, private val collectingPhase: Boolean = false
 ) : ClassVisitor(JavaInfo.ASM_VERSION, delegateClassVisitor) {
 
     private val chosenOperators: MutableSet<Operator> = HashSet<Operator>()
@@ -79,11 +79,15 @@ class MutatedClassVisitor(
         )
 
         val info = MethodInfo(tracker.getClsInfo(), access, methodName, methodDescriptor)
-        //TODO: change filter to kind of regex or predicate to filter methods that should be excluded from mutation
+        //TODO: support method exclusion here
         return if (!filter.contains(info.name)) {
             var chain = methodVisitor
             for (each in chosenOperators) {
                 chain = each.generateVisitor(methodTracker, info, chain)
+            }
+            // Use loop visitor to detect loop (for, while, do while)
+            if (collectingPhase) {
+                chain = LoopVisitor(chain, methodTracker)
             }
             val wrapped = LineVisitor(chain, methodTracker)
             InstructionVisitor(wrapped, methodTracker)

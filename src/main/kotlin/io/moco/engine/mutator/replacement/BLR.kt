@@ -50,8 +50,10 @@ class BLR(
 
     private fun operatorReplace(opcode: Int, newOpcode: Int): Boolean {
         // Replace IAND by IOR, or vice versa
-        val newMutation = tracker.registerMutation(operator, createDesc(opcode, newOpcode),
-                                                   createUniqueID(opcode, newOpcode)) ?: return false
+        val newMutation = tracker.registerMutation(
+            operator, createDesc(opcode, newOpcode),
+            createUniqueID(opcode, newOpcode), opcodeDesc[opcode]?.second
+        ) ?: return false
         //Collect mutation information
         if (tracker.mutatedClassTracker.targetMutation != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it

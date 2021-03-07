@@ -44,7 +44,7 @@ data class PersistentMutationResult(
                             "file_name" to mutationDetails.fileName,
                             "line_of_code" to mutationDetails.lineOfCode.toString(),
                             "instruction_indices" to mutationID.instructionIndices!!.joinToString(","),
-                            "mutator_id" to mutationID.mutatorUniqueID,
+                            "mutator_id" to mutationID.mutatorID,
                             "mutation_description" to mutationDetails.description,
                             "operator_name" to mutationID.operatorName,
                             "test_status" to item["result"] as String,

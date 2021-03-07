@@ -30,6 +30,7 @@ class LineVisitor(
 
     override fun visitLineNumber(line: Int, start: Label) {
         mutatedMethodTracker.currConsideredLineNumber = line
+        mutatedMethodTracker.currConsideredLineLabel = start
         mv.visitLineNumber(line, start)
     }
 

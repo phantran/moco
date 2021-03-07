@@ -101,7 +101,7 @@ class MutationEntryPoint(
                     for (m in mList!!) {
                         if (m.lineOfCode.toString() == bLEntry["line_of_code"]
                             && m.mutationID.instructionIndices!!.joinToString(",") == bLEntry["instruction_indices"]
-                            && m.mutationID.mutatorUniqueID == bLEntry["mutator_id"]
+                            && m.mutationID.mutatorID == bLEntry["mutator_id"]
                         ) {
                             mList.remove(m)
                         }
@@ -216,10 +216,10 @@ class MutationEntryPoint(
     }
 
     private fun persistMutationResults() {
-        logger.debug("Persist mutation test results")
         JsonSource("${mocoBuildPath}${File.separator}$mutationResultsFolder", "mutation")
             .save(mutationStorage)
         if (gitMode) {
+            logger.debug("Persist mutation test results")
             val gh = gitProcessor.headCommit.name
             // Mutants black list UPDATE - ADD (mutation results with status as run_error)
             MutantsBlackList().saveErrorMutants(mutationStorage)

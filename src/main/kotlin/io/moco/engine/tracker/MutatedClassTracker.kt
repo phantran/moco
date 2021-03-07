@@ -28,16 +28,21 @@ class MutatedClassTracker(val targetMutation: Mutation? = null, val coveredLines
     private var generatedTargetMutation: Mutation? = null
     private var clsInfo: ClassInfo? = null
     private var fileName: String? = null
+    // "-" is used to as delimiter of mutator id -> so we take the first element of the split mutator id string
+    // This original opcode is then used in mutated method tracker to detect same opcode on the line of code
+    // of the target mutation
+    val originalOpcode: String? = targetMutation?.mutationID?.mutatorID?.split("-")?.get(0)
 
     fun addMutation(mutation: Mutation) {
         mutations.add(mutation)
     }
 
-    fun mutationAlreadyCollected(id: MutationID): Boolean {
-        return mutations.any { it.mutationID == id }
+    fun shouldCollectThisMutation(id: MutationID): Boolean {
+//                return mutations.any { it.mutationID == id }
+        return mutations.any { it.mutationID.compareWithoutInstruction(id) }
     }
 
-    fun getCollectedMutations(): List<Mutation> {
+    fun getCollectedMutations(): MutableList<Mutation> {
         return mutations
     }
 
@@ -64,5 +69,4 @@ class MutatedClassTracker(val targetMutation: Mutation? = null, val coveredLines
     fun getFileName(): String? {
         return fileName
     }
-
 }

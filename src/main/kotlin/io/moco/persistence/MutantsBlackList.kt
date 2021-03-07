@@ -43,7 +43,7 @@ data class MutantsBlackList(
                             "class_name" to key,
                             "line_of_code" to mutationDetails.lineOfCode.toString(),
                             "instruction_indices" to mutationID.instructionIndices!!.joinToString(","),
-                            "mutator_id" to mutationID.mutatorUniqueID,
+                            "mutator_id" to mutationID.mutatorID,
                         )
                     )
                 }

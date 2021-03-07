@@ -52,13 +52,13 @@ class BLD(
     )
 
     private fun trySecondOperandRemoval(opcode: Int, type: String): Boolean {
-        // KEEP_F_$opcode means keep first operand
+        // $opcode-KEEP-F means keep first operand
         val newMutation =
             tracker.registerMutation(
                 operator,
-                "delete second operand after logical operator " +
+                "delete second operand after logical operator" +
                         "${opcodeDesc[opcode]?.second?.substring(1)}",
-                "KEEP_F_${opcodeDesc[opcode]?.second}"
+                "${opcodeDesc[opcode]?.second}-KEEP-F", opcodeDesc[opcode]?.second
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutation != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it
@@ -77,13 +77,13 @@ class BLD(
     }
 
     private fun tryFirstOperandRemoval(opcode: Int, type: String): Boolean {
-        // KEEP_S_$opcode means keep second operand
+        // $opcode-KEEP-S means keep second operand
         val newMutation =
             tracker.registerMutation(
                 operator,
-                "delete first operand before logical operator " +
+                "delete first operand before logical operator" +
                         "${opcodeDesc[opcode]?.second?.substring(1)}",
-                "KEEP_S_${opcodeDesc[opcode]?.second}"
+                "${opcodeDesc[opcode]?.second}-KEEP-S", opcodeDesc[opcode]?.second
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutation != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it

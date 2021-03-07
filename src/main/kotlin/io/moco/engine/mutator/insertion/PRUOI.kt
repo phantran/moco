@@ -21,6 +21,7 @@ import io.moco.engine.operator.InsertionOperator
 import io.moco.engine.tracker.MutatedMethodTracker
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
+import kotlin.random.Random
 
 
 /**
@@ -61,6 +62,8 @@ class PRUOI(
         "field" to listOf(Opcodes.GETFIELD, Opcodes.GETSTATIC)
     )
 
+    override val insertionPosition = "PR"
+
     private val operatorTypes = listOf(
         Pair("pre-increment", "PRI"), Pair("pre-decrement", "PRD"),
     )
@@ -72,28 +75,30 @@ class PRUOI(
         }
         var visited = false
         if (supported) {
-            for (operatorType in operatorTypes) {
-                // Always collect mutation information in both collecting and creating phase
-                val newMutation = tracker.registerMutation(
-                    operator,
-                    createDesc(operatorType.first, opcode), createUniqueID(operatorType.second, opcode)
-                ) ?: continue
-                // But only do visiting to create actual mutant if in creating phase
-                if (tracker.mutatedClassTracker.targetMutation != null) {
-                    if (tracker.isTargetMutation(newMutation)) {
-                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
-                        logger.debug("${operatorType.first} of variable : $v")
-                        when (operatorType.second) {
-                            "PRI" -> visited = handleVarPreOp(opcode, v)
-                            "PRD" -> visited = handleVarPreOp(opcode, v, false)
-                        }
-                        if (visited) break
+            val i = Random.nextInt(0, operatorTypes.size)
+            val operatorType = operatorTypes[i]
+
+            // Always collect mutation information in both collecting and creating phase
+            val newMutation = tracker.registerMutation(
+                operator,
+                createDesc(operatorType.first, opcode),
+                createUniqueID(opcode, tracker.currConsideredLineNumber),
+                opcodeDesc[opcode]?.second, mutableMapOf("varIndex" to v)
+            )
+            // But only do visiting to create actual mutant if in creating phase
+            if (tracker.mutatedClassTracker.targetMutation != null) {
+                if (tracker.isTargetMutation(newMutation)) {
+                    tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation!!)
+                    logger.debug("${operatorType.first} of variable : $v")
+                    when (operatorType.second) {
+                        "PRI" -> visited = handleVarPreOp(opcode, v)
+                        "PRD" -> visited = handleVarPreOp(opcode, v, false)
                     }
+
+
                 }
             }
-            if (!visited) {
-                mv.visitVarInsn(opcode, v)
-            }
+            if (!visited) mv.visitVarInsn(opcode, v)
         } else {
             mv.visitVarInsn(opcode, v)
         }
@@ -141,28 +146,28 @@ class PRUOI(
         }
         var visited = false
         if (supported) {
-            for (operatorType in operatorTypes) {
-                // Always collect mutation information in both collecting and creating phase
-                val newMutation = tracker.registerMutation(
-                    operator,
-                    createDesc(operatorType.first, opcode), createUniqueID(operatorType.second, opcode)
-                ) ?: continue
-                // But only do visiting to create actual mutant if still in creating phase
-                if (tracker.mutatedClassTracker.targetMutation != null) {
-                    if (tracker.isTargetMutation(newMutation)) {
-                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
-                        logger.debug("${operatorType.first} of array element")
-                        when (operatorType.second) {
-                            "PRI" -> visited = handleArrPreOp(opcode)
-                            "PRD" -> visited = handleArrPreOp(opcode, false)
-                        }
-                        if (visited) break
+            val i = Random.nextInt(0, operatorTypes.size)
+            val operatorType = operatorTypes[i]
+
+            // Always collect mutation information in both collecting and creating phase
+            val newMutation = tracker.registerMutation(
+                operator,
+                createDesc(operatorType.first, opcode),
+                createUniqueID(opcode, tracker.currConsideredLineNumber),
+                opcodeDesc[opcode]?.second
+            )
+            // But only do visiting to create actual mutant if still in creating phase
+            if (tracker.mutatedClassTracker.targetMutation != null) {
+                if (tracker.isTargetMutation(newMutation)) {
+                    tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation!!)
+                    logger.debug("${operatorType.first} of array element")
+                    when (operatorType.second) {
+                        "PRI" -> visited = handleArrPreOp(opcode)
+                        "PRD" -> visited = handleArrPreOp(opcode, false)
                     }
                 }
             }
-            if (!visited) {
-                mv.visitInsn(opcode)
-            }
+            if (!visited) mv.visitInsn(opcode)
         } else {
             mv.visitInsn(opcode)
         }
@@ -240,29 +245,29 @@ class PRUOI(
         }
         var visited = false
         if (supported) {
-            for (operatorType in operatorTypes) {
-                // Always collect mutation information in both collecting and creating phase
-                val newMutation = tracker.registerMutation(
-                    operator,
-                    createDesc(operatorType.first, opcode), createUniqueID("${operatorType.second}_$desc", opcode)
-                ) ?: continue
-                // But only do visiting to create actual mutant if still in creating phase
-                if (tracker.mutatedClassTracker.targetMutation != null) {
-                    if (tracker.isTargetMutation(newMutation)) {
+            val i = Random.nextInt(0, operatorTypes.size)
+            val operatorType = operatorTypes[i]
+            // Always collect mutation information in both collecting and creating phase
+            val newMutation = tracker.registerMutation(
+                operator,
+                createDesc(operatorType.first, opcode),
+                createUniqueID(opcode, tracker.currConsideredLineNumber),
+                opcodeDesc[opcode]?.second
+            )
+            // But only do visiting to create actual mutant if still in creating phase
+            if (tracker.mutatedClassTracker.targetMutation != null) {
+                if (tracker.isTargetMutation(newMutation)) {
 
-                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
-                        logger.debug("${operatorType.first} of ${opcodeDesc[opcode]?.first}")
-                        when (operatorType.second) {
-                            "PRI" -> visited = handleFieldPreOp(opcode, owner, name, desc)
-                            "PRD" -> visited = handleFieldPreOp(opcode, owner, name, desc, false)
-                        }
+                    tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation!!)
+                    logger.debug("${operatorType.first} of ${opcodeDesc[opcode]?.first}")
+                    when (operatorType.second) {
+                        "PRI" -> visited = handleFieldPreOp(opcode, owner, name, desc)
+                        "PRD" -> visited = handleFieldPreOp(opcode, owner, name, desc, false)
                     }
                 }
-                if (visited) break
             }
-            if (!visited) {
+            if (!visited)
                 mv.visitFieldInsn(opcode, owner, name, desc)
-            }
         } else {
             mv.visitFieldInsn(opcode, owner, name, desc)
         }
@@ -280,7 +285,9 @@ class PRUOI(
 
         when (desc) {
             "I" -> {
-                if (isNormalField) { mv.visitInsn(Opcodes.DUP) }
+                if (isNormalField) {
+                    mv.visitInsn(Opcodes.DUP)
+                }
                 mv.visitFieldInsn(opcode, owner, name, desc)
                 mv.visitInsn(Opcodes.ICONST_1)
                 mv.visitInsn(if (isInc) Opcodes.IADD else Opcodes.ISUB)

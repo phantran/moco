@@ -86,8 +86,8 @@ class ROR(
                 if (newOpcode != opcode) {
                     // Collect mutation information
                     val newMutation = tracker.registerMutation(
-                        operator,
-                        createDesc(opcode, newOpcode), createUniqueID(opcode, newOpcode)
+                        operator, createDesc(opcode, newOpcode),
+                        createUniqueID(opcode, newOpcode), opcodeDesc[opcode]?.second
                     ) ?: continue
                     if (tracker.mutatedClassTracker.targetMutation != null) {
                         // In mutant creation phase, visit corresponding instruction to mutate it

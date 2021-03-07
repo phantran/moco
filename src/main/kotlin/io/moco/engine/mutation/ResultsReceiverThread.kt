@@ -32,7 +32,7 @@ class ResultsReceiverThread(
     private val socket: ServerSocket,
     private val workerArguments: MutationWorkerArguments,
     private val mutationStorage: MutationStorage,
-    private val resultMapping: MutableMap<MutationID, MutationTestResult> = mutableMapOf(),
+    private val resultMapping: MutableMap<MutationID, Pair<MutationTestResult, List<String>?>> = mutableMapOf(),
 ) {
 
     companion object {
@@ -68,15 +68,16 @@ class ResultsReceiverThread(
 
     @Synchronized
     private fun register(stream: DataInputStream) {
-        val mutation: MutationID = DataStreamUtils.readObject(stream)
-        this.resultMapping[mutation] = MutationTestResult(1, MutationTestStatus.STARTED)
+        val mutationID: MutationID = DataStreamUtils.readObject(stream)
+        this.resultMapping[mutationID] = Pair(MutationTestResult(1, MutationTestStatus.STARTED), null)
     }
 
     @Synchronized
     private fun report(stream: DataInputStream) {
-        val mutation: MutationID = DataStreamUtils.readObject(stream)
+        val mutationID: MutationID = DataStreamUtils.readObject(stream)
+        val instructionsOder: List<String> = DataStreamUtils.readObject(stream)
         val result: MutationTestResult = DataStreamUtils.readObject(stream)
-        this.resultMapping[mutation] = result
+        this.resultMapping[mutationID] = Pair(result, instructionsOder)
     }
 
     private val resultPolling = Callable {
@@ -123,11 +124,13 @@ class ResultsReceiverThread(
             if (resultMapping.containsKey(mutation.mutationID)) {
                 val clsName = mutation.mutationID.location.className?.getJavaName()
                 if (clsName != null) {
-                    val status = when (resultMapping[mutation.mutationID]?.mutationTestStatus) {
+                    val status = when (resultMapping[mutation.mutationID]?.first?.mutationTestStatus) {
                         MutationTestStatus.KILLED -> "killed"
                         MutationTestStatus.SURVIVED -> "survived"
                         else -> "run_error"
                     }
+                    val collectInstructionsOrder = resultMapping[mutation.mutationID]?.second
+                    mutation.instructionsOrder = collectInstructionsOrder!!.toMutableList()
                     // storage already contains class name entry
                     if (mutationStorage.entries.containsKey(clsName)) {
                         // NOTE: do not change map keys because of the consistency between moco and gamekins

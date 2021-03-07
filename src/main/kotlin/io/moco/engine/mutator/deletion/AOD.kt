@@ -73,7 +73,7 @@ class AOD(
             tracker.registerMutation(
                 operator,
                 "delete operand after ${opcodeDesc[opcode]?.first} operator",
-                                                "KEEP_F_$opcode"
+                "${opcodeDesc[opcode]?.second}-KEEP-F", opcodeDesc[opcode]?.second
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutation != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it
@@ -102,8 +102,8 @@ class AOD(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                "delete operand before ${opcodeDesc[opcode]?.first} operator ",
-                                                        "KEEP_S_$opcode"
+                "delete operand before ${opcodeDesc[opcode]?.first} operator",
+                "${opcodeDesc[opcode]?.second}-KEEP-S", opcodeDesc[opcode]?.second
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutation != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it

@@ -20,6 +20,7 @@ package io.moco.engine.mutation
 import io.moco.utils.DataStreamUtils
 import java.io.DataOutputStream
 import java.io.IOException
+import java.io.Serializable
 
 
 class Communicator(private val outputStream: DataOutputStream) {
@@ -37,12 +38,15 @@ class Communicator(private val outputStream: DataOutputStream) {
     @Synchronized
     @Throws(IOException::class)
     fun reportToMainProcess(
-        mutationID: MutationID?,
+        mutation: Mutation?,
         mutationTestResult: MutationTestResult?
     ) {
         outputStream.writeByte(ResultsReceiverThread.report.toInt())
-        if (mutationID != null) {
-            DataStreamUtils.writeObject(outputStream, mutationID)
+        if (mutation?.mutationID != null) {
+            DataStreamUtils.writeObject(outputStream, mutation.mutationID)
+        }
+        if (mutation?.instructionsOrder != null) {
+            DataStreamUtils.writeObject(outputStream, mutation.instructionsOrder as Serializable)
         }
         if (mutationTestResult != null) {
             DataStreamUtils.writeObject(outputStream, mutationTestResult)

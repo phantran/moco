@@ -98,7 +98,7 @@ class MutationTestWorker(
         for (mutation: Mutation in mutations) {
             if (testMonitor.shouldSkipThisMutation(mutation)) {
                 logger.debug("Skip mutation test for mutant at line " +
-                        "${mutation.lineOfCode} - ${mutation.mutationID.mutatorUniqueID}")
+                        "${mutation.lineOfCode} - ${mutation.mutationID.mutatorID}")
                 continue
             }
             logger.debug("------- Handle mutation of class " +
@@ -124,6 +124,7 @@ class MutationTestWorker(
 
 
         communicator.registerToMainProcess(mutationId)
+
         val testResult: MutationTestResult = if (tests.isEmpty()) {
             MutationTestResult(0, MutationTestStatus.RUN_ERROR)
         } else {
@@ -131,7 +132,9 @@ class MutationTestWorker(
                 mutantIntroducer, mutation, createdMutant, tests
             )
         }
-        communicator.reportToMainProcess(mutationId, testResult)
+
+        println(mutation)
+        communicator.reportToMainProcess(mutation, testResult)
         logger.debug("------- Done in " + (System.currentTimeMillis() - t0) + " ms -------------")
     }
 }

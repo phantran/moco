@@ -32,6 +32,8 @@ open class InsertionMutator(
 
     val logger = MoCoLogger()
 
+    open val insertionPosition = ""
+
     open val opcodeDesc: Map<Int, Pair<String, String>> = mapOf()
 
     open val supportedOpcodes: Map<String, List<Int>> = mapOf()
@@ -40,7 +42,7 @@ open class InsertionMutator(
         return "$action ${opcodeDesc[op]?.first}"
     }
 
-    open fun createUniqueID(prefix: String, op: Int): String {
-        return "${prefix}_${opcodeDesc[op]?.second}"
+    open fun createUniqueID(op: Int, line: Int): String {
+        return "${opcodeDesc[op]?.second}-${insertionPosition}UOI-$line"
     }
 }

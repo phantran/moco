@@ -17,7 +17,7 @@
 
 package io.moco.engine.mutation
 
-import io.moco.engine.DefaultClassVisitor
+import io.moco.engine.preprocessing.DefaultClassVisitor
 import io.moco.utils.ByteArrayLoader
 import io.moco.engine.operator.Operator
 import io.moco.engine.tracker.MutatedClassTracker
@@ -64,7 +64,7 @@ class MutationGenerator(
         val cr = ClassReader(clsToMutate)
         val filter = listOf<String>()
 //        val cv = TraceClassVisitor(DefaultClassVisitor(), PrintWriter(System.out))
-        val mcv = MutatedClassVisitor(DefaultClassVisitor(), tracker, filter, operators)
+        val mcv = MutatedClassVisitor(DefaultClassVisitor(), tracker, filter, operators, true)
         cr.accept(mcv, ClassReader.EXPAND_FRAMES)
         return tracker.getCollectedMutations()
     }
@@ -89,7 +89,8 @@ class MutationGenerator(
 
         val filter = listOf<String>()
         val mcv = MutatedClassVisitor(
-            ca, tracker, filter, operators?.filter { it.operatorName == mutation.mutationID.operatorName }
+            ca, tracker, filter,
+            operators?.filter { it.operatorName == mutation.mutationID.operatorName }, false
         )
         try {
             cr.accept(mcv, ClassReader.EXPAND_FRAMES)

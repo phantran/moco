@@ -40,19 +40,19 @@ class AOR(
 ) : ReplacementMutator(operator, tracker, delegateMethodVisitor) {
 
     override val opcodeDesc: Map<Int, Pair<String, String>> = mapOf(
-        Opcodes.IADD to Pair("integer addition", "IADD"), Opcodes.ISUB to Pair("integer subtraction","ISUB"),
-        Opcodes.IMUL to Pair("integer multiplication", "IMUL"), Opcodes.IDIV to Pair("integer division","IDIV"),
+        Opcodes.IADD to Pair("integer addition", "IADD"), Opcodes.ISUB to Pair("integer subtraction", "ISUB"),
+        Opcodes.IMUL to Pair("integer multiplication", "IMUL"), Opcodes.IDIV to Pair("integer division", "IDIV"),
         Opcodes.IREM to Pair("integer modulo", "IREM"),
 
-        Opcodes.LADD to Pair("long addition", "LADD"), Opcodes.LSUB to Pair("long subtraction","LSUB"),
-        Opcodes.LMUL to Pair("long multiplication", "LMUL"), Opcodes.LDIV to Pair("long division","LDIV"),
+        Opcodes.LADD to Pair("long addition", "LADD"), Opcodes.LSUB to Pair("long subtraction", "LSUB"),
+        Opcodes.LMUL to Pair("long multiplication", "LMUL"), Opcodes.LDIV to Pair("long division", "LDIV"),
         Opcodes.LREM to Pair("long modulo", "LREM"),
 
-        Opcodes.FADD to Pair("float addition", "FADD"), Opcodes.FSUB to Pair("float subtraction","FSUB"),
-        Opcodes.FMUL to Pair("float multiplication", "FMUL"), Opcodes.FDIV to Pair("float division","FDIV"),
+        Opcodes.FADD to Pair("float addition", "FADD"), Opcodes.FSUB to Pair("float subtraction", "FSUB"),
+        Opcodes.FMUL to Pair("float multiplication", "FMUL"), Opcodes.FDIV to Pair("float division", "FDIV"),
         Opcodes.FREM to Pair("float modulo", "FREM"),
 
-        Opcodes.DADD to Pair("double addition", "DADD"), Opcodes.DSUB to Pair("double subtraction","DSUB"),
+        Opcodes.DADD to Pair("double addition", "DADD"), Opcodes.DSUB to Pair("double subtraction", "DSUB"),
         Opcodes.DMUL to Pair("double multiplication", "DMUL"), Opcodes.DDIV to Pair("double division", "DDIV"),
         Opcodes.DREM to Pair("double modulo", "DREM"),
     )
@@ -79,8 +79,10 @@ class AOR(
             for (newOpcode in supportedOpcodes[type]!!) {
                 if (newOpcode != opcode) {
                     // Collect mutation information
-                    val newMutation = tracker.registerMutation(operator,
-                        createDesc(opcode, newOpcode), createUniqueID(opcode, newOpcode)) ?: continue
+                    val newMutation = tracker.registerMutation(
+                        operator, createDesc(opcode, newOpcode),
+                        createUniqueID(opcode, newOpcode), opcodeDesc[opcode]?.second
+                    ) ?: continue
                     if (tracker.mutatedClassTracker.targetMutation != null) {
                         // In mutant creation phase, visit corresponding instruction to mutate it
                         if (tracker.isTargetMutation(newMutation)) {
