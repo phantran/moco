@@ -23,7 +23,6 @@ import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
-
 /**
  * Relational Operator Replacement
  *
@@ -38,25 +37,28 @@ class ROR(
 ) : ReplacementMutator(operator, tracker, delegateMethodVisitor) {
 
     override val opcodeDesc: Map<Int, Pair<String, String>> = mapOf(
-        Opcodes.IFLT to Pair("less than operator", "IFLT"),
-        Opcodes.IFLE to Pair("less than or equal operator", "IFLE"),
-        Opcodes.IFGT to Pair("greater than operator", "IFGT"),
-        Opcodes.IFGE to Pair("greater than or equal operator", "IFGE"),
-        Opcodes.IFEQ to Pair("equal operator", "IFEQ"),
-        Opcodes.IFNE to Pair("not equal operator", "IFNE"),
+        // Bytecode of jump instruction is reversed of source code.
+        // Example: < operator in source code is translate to IFGE in byte code
+        // That's why description is reversed here
+        Opcodes.IFLT to Pair("greater than or equal operator", "IFLT"),
+        Opcodes.IFLE to Pair("greater than operator", "IFLE"),
+        Opcodes.IFGT to Pair("less than or equal operator", "IFGT"),
+        Opcodes.IFGE to Pair("less than operator", "IFGE"),
+        Opcodes.IFEQ to Pair("not equal operator", "IFEQ"),
+        Opcodes.IFNE to Pair("equal operator", "IFNE"),
 
-        Opcodes.IF_ICMPLT to Pair("less than operator", "IF_ICMPLT"),
-        Opcodes.IF_ICMPLE to Pair("less than or equal operator", "IF_ICMPLE"),
-        Opcodes.IF_ICMPGT to Pair("greater than operator", "IF_ICMPGT"),
-        Opcodes.IF_ICMPGE to Pair("greater than or equal operator", "IF_ICMPGE"),
-        Opcodes.IF_ICMPEQ to Pair("equal operator", "IF_ICMPEQ"),
-        Opcodes.IF_ICMPNE to Pair("not equal operator", "IF_ICMPNE"),
+        Opcodes.IF_ICMPLT to Pair("greater than or equal operator", "IF_ICMPLT"),
+        Opcodes.IF_ICMPLE to Pair("greater than operator", "IF_ICMPLE"),
+        Opcodes.IF_ICMPGT to Pair("less than or equal operator", "IF_ICMPGT"),
+        Opcodes.IF_ICMPGE to Pair("less than operator", "IF_ICMPGE"),
+        Opcodes.IF_ICMPEQ to Pair("not equal operator", "IF_ICMPEQ"),
+        Opcodes.IF_ICMPNE to Pair("equal operator", "IF_ICMPNE"),
 
-        Opcodes.IFNULL to Pair("equal operator", "IFNULL"),
-        Opcodes.IFNONNULL to Pair("not equal operator", "IFNONNULL"),
+        Opcodes.IFNULL to Pair("not equal operator", "IFNULL"),
+        Opcodes.IFNONNULL to Pair("equal operator", "IFNONNULL"),
 
-        Opcodes.IF_ACMPEQ to Pair("equal operator", "IF_ACMPEQ"),
-        Opcodes.IF_ACMPNE to Pair("not equal operator", "IF_ACMPNE"),
+        Opcodes.IF_ACMPEQ to Pair("not equal operator", "IF_ACMPEQ"),
+        Opcodes.IF_ACMPNE to Pair("equal operator", "IF_ACMPNE"),
     )
 
     override val supportedOpcodes = mapOf(
