@@ -252,6 +252,7 @@ class PRUOI(
                     if (tracker.isTargetMutation(newMutation)) {
                         tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation!!)
                         logger.debug("${operatorType.first} of ${opcodeDesc[opcode]?.first}")
+                        tracker.mutatedClassTracker.targetMutation.additionalInfo["fieldName"] = name
                         when (operatorType.second) {
                             "I" -> visited = handleFieldPreOp(opcode, owner, name, desc)
                             "D" -> visited = handleFieldPreOp(opcode, owner, name, desc, false)

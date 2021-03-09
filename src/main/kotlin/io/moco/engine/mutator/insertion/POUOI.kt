@@ -245,7 +245,7 @@ class POUOI(
                     if (tracker.isTargetMutation(newMutation)) {
                         tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation!!)
                         logger.debug("${operatorType.first} of ${opcodeDesc[opcode]?.first}")
-
+                        tracker.mutatedClassTracker.targetMutation.additionalInfo["fieldName"] = name
                         when (operatorType.second) {
                             "I" -> visited = handleFieldPostOp(opcode, owner, name, desc)
                             "D" -> visited = handleFieldPostOp(opcode, owner, name, desc, false)
