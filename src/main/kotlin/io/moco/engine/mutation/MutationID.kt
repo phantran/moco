@@ -25,7 +25,7 @@ data class MutationID(
     @JsonProperty("methodInfo") val location: MutatedMethodLocation,
     @JsonProperty("instructionIndices") val instructionIndices: Collection<Int>?,
     @JsonProperty("mutationOperatorName") val operatorName: String,
-    @JsonProperty("mutatorID") val mutatorID: String
+    @JsonProperty("mutatorID") var mutatorID: String
 ): Serializable {
 
     fun compareWithoutInstruction(other: MutationID): Boolean {

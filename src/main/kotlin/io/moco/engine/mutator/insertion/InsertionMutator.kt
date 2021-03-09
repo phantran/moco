@@ -21,6 +21,7 @@ import io.moco.engine.operator.InsertionOperator
 import io.moco.engine.tracker.MutatedMethodTracker
 import io.moco.utils.JavaInfo
 import io.moco.utils.MoCoLogger
+import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 
 
@@ -32,7 +33,6 @@ open class InsertionMutator(
 
     val logger = MoCoLogger()
 
-    open val insertionPosition = ""
 
     open val opcodeDesc: Map<Int, Pair<String, String>> = mapOf()
 
@@ -42,7 +42,45 @@ open class InsertionMutator(
         return "$action ${opcodeDesc[op]?.first}"
     }
 
-    open fun createUniqueID(op: Int, line: Int): String {
-        return "${opcodeDesc[op]?.second}-${insertionPosition}UOI-$line"
+    open fun createUniqueID(op: Int, type: String, incOrDec: String ): String {
+        // Unique ID format is important since it is used in many other places such as
+        // originalOpcode and other third party plugins, it should always start with opcode
+        return "${opcodeDesc[op]?.second}-${type}UOI-$incOrDec"
+    }
+
+    protected var varIndexToLineNo: Pair<Int, Int>? = null
+    private var collectVarName: String? = null
+    private val labelsToLineNoMap: MutableMap<Label, Int> = mutableMapOf()
+
+    override fun visitLabel(label: Label?) {
+        if (label != null) labelsToLineNoMap[label] = tracker.currConsideredLineNumber
+        mv.visitLabel(label)
+    }
+
+    override fun visitLocalVariable(
+        name: String?,
+        descriptor: String?,
+        signature: String?,
+        start: Label?,
+        end: Label?,
+        index: Int
+    ) {
+        if (collectVarName == null && varIndexToLineNo != null) {
+            if (varIndexToLineNo!!.first == index) {
+                val startLine = labelsToLineNoMap[start]
+                val endLine = labelsToLineNoMap[end]
+                if (startLine != null && endLine != null) {
+                    // Record line number of mutated line is within the record local variable scope
+                    if (startLine < varIndexToLineNo!!.second && varIndexToLineNo!!.second < endLine) {
+                        collectVarName = name
+                        val m = tracker.mutatedClassTracker.targetMutation
+                        if (name != null) {
+                            m!!.additionalInfo["varName"] = name
+                        }
+                    }
+                }
+            }
+        }
+        mv.visitLocalVariable(name, descriptor, signature, start, end, index)
     }
 }

@@ -30,7 +30,9 @@ class LoopVisitor(
     private val mutatedMethodTracker: MutatedMethodTracker,
 ) : MethodVisitor(JavaInfo.ASM_VERSION, delegateMethodVisitor) {
     private val logger = MoCoLogger()
+    // Jump tracker is a list of label to line number pair of jump instruction in a method
     private var jumpTracker: MutableList<Pair<Label, Int>>? = mutableListOf()
+    // localVarTracker record mapping from line number to variable indices used on that line
     private var localVarTracker: MutableMap<Int, MutableSet<Int>>? = mutableMapOf()
     private var mapLineLabel: MutableMap<Label, Int> = mutableMapOf()
     private var lineTracker: MutableList<Int> = mutableListOf()
@@ -70,6 +72,7 @@ class LoopVisitor(
             )
         } else {
             if (!jumpTracker.isNullOrEmpty()) {
+                // when instruction is goto and have previous recorded another type of jump ins
                 for (item in jumpTracker!!) {
                     if (mutatedMethodTracker.currConsideredLineNumber == item.second) {
                         if (label == item.first) {
@@ -80,7 +83,6 @@ class LoopVisitor(
                                 // The value of this map is a list of indices of local variables used for the loop
                                 localVarTracker?.get(item.second)!!.toList()
                             )
-                            // Remove the target jump point which is the target of this goto instruction
                         }
                     }
                 }
@@ -110,16 +112,16 @@ class LoopVisitor(
     private fun mutationForLoopCounters(mutation: Mutation, mt: MutatedMethodTracker): Boolean {
         // instructions at lines of code of for loop such as for, while, do while, are not mutated
         // because such kind of mutations can lead to infinite loop
-        if (mutation.optionalInfo?.get("varIndex") != null) {
+        if (mutation.varIndicesInLoop?.get("varIndex") != null) {
             if (mt.forWhileloopTracker.any {
                             it.key.first <= mutation.lineOfCode &&
                             mutation.lineOfCode <= it.key.second &&
-                            it.value.contains(mutation.optionalInfo?.get("varIndex")) } ||
+                            it.value.contains(mutation.varIndicesInLoop?.get("varIndex")) } ||
 
                 mt.doWhileloopTracker.any {
                     it.key.first <= mutation.lineOfCode &&
                             mutation.lineOfCode <= it.key.second &&
-                            it.value.contains(mutation.optionalInfo?.get("varIndex")) } ) {
+                            it.value.contains(mutation.varIndicesInLoop?.get("varIndex")) } ) {
 
                 logger.debug("Skip loop mutation " +
                         "${mutation.mutationID.location.className?.name} -" +
@@ -131,13 +133,5 @@ class LoopVisitor(
             }
         }
         return false
-
-//        if (operator.operatorName == "ROR") {
-//            // We don't mutate relational operator at line of code for loop (for, while, do while)
-//            if (forWhileloopTracker.any { it.key.first == currConsideredLineNumber }) {
-//                return true
-//            }
-//        }
-//        return false
     }
 }

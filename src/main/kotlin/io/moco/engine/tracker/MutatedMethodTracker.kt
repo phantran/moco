@@ -64,7 +64,7 @@ class MutatedMethodTracker(
         description: String,
         mutatorID: String,
         opcode: String? = "",
-        optionalInfo: MutableMap<String, Any?>? = mutableMapOf()
+        varIndicesInLoop: MutableMap<String, Any?>? = mutableMapOf()
     ): Mutation? {
         val newMutationID = MutationID(
             mutatedMethodLocation, mutableListOf(instructionIndex),
@@ -94,7 +94,7 @@ class MutatedMethodTracker(
             mutatedClassTracker.getFileName(),
             currConsideredLineNumber,
             description,
-            optionalInfo
+            varIndicesInLoop
         )
 
         this.mutatedClassTracker.addMutation(newMutation)

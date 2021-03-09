@@ -24,7 +24,7 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
 /**
- * Relational Operator Replacement
+ * ROR - Relational Operator Replacement
  *
  * @constructor
  *

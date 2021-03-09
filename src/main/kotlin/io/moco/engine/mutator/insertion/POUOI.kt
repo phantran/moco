@@ -21,7 +21,6 @@ import io.moco.engine.operator.InsertionOperator
 import io.moco.engine.tracker.MutatedMethodTracker
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
-import kotlin.random.Random
 
 
 /**
@@ -56,8 +55,6 @@ class POUOI(
         Opcodes.GETSTATIC to Pair("static field", "GETSTATIC"),
     )
 
-    override val insertionPosition = "PO"
-
     override val supportedOpcodes = mapOf(
         "var" to listOf(Opcodes.ILOAD, Opcodes.FLOAD, Opcodes.LLOAD, Opcodes.DLOAD),
         "arr" to listOf(Opcodes.IALOAD, Opcodes.FALOAD, Opcodes.LALOAD, Opcodes.DALOAD, Opcodes.BALOAD, Opcodes.SALOAD),
@@ -65,7 +62,7 @@ class POUOI(
     )
 
     private val operatorTypes = listOf(
-        Pair("post-increment", "POI"), Pair("post-decrement", "POD"),
+        Pair("post-increment", "I"), Pair("post-decrement", "D"),
     )
 
     override fun visitVarInsn(opcode: Int, v: Int) {
@@ -82,7 +79,7 @@ class POUOI(
                 val newMutation = tracker.registerMutation(
                     operator,
                     createDesc(operatorType.first, opcode),
-                    createUniqueID(opcode, tracker.currConsideredLineNumber),
+                    createUniqueID(opcode, "PO", operatorType.second),
                     opcodeDesc[opcode]?.second, mutableMapOf("varIndex" to v)
                 ) ?: return
                 // But only do visiting to create actual mutant if in creating phase
@@ -90,9 +87,11 @@ class POUOI(
                     if (tracker.isTargetMutation(newMutation)) {
                         tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
                         logger.debug("${operatorType.first} of variable : $v")
+                        // Collect variable name info
+                        varIndexToLineNo = Pair(v, tracker.currConsideredLineNumber)
                         when (operatorType.second) {
-                            "POI" -> handleVarPostOp(opcode, v)
-                            "POD" -> handleVarPostOp(opcode, v, false)
+                            "I" -> handleVarPostOp(opcode, v)
+                            "D" -> handleVarPostOp(opcode, v, false)
                         }
                         return
                     }
@@ -137,7 +136,7 @@ class POUOI(
                 val newMutation = tracker.registerMutation(
                     operator,
                     createDesc(operatorType.first, opcode),
-                    createUniqueID(opcode, tracker.currConsideredLineNumber),
+                    createUniqueID(opcode, "PO", operatorType.second),
                     opcodeDesc[opcode]?.second
                 )
                 // But only do visiting to create actual mutant if still in creating phase
@@ -146,8 +145,8 @@ class POUOI(
                         tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation!!)
                         logger.debug("${operatorType.first} of array element")
                         when (operatorType.second) {
-                            "POI" -> visited = handleArrPostOp(opcode)
-                            "POD" -> visited = handleArrPostOp(opcode, false)
+                            "I" -> visited = handleArrPostOp(opcode)
+                            "D" -> visited = handleArrPostOp(opcode, false)
                         }
                     }
                 }
@@ -237,7 +236,7 @@ class POUOI(
                 val newMutation = tracker.registerMutation(
                     operator,
                     createDesc(operatorType.first, opcode),
-                    createUniqueID(opcode, tracker.currConsideredLineNumber),
+                    createUniqueID(opcode, "PO", operatorType.second),
                     opcodeDesc[opcode]?.second
                 )
                 // But only do visiting to create actual mutant if still in creating phase
@@ -248,8 +247,8 @@ class POUOI(
                         logger.debug("${operatorType.first} of ${opcodeDesc[opcode]?.first}")
 
                         when (operatorType.second) {
-                            "POI" -> visited = handleFieldPostOp(opcode, owner, name, desc)
-                            "POD" -> visited = handleFieldPostOp(opcode, owner, name, desc, false)
+                            "I" -> visited = handleFieldPostOp(opcode, owner, name, desc)
+                            "D" -> visited = handleFieldPostOp(opcode, owner, name, desc, false)
                         }
                     }
                 }

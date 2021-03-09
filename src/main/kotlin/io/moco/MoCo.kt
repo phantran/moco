@@ -56,8 +56,8 @@ class MoCo : AbstractMojo() {
     /**
      * Mutation result storage file name
      */
-    @Parameter(defaultValue = "moco", property = "mutationResultsFolder", required = false)
-    private val mutationResultsFolder: String = "moco"
+    @Parameter(defaultValue = "mutation", property = "mutationResultsFolder", required = false)
+    private val mutationResultsFolder: String = "mutation"
 
     /**
      * Excluded source classes, comma separated string, specify as class name with "/", example: io/moco/Example

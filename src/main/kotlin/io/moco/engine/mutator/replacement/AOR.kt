@@ -15,7 +15,6 @@
  *
  */
 
-
 package io.moco.engine.mutator.replacement
 
 import io.moco.engine.operator.ReplacementOperator

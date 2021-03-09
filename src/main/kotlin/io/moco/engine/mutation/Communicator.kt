@@ -48,6 +48,9 @@ class Communicator(private val outputStream: DataOutputStream) {
         if (mutation?.instructionsOrder != null) {
             DataStreamUtils.writeObject(outputStream, mutation.instructionsOrder as Serializable)
         }
+        if (mutation != null) {
+            DataStreamUtils.writeObject(outputStream, mutation.additionalInfo as Serializable)
+        }
         if (mutationTestResult != null) {
             DataStreamUtils.writeObject(outputStream, mutationTestResult)
         }

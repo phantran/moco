@@ -124,15 +124,8 @@ class BLD(
         var visited: Boolean
         if (supported) {
             visited = trySecondOperandRemoval(opcode, type)
-            if (!visited) {
-                visited = tryFirstOperandRemoval(opcode, type)
-            }
-            if (!visited) {
-                // Go on without mutating bytecode after collecting all possible mutations
-                mv.visitInsn(opcode)
-            }
-        } else {
-            mv.visitInsn(opcode)
-        }
+            if (!visited) visited = tryFirstOperandRemoval(opcode, type)
+            if (!visited) mv.visitInsn(opcode)
+        } else mv.visitInsn(opcode)
     }
 }

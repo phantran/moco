@@ -80,7 +80,6 @@ class AOD(
             if (tracker.isTargetMutation(newMutation)) {
                 tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
                 logger.debug("Delete second operand after arithmetic operator: $opcode")
-
                 return when (type) {
                     "int", "float" -> {
                         mv.visitInsn(Opcodes.POP)
@@ -162,10 +161,7 @@ class AOD(
         if (supported) {
             visited = tryFirstOperandRemoval(opcode, type)
             if (!visited) visited = trySecondOperandRemoval(opcode, type)
-            // Go on without mutating bytecode after collecting all possible mutations
             if (!visited) mv.visitInsn(opcode)
-        } else {
-            mv.visitInsn(opcode)
-        }
+        } else mv.visitInsn(opcode)
     }
 }
