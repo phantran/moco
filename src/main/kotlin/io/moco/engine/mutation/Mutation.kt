@@ -27,7 +27,7 @@ data class Mutation (
     @JsonProperty("fileName") val fileName: String? = "unknown_source_file",
     @JsonProperty("loc") val lineOfCode: Int,  // Line number of the mutant
     @JsonProperty("mutationDescription")val description: String,  // Additional information about the mutant
-    @JsonIgnore var varIndicesInLoop: MutableMap<String, Any?>? = mutableMapOf(),
+    @JsonIgnore var relatedVarIndices: MutableSet<Int> = mutableSetOf(),
     @JsonProperty("instructionsOrder") var instructionsOrder: MutableList<String> = mutableListOf(),  // Additional information about the mutant
     @JsonProperty("additionalInfo") var additionalInfo: MutableMap<String, String> = mutableMapOf(),  // Additional information about the mutant
     //TODO: Add feature for find finally block and static initializer later

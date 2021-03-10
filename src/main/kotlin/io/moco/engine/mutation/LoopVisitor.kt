@@ -30,8 +30,10 @@ class LoopVisitor(
     private val mutatedMethodTracker: MutatedMethodTracker,
 ) : MethodVisitor(JavaInfo.ASM_VERSION, delegateMethodVisitor) {
     private val logger = MoCoLogger()
+
     // Jump tracker is a list of label to line number pair of jump instruction in a method
     private var jumpTracker: MutableSet<Pair<Label, Int>>? = mutableSetOf()
+
     // localVarTracker record mapping from line number to variable indices used on that line
     private var localVarTracker: MutableMap<Int, MutableSet<Int>>? = mutableMapOf()
     private var mapLineLabel: MutableMap<Label, Int> = mutableMapOf()
@@ -113,30 +115,39 @@ class LoopVisitor(
         super.visitEnd()
     }
 
+    private fun inLoopCheck(it: Map.Entry<Pair<Int, Int>, List<Int>>, mutation: Mutation): Boolean {
+        return (it.key.first <= mutation.lineOfCode &&
+                mutation.lineOfCode <= it.key.second &&
+                mutation.relatedVarIndices.any { it1 -> it.value.contains(it1) })
+    }
+
     private fun mutationForLoopCounters(mutation: Mutation, mt: MutatedMethodTracker): Boolean {
         // instructions at lines of code of for loop such as for, while, do while, are not mutated
         // because such kind of mutations can lead to infinite loop
-        if (mutation.varIndicesInLoop?.get("varIndex") != null) {
-            println(mutatedMethodTracker.forWhileloopTracker)
-            mutation.varIndicesInLoop
-            if (mt.forWhileloopTracker.any {
-                            it.key.first <= mutation.lineOfCode &&
-                            mutation.lineOfCode <= it.key.second &&
-                            it.value.contains(mutation.varIndicesInLoop?.get("varIndex")) } ||
-
-                mt.doWhileloopTracker.any {
-                    it.key.first <= mutation.lineOfCode &&
-                            mutation.lineOfCode <= it.key.second &&
-                            it.value.contains(mutation.varIndicesInLoop?.get("varIndex")) } ) {
-
-                logger.debug("Skip loop mutation " +
+        var found = false
+        if (mutation.relatedVarIndices.isNotEmpty()) {
+            if (mt.forWhileloopTracker.any { inLoopCheck(it, mutation) } ||
+                mt.doWhileloopTracker.any { inLoopCheck(it, mutation) }) {
+                found = true
+            }
+        }
+        if (mutation.mutationID.operatorName == "ROR") {
+            // We don't mutate relational operator on loop line
+            if (mt.forWhileloopTracker.any { it.key.first == mutation.lineOfCode } ||
+                mt.doWhileloopTracker.any { it.key.second == mutation.lineOfCode }) {
+                found = true
+            }
+        }
+        if (found) {
+            logger.debug(
+                "Skip mutation on loop counters" +
                         "${mutation.mutationID.location.className?.name} -" +
                         "${mutation.mutationID.location.methodName.name} -" +
                         "${mutation.mutationID.mutatorID}-" +
                         "${mutation.mutationID.instructionIndices}-" +
-                        "${mutation.lineOfCode}")
-                return true
-            }
+                        "${mutation.lineOfCode}"
+            )
+            return true
         }
         return false
     }

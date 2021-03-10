@@ -77,7 +77,7 @@ class PRUOI(
                     operator,
                     createDesc(operatorType.first, opcode),
                     createUniqueID(opcode, "PR", operatorType.second),
-                    opcodeDesc[opcode]?.second, mutableMapOf("varIndex" to v)
+                    opcodeDesc[opcode]?.second, mutableSetOf(v)
                 )
                 // But only do visiting to create actual mutant if in creating phase
                 if (tracker.mutatedClassTracker.targetMutation != null) {

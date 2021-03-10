@@ -80,7 +80,7 @@ class POUOI(
                     operator,
                     createDesc(operatorType.first, opcode),
                     createUniqueID(opcode, "PO", operatorType.second),
-                    opcodeDesc[opcode]?.second, mutableMapOf("varIndex" to v)
+                    opcodeDesc[opcode]?.second, mutableSetOf(v)
                 ) ?: return
                 // But only do visiting to create actual mutant if in creating phase
                 if (tracker.mutatedClassTracker.targetMutation != null) {
