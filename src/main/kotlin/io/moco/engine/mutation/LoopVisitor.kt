@@ -31,7 +31,7 @@ class LoopVisitor(
 ) : MethodVisitor(JavaInfo.ASM_VERSION, delegateMethodVisitor) {
     private val logger = MoCoLogger()
     // Jump tracker is a list of label to line number pair of jump instruction in a method
-    private var jumpTracker: MutableList<Pair<Label, Int>>? = mutableListOf()
+    private var jumpTracker: MutableSet<Pair<Label, Int>>? = mutableSetOf()
     // localVarTracker record mapping from line number to variable indices used on that line
     private var localVarTracker: MutableMap<Int, MutableSet<Int>>? = mutableMapOf()
     private var mapLineLabel: MutableMap<Label, Int> = mutableMapOf()
@@ -74,12 +74,16 @@ class LoopVisitor(
             if (!jumpTracker.isNullOrEmpty()) {
                 // when instruction is goto and have previous recorded another type of jump ins
                 for (item in jumpTracker!!) {
-                    if (mutatedMethodTracker.currConsideredLineNumber == item.second) {
+                    if (mutatedMethodTracker.currConsideredLineNumber >= item.second) {
                         if (label == item.first) {
                             // loop detected
+                            var endLine = lineTracker.elementAt(lineTracker.size - 1);
+                            if (endLine < item.second) {
+                                endLine = lineTracker.elementAt(lineTracker.size - 2);
+                            }
                             mutatedMethodTracker.forWhileloopTracker.putIfAbsent(
                                 // Key is a pair of start and end lines of code of the loop
-                                Pair(item.second, lineTracker.elementAt(lineTracker.size - 2)),
+                                Pair(item.second, endLine),
                                 // The value of this map is a list of indices of local variables used for the loop
                                 localVarTracker?.get(item.second)!!.toList()
                             )
@@ -113,6 +117,8 @@ class LoopVisitor(
         // instructions at lines of code of for loop such as for, while, do while, are not mutated
         // because such kind of mutations can lead to infinite loop
         if (mutation.varIndicesInLoop?.get("varIndex") != null) {
+            println(mutatedMethodTracker.forWhileloopTracker)
+            mutation.varIndicesInLoop
             if (mt.forWhileloopTracker.any {
                             it.key.first <= mutation.lineOfCode &&
                             mutation.lineOfCode <= it.key.second &&

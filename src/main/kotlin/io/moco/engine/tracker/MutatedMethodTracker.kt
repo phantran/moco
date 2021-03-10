@@ -78,7 +78,6 @@ class MutatedMethodTracker(
                 return null
             }
         }
-
         // Only collect unique mutation (mutation id must be unique)
         if (mutatedClassTracker.shouldCollectThisMutation(newMutationID)) {
             return null

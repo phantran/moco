@@ -41,6 +41,6 @@ open class ReplacementMutator(
     }
 
     open fun createUniqueID(op1: Int, op2: Int): String {
-        return "${opcodeDesc[op1]?.second}-${opcodeDesc[op2]?.second}"
+        return "${opcodeDesc[op1]?.second}-${opcodeDesc[op2]?.second}-${tracker.currConsideredLineNumber}"
     }
 }

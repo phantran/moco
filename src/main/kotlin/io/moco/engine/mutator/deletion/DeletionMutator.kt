@@ -18,16 +18,28 @@
 package io.moco.engine.mutator.deletion
 
 import io.moco.engine.MethodInfo
+import io.moco.engine.tracker.MutatedMethodTracker
 import io.moco.utils.JavaInfo
 import io.moco.utils.MoCoLogger
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.commons.LocalVariablesSorter
 
 open class DeletionMutator(
+    val tracker: MutatedMethodTracker,
     methodInfo: MethodInfo,
     delegateMethodVisitor: MethodVisitor
 ) : LocalVariablesSorter(JavaInfo.ASM_VERSION, methodInfo.access, methodInfo.methodDescriptor, delegateMethodVisitor) {
     val logger = MoCoLogger()
     open val opcodeDesc: Map<Int, Pair<String, String>> = mapOf()
     open val supportedOpcodes: Map<String, List<Int>> = mapOf()
+
+    open fun createDesc(action: String, op: Int): String {
+        return "$action ${opcodeDesc[op]?.first}"
+    }
+
+    open fun createUniqueID(op: Int, position: String): String {
+        // Unique ID format is important since it is used in many other places such as
+        // originalOpcode and other third party plugins, it should always start with opcode
+        return "${opcodeDesc[op]?.second}-${position}-${tracker.currConsideredLineNumber}"
+    }
 }

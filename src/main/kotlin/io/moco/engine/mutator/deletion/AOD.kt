@@ -37,10 +37,10 @@ import org.objectweb.asm.Type
  */
 class AOD(
     val operator: DeletionOperator,
-    val tracker: MutatedMethodTracker,
+    tracker: MutatedMethodTracker,
     private val methodInfo: MethodInfo,
     delegateMethodVisitor: MethodVisitor
-) : DeletionMutator(methodInfo, delegateMethodVisitor) {
+) : DeletionMutator(tracker, methodInfo, delegateMethodVisitor) {
 
     override val opcodeDesc: Map<Int, Pair<String, String>> = mapOf(
         Opcodes.IADD to Pair("integer addition", "IADD"), Opcodes.ISUB to Pair("integer subtraction", "ISUB"),
@@ -72,8 +72,9 @@ class AOD(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                "delete operand after ${opcodeDesc[opcode]?.first} operator",
-                "${opcodeDesc[opcode]?.second}-KEEP-F", opcodeDesc[opcode]?.second
+                createDesc("delete operand after", opcode),
+                createUniqueID(opcode, "KEEP-F"),
+                opcodeDesc[opcode]?.second
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutation != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it
@@ -101,8 +102,9 @@ class AOD(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                "delete operand before ${opcodeDesc[opcode]?.first} operator",
-                "${opcodeDesc[opcode]?.second}-KEEP-S", opcodeDesc[opcode]?.second
+                createDesc("delete operand after", opcode),
+                createUniqueID(opcode, "KEEP-S"),
+                opcodeDesc[opcode]?.second
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutation != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it

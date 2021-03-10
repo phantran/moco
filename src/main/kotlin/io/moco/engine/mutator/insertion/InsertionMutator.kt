@@ -45,7 +45,7 @@ open class InsertionMutator(
     open fun createUniqueID(op: Int, type: String, incOrDec: String ): String {
         // Unique ID format is important since it is used in many other places such as
         // originalOpcode and other third party plugins, it should always start with opcode
-        return "${opcodeDesc[op]?.second}-${type}UOI-$incOrDec"
+        return "${opcodeDesc[op]?.second}-${type}UOI-$incOrDec-${tracker.currConsideredLineNumber}"
     }
 
     protected var varIndexToLineNo: Pair<Int, Int>? = null

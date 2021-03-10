@@ -36,10 +36,10 @@ import org.objectweb.asm.Type
  */
 class BLD(
     val operator: DeletionOperator,
-    val tracker: MutatedMethodTracker,
+    tracker: MutatedMethodTracker,
     private val methodInfo: MethodInfo,
     delegateMethodVisitor: MethodVisitor
-) : DeletionMutator(methodInfo, delegateMethodVisitor) {
+) : DeletionMutator(tracker, methodInfo, delegateMethodVisitor) {
 
     override val opcodeDesc: Map<Int, Pair<String, String>> = mapOf(
         Opcodes.IAND to Pair("integer AND", "IAND"), Opcodes.IOR to Pair("integer OR", "IOR"),
@@ -56,9 +56,9 @@ class BLD(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                "delete second operand after logical operator" +
-                        "${opcodeDesc[opcode]?.second?.substring(1)}",
-                "${opcodeDesc[opcode]?.second}-KEEP-F", opcodeDesc[opcode]?.second
+                createDesc("delete second operand after logical operator", opcode),
+                createUniqueID(opcode, "KEEP-F"),
+                opcodeDesc[opcode]?.second
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutation != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it
@@ -81,9 +81,9 @@ class BLD(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                "delete first operand before logical operator" +
-                        "${opcodeDesc[opcode]?.second?.substring(1)}",
-                "${opcodeDesc[opcode]?.second}-KEEP-S", opcodeDesc[opcode]?.second
+                createDesc("delete first operand after logical operator", opcode),
+                createUniqueID(opcode, "KEEP-S"),
+                opcodeDesc[opcode]?.second
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutation != null) {
             // In mutant creation phase, visit corresponding instruction to mutate it
