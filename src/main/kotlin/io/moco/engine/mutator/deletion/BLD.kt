@@ -57,7 +57,7 @@ class BLD(
             tracker.registerMutation(
                 operator,
                 createDesc("delete second operand after logical operator", opcode),
-                createUniqueID(opcode, "KEEP-F"),
+                createUniqueID(opcode, "S"),
                 opcodeDesc[opcode]?.second
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutation != null) {
@@ -81,8 +81,8 @@ class BLD(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                createDesc("delete first operand after logical operator", opcode),
-                createUniqueID(opcode, "KEEP-S"),
+                createDesc("delete first operand before logical operator", opcode),
+                createUniqueID(opcode, "F"),
                 opcodeDesc[opcode]?.second
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutation != null) {

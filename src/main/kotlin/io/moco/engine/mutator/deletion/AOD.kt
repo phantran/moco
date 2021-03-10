@@ -83,8 +83,8 @@ class AOD(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                createDesc("delete operand after", opcode),
-                createUniqueID(opcode, "KEEP-F"),
+                createDesc("delete second operand after arithmetic operator", opcode),
+                createUniqueID(opcode, "S"),
                 opcodeDesc[opcode]?.second
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutation != null) {
@@ -113,8 +113,8 @@ class AOD(
         val newMutation =
             tracker.registerMutation(
                 operator,
-                createDesc("delete operand after", opcode),
-                createUniqueID(opcode, "KEEP-S"),
+                createDesc("delete first operand before arithmetic operator", opcode),
+                createUniqueID(opcode, "F"),
                 opcodeDesc[opcode]?.second
             ) ?: return false
         if (tracker.mutatedClassTracker.targetMutation != null) {
