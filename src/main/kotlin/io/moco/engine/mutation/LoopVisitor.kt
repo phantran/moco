@@ -56,12 +56,14 @@ class LoopVisitor(
         if (mapLineLabel.keys.contains(label) && opcode != Opcodes.GOTO && opcode != Opcodes.JSR &&
             mutatedMethodTracker.currConsideredLineNumber > mapLineLabel[label]!!
         ) {
-            mutatedMethodTracker.doWhileloopTracker.putIfAbsent(
-                // Key is a pair of start and end lines of code of the loop
-                Pair(mapLineLabel[label]!!, mutatedMethodTracker.currConsideredLineNumber),
-                // The value of this map is a list of indices of local variables used for the loop
-                localVarTracker?.get(mutatedMethodTracker.currConsideredLineNumber)!!.toList()
-            )
+            if (mutatedMethodTracker.currConsideredLineNumber >= mapLineLabel[label]!! + 1) {
+                mutatedMethodTracker.doWhileloopTracker.putIfAbsent(
+                    // Key is a pair of start and end lines of code of the loop
+                    Pair(mapLineLabel[label]!! + 1, mutatedMethodTracker.currConsideredLineNumber),
+                    // The value of this map is a list of indices of local variables used for the loop
+                    localVarTracker?.get(mutatedMethodTracker.currConsideredLineNumber)!!.toList()
+                )
+            }
         }
 
         // handle for, while
