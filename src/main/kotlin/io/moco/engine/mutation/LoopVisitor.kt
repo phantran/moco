@@ -142,7 +142,7 @@ class LoopVisitor(
         }
         if (found) {
             logger.debug(
-                "Skip mutation on loop counters" +
+                "Skip mutation on loop counters " +
                         "${mutation.mutationID.location.className?.name} -" +
                         "${mutation.mutationID.location.methodName.name} -" +
                         "${mutation.mutationID.mutatorID}-" +

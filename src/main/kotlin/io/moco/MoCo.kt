@@ -196,6 +196,7 @@ class MoCo : AbstractMojo() {
 
             Configuration.currentConfig = configuration
             MoCoLogger.useMvnLog(log)
+            MoCoLogger.debugEnabled = Configuration.currentConfig!!.debugEnabled
             H2Database.initPool(
                 url = "jdbc:h2:file:${Configuration.currentConfig?.mocoBuildPath}" +
                         "${File.separator}/persistence/moco;mode=MySQL;",

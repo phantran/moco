@@ -22,5 +22,5 @@ import java.io.Serializable
 
 
 data class MethodName (
-    @JsonProperty("methodName") val name: String,
+    @JsonProperty("methodName") var name: String,
 ) : Serializable

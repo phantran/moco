@@ -137,6 +137,10 @@ class ResultsReceiverThread(
                     val additionalInfo = resultMapping[mutation.mutationID]?.get("additionalInfo")  as MutableMap<String, String>
                     mutation.instructionsOrder = collectInstructionsOrder.toMutableList()
                     mutation.additionalInfo = additionalInfo
+                    // Change method name <init> to constructor for 3rd party plugins usage
+                    if (mutation.mutationID.location.methodName.name == "<init>") {
+                        mutation.mutationID.location.methodName.name = "constructor"
+                    }
                     // storage already contains class name entry
                     if (mutationStorage.entries.containsKey(clsName)) {
                         // NOTE: do not change map keys because of the consistency between moco and gamekins
