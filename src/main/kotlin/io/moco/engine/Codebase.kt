@@ -113,7 +113,8 @@ class Codebase(
      * @return
      */
     private fun fileToClassName(file: File, filter: List<String>, folderFilter: List<String>): ClassName? {
-        if (folderFilter.any { file.absolutePath.contains(it) }) {
+        if (!(folderFilter.size == 1 && folderFilter[0] ==  "") &&
+            folderFilter.any { file.absolutePath.contains(it) }) {
             return null
         }
 

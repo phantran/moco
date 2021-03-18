@@ -22,7 +22,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.unmockkAll
 
 
-class ClassInfoTest: AnnotationSpec()  {
+class ClassNameTest: AnnotationSpec()  {
 
     @BeforeEach
     fun init() {
@@ -34,13 +34,19 @@ class ClassInfoTest: AnnotationSpec()  {
     }
 
     @Test
-    fun testIsEnum() {
-        val t = ClassInfo(5, 5, "a", null, "b", arrayOf("a"))
-        t.isEnum shouldBe false
-        t.version shouldBe 5
-        t.access shouldBe 5
-        t.name shouldBe "a"
-        t.signature shouldBe null
-        t.version shouldBe 5
+    fun testJavaName() {
+        val t = ClassName("org/example")
+        t.getJavaName() shouldBe "org.example"
+    }
+
+    @Test
+    fun testFromString() {
+        ClassName.fromString("org.example") shouldBe ClassName("org/example")
+    }
+
+    @Test
+    fun testClsNameToClass() {
+        ClassName.clsNameToClass(ClassName("io.moco.engine.ClassInfo")) shouldBe ClassInfo::class.java
+        ClassName.clsNameToClass(ClassName("io.moco.engine.ClassInfo1")) shouldBe null
     }
 }

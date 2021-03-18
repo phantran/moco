@@ -31,7 +31,7 @@ class MoCoLogger {
         if (useMvnLog) {
             mvnLogger?.info(m)
         } else {
-            devLogger?.info { m }
+            if (!noLogAtAll) devLogger?.info { m }
         }
     }
 
@@ -41,7 +41,7 @@ class MoCoLogger {
             if (useMvnLog) {
                 mvnLogger?.info(m)
             } else {
-                devLogger?.info { m }
+                if (!noLogAtAll) devLogger?.info { m }
             }
         }
     }
@@ -52,7 +52,7 @@ class MoCoLogger {
             if (useMvnLog) {
                 mvnLogger?.info( "${LocalDateTime.now()} [DEBUG] $m" )
             } else {
-                devLogger?.info { "${LocalDateTime.now()} [DEBUG] $m" }
+                if (!noLogAtAll)  devLogger?.info { "${LocalDateTime.now()} [DEBUG] $m" }
             }
         }
     }
@@ -62,7 +62,7 @@ class MoCoLogger {
         if (useMvnLog) {
             mvnLogger?.warn(m)
         } else {
-            devLogger?.warn { m }
+            if (!noLogAtAll) devLogger?.warn { m }
         }
     }
 
@@ -71,7 +71,7 @@ class MoCoLogger {
         if (useMvnLog) {
             mvnLogger?.error(m)
         } else {
-            devLogger?.error { m }
+            if (!noLogAtAll) devLogger?.error { m }
         }
     }
 
@@ -80,6 +80,7 @@ class MoCoLogger {
         var mvnLogger: Log? = null
         var debugEnabled = false
         var verbose = true
+        var noLogAtAll = false
 
         fun useMvnLog(logger: Log? = null) {
             useMvnLog = true

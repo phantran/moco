@@ -15,16 +15,7 @@
  *
  */
 
-package io.moco.utils
+package io.moco.engine.mutator.replacement
 
-import org.junit.Assert
-import org.junit.Test
-import org.objectweb.asm.Opcodes
-
-
-class JavaInfoTest {
-    @Test
-    fun test_JavaInfo() {
-        Assert.assertEquals(JavaInfo.ASM_VERSION, Opcodes.ASM8)
-    }
+class AORTest {
 }

@@ -15,16 +15,28 @@
  *
  */
 
-package io.moco.utils
+package io.moco.engine.mutator.deletion
 
-import org.junit.Assert
-import org.junit.Test
-import org.objectweb.asm.Opcodes
+import io.kotest.core.spec.style.AnnotationSpec
+import io.kotest.matchers.shouldNotBe
+import io.mockk.unmockkAll
+import io.moco.engine.Codebase
+import java.nio.file.Paths
 
+class AODTest: AnnotationSpec() {
 
-class JavaInfoTest {
+    @BeforeEach
+    fun init() {
+    }
+
+    @AfterAll
+    fun cleanUp() {
+        unmockkAll()
+    }
+
     @Test
-    fun test_JavaInfo() {
-        Assert.assertEquals(JavaInfo.ASM_VERSION, Opcodes.ASM8)
+    fun testCodeBase2() {
+        1 shouldNotBe 2
+
     }
 }

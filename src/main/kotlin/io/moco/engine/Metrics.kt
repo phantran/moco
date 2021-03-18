@@ -24,9 +24,9 @@ import io.moco.utils.GitProcessor
 import io.moco.utils.MoCoLogger
 
 class Metrics(private val mutationStorage: MutationStorage) {
-    private val logger = MoCoLogger()
+    val logger = MoCoLogger()
 
-    private fun calculateRunCoverage(mutationStorage: MutationStorage): Double {
+    fun calculateRunCoverage(mutationStorage: MutationStorage): Double {
         var total = 0.0
         var killedMutants = 0.0
         for ((_, value) in mutationStorage.entries) {
@@ -34,13 +34,13 @@ class Metrics(private val mutationStorage: MutationStorage) {
             killedMutants += value.count { it["result"] == "killed" }
         }
         var res = 0.0
-         if (total > 0.0) {
-             res = (killedMutants / total) * 100.0
-         }
+        if (total > 0.0) {
+            res = (killedMutants / total) * 100.0
+        }
         return res
     }
 
-    private fun calculateAccumulatedCoverage(configuredOperators: String): Double {
+    fun calculateAccumulatedCoverage(configuredOperators: String): Double {
         val savedProgress = ProgressClassTest().getData("covered_operators = \'$configuredOperators\'")
         var killedMutants = 0.0
         var totalMutants = 0.0
@@ -49,7 +49,7 @@ class Metrics(private val mutationStorage: MutationStorage) {
             totalMutants += item.entry["total_mutants"]?.toIntOrNull() ?: 0
         }
         return if (totalMutants == 0.0) 0.0
-               else ((killedMutants / totalMutants) * 100)
+        else ((killedMutants / totalMutants) * 100)
     }
 
     fun reportResults(filteredMuOpNames: List<String>, gitProcessor: GitProcessor) {

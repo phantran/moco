@@ -15,16 +15,16 @@
  *
  */
 
-package io.moco.utils
+package io.moco.engine
 
-import org.junit.Assert
-import org.junit.Test
-import org.objectweb.asm.Opcodes
+import io.kotest.core.spec.style.AnnotationSpec
+import io.kotest.matchers.shouldBe
 
+class MethodNameTest: AnnotationSpec() {
 
-class JavaInfoTest {
     @Test
-    fun test_JavaInfo() {
-        Assert.assertEquals(JavaInfo.ASM_VERSION, Opcodes.ASM8)
+    fun testMethodName() {
+        val temp = MethodName("abc")
+        temp.name shouldBe "abc"
     }
 }

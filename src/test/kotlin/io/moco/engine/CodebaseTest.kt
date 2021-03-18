@@ -18,11 +18,11 @@
 package io.moco.engine
 
 import io.kotest.core.spec.style.AnnotationSpec
-import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.mockk.unmockkAll
+import java.nio.file.Paths
 
-
-class ClassInfoTest: AnnotationSpec()  {
+class CodebaseTest : AnnotationSpec() {
 
     @BeforeEach
     fun init() {
@@ -34,13 +34,16 @@ class ClassInfoTest: AnnotationSpec()  {
     }
 
     @Test
-    fun testIsEnum() {
-        val t = ClassInfo(5, 5, "a", null, "b", arrayOf("a"))
-        t.isEnum shouldBe false
-        t.version shouldBe 5
-        t.access shouldBe 5
-        t.name shouldBe "a"
-        t.signature shouldBe null
-        t.version shouldBe 5
+    fun testCodeBase() {
+        val excludedSourceClasses = mutableListOf("")
+        val excludedSourceFolders = mutableListOf("io/moco/engine/mutator")
+        val excludedTestClasses = mutableListOf("")
+        val excludedTestFolders = mutableListOf("")
+        val codePath = Paths.get("").toAbsolutePath().toString() + "/target/classes/io/moco/engine"
+        val testPath = Paths.get("").toAbsolutePath().toString() + "/target/test-classes/io/moco/engine"
+        val codeBase = Codebase(codePath, testPath, excludedSourceClasses, excludedSourceFolders,
+            excludedTestClasses, excludedTestFolders)
+        codeBase.sourceClassNames.size shouldNotBe 0
+        codeBase.toString() shouldNotBe ""
     }
 }
