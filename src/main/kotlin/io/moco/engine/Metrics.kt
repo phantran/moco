@@ -54,6 +54,7 @@ class Metrics(private val mutationStorage: MutationStorage) {
 
     fun reportResults(filteredMuOpNames: List<String>, gitProcessor: GitProcessor?) {
         val runCoverage = calculateRunCoverage(mutationStorage)
+        MoCoEntryPoint.runScore = runCoverage
         logger.info("-----------------------------------------------------------------------")
         logger.info("Mutation Coverage of this run: " + "%.2f".format(runCoverage) + "%")
         if (Configuration.currentConfig!!.gitMode) {

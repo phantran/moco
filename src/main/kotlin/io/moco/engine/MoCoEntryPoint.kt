@@ -52,6 +52,9 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     private var recordedTestMapping: String? = null
     private var gitProcessor = if (gitMode) GitProcessor(configuration.baseDir) else null
     private var newOp: Boolean = false
+    companion object {
+        var runScore = 0.0
+    }
 
     init {
         MoCoLogger.verbose = configuration.verbose
