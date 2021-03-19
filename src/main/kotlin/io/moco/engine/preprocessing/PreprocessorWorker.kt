@@ -92,12 +92,13 @@ object PreprocessorWorker {
             jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())
             logger.info("Preprocessing: Data saved and exit")
             logger.info("Preprocessing: Exit because of error")
-            val exitIndex = ex.message!!.toIntOrNull()
-            if (exitIndex != null) {
-                exitProcess(exitIndex)
-            } else {
-                exitProcess(MoCoProcessCode.UNRECOVERABLE_ERROR.code)
+            if (!ex.message.isNullOrEmpty()) {
+                val exitIndex = ex.message!!.toIntOrNull()
+                if (exitIndex != null) {
+                    exitProcess(exitIndex + 1)
+                }
             }
+            exitProcess(MoCoProcessCode.UNRECOVERABLE_ERROR.code)
         }
     }
 

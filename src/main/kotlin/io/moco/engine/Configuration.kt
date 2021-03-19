@@ -43,6 +43,7 @@ data class Configuration(
     val verbose: Boolean,
     val numberOfThreads: Int,
     val noLogAtAll: Boolean = false,
+    val enableMetrics: Boolean = false,
 ) {
     companion object {
         var currentConfig: Configuration? = null

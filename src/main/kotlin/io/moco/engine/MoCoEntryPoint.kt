@@ -26,6 +26,7 @@ import io.moco.utils.JarUtil
 import java.io.File
 
 import io.moco.utils.MoCoLogger
+import kotlin.math.log
 import kotlin.system.measureTimeMillis
 
 
@@ -50,7 +51,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     private var clsByGit: List<String>? = listOf()
     private var projectMeta: ProjectMeta? = null
     private var recordedTestMapping: String? = null
-    private var gitProcessor = if (gitMode) GitProcessor(configuration.baseDir) else null
+    private var gitProcessor: GitProcessor? = null
     private var newOp: Boolean = false
     companion object {
         var runScore = 0.0
@@ -80,7 +81,9 @@ class MoCoEntryPoint(private val configuration: Configuration) {
             }
         }
         logger.info("Execution done after ${executionTime / 1000}s")
-        Metrics(mutationStorage).reportResults(fOpNames, gitProcessor)
+        if (Configuration.currentConfig!!.enableMetrics) {
+            Metrics(mutationStorage).reportResults(fOpNames, gitProcessor)
+        }
         cleanBeforeExit()
         logger.info("DONE")
     }
@@ -137,6 +140,16 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     }
 
     private fun gitInfoProcessing(): Boolean {
+        if (gitMode) {
+            try {
+                gitProcessor = GitProcessor(configuration.baseDir)
+            } catch (e: Exception) {
+                logger.error("Git Mode is ON but Git information couldn't be processed, " +
+                        "make sure this source code was initialized as a Git repository")
+                return false
+            }
+        }
+
         if (!shouldRunFromScratch()) {
             logger.info("Git mode: on")
             logger.info("Latest stored commit: ${projectMeta?.meta?.get("latestStoredCommitID")}")
@@ -169,23 +182,21 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     }
 
     private fun shouldResetDB(): Boolean {
-        if (!gitMode) {
-            return false
-        }
+        // MoCo will not used database if Git Mode is off -> proceed in normal mode
+        // No execution data and meta data will be collected
+        if (!gitMode) return false
         val sourceBuildFolder = projectMeta?.meta?.get("sourceBuildFolder")
         val recordedTestFolder = projectMeta?.meta?.get("testBuildFolder")
-        if (sourceBuildFolder != Configuration.currentConfig?.buildRoot) {
-            return true
-        }
-        if (recordedTestFolder != Configuration.currentConfig?.testRoot) {
-            return true
-        }
+        // If one changes the target build folder and test folder -> MoCo will erase the existing database and
+        // run from scratch to avoid saving conflicting mutation data to database
+        if (sourceBuildFolder != Configuration.currentConfig?.buildRoot) return true
+        if (recordedTestFolder != Configuration.currentConfig?.testRoot) return true
         return false
     }
 
     fun shouldRunFromScratch(): Boolean {
         if (gitMode) {
-            // MoCo will rerun (execute all tests on all cut when users change mutation operator set configuration
+            // Run from scratch if mutation operators inclusion/exclusion configuration was changed
             val recordedOps = projectMeta?.meta?.get("runOperators")?.split("-")
             if (!recordedOps.isNullOrEmpty()) {
                 if (!recordedOps.contains(fOpNames.joinToString(","))) {

@@ -21,13 +21,7 @@ import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockkClass
-import io.mockk.unmockkAll
-import io.moco.engine.operator.Operator
-import io.moco.persistence.H2Database
 import io.moco.utils.MoCoLogger
-import java.io.File
-import java.nio.file.Paths
-import org.apache.commons.io.FileUtils;
 
 
 class MoCoEntryPointTest: AnnotationSpec() {

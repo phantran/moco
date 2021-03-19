@@ -18,6 +18,7 @@
 package io.moco.integration
 
 import io.kotest.core.spec.style.AnnotationSpec
+import io.kotest.matchers.ints.shouldBeInRange
 import io.kotest.matchers.shouldBe
 import io.mockk.unmockkAll
 import io.moco.engine.Configuration
@@ -73,7 +74,8 @@ class AEntryPointTest: AnnotationSpec() {
             debugEnabled = false,
             verbose = false,
             2,
-            noLogAtAll = true
+            noLogAtAll = true,
+            enableMetrics = true
         )
         Configuration.currentConfig = configuration
         MoCoLogger.useKotlinLog()
@@ -87,7 +89,7 @@ class AEntryPointTest: AnnotationSpec() {
         )
         H2Database().initDBTablesIfNotExists()
         MoCoEntryPoint(configuration).execute()
-        MoCoEntryPoint.runScore.roundToInt() shouldBe 57
+        MoCoEntryPoint.runScore.roundToInt() shouldBeInRange IntRange(50, 60)
         H2Database.shutDownDB()
     }
 }

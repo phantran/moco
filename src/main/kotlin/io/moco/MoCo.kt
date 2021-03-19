@@ -22,6 +22,7 @@ import io.moco.engine.MoCoEntryPoint
 import io.moco.engine.operator.Operator
 import io.moco.persistence.H2Database
 import io.moco.utils.MoCoLogger
+import org.apache.maven.artifact.repository.ArtifactRepository
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugin.MojoExecutionException
 import org.apache.maven.plugins.annotations.LifecyclePhase
@@ -31,7 +32,6 @@ import org.apache.maven.plugins.annotations.ResolutionScope
 import java.io.File
 import org.apache.maven.project.MavenProject
 import java.lang.Exception
-
 
 /**
  * Goal which perform mutation tests, collect mutation information and store mutation information into JSON file
@@ -140,10 +140,20 @@ class MoCo : AbstractMojo() {
     @Parameter(defaultValue = "2", property = "numberOfThreads", required = false)
     private val numberOfThreads: Int = 2
 
+    /**
+     * Number of max threads to use by the main process of MoCo
+     */
+    @Parameter(defaultValue = "false", property = "enableMetrics", required = false)
+    private val enableMetrics: Boolean = false
+
+    @Parameter(defaultValue = "\${localRepository}", readonly = true, required = true)
+    private val localRepository: ArtifactRepository? = null
+
 
     @Throws(MojoExecutionException::class)
     override fun execute() {
         try {
+            val persistencePath = localRepository?.basedir + "/io/moco/persistence/moco"
             // Often named as "target" or "build" folder, contains compiled classes, JaCoCo report, MoCo report, etc...
             val buildRoot =
                 project?.build?.directory.toString()
@@ -191,15 +201,15 @@ class MoCo : AbstractMojo() {
                 mutationPerClass,
                 debugEnabled,
                 verbose,
-                numberOfThreads
+                numberOfThreads,
+                enableMetrics
             )
 
             Configuration.currentConfig = configuration
             MoCoLogger.useMvnLog(log)
             MoCoLogger.debugEnabled = Configuration.currentConfig!!.debugEnabled
             H2Database.initPool(
-                url = "jdbc:h2:file:${Configuration.currentConfig?.mocoBuildPath}" +
-                        "${File.separator}/persistence/moco;mode=MySQL;",
+                url = "jdbc:h2:file:${persistencePath};mode=MySQL;",
                 user = "moco",
                 password = "moco",
             )
