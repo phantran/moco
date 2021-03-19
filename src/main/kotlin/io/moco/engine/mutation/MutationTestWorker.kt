@@ -66,7 +66,7 @@ class MutationTestWorker(
                 DataStreamUtils.readObject(DataInputStream(socket.getInputStream()))
             MoCoLogger.debugEnabled = givenWorkerArgs.debugEnabled
             MoCoLogger.verbose = givenWorkerArgs.verbose
-
+            if (givenWorkerArgs.noLogAtAll) MoCoLogger.noLogAtAll = true
             MoCoLogger.useKotlinLog()
             logger = MoCoLogger()
             classPath = givenWorkerArgs.classPath

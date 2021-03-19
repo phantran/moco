@@ -52,7 +52,7 @@ class Metrics(private val mutationStorage: MutationStorage) {
         else ((killedMutants / totalMutants) * 100)
     }
 
-    fun reportResults(filteredMuOpNames: List<String>, gitProcessor: GitProcessor) {
+    fun reportResults(filteredMuOpNames: List<String>, gitProcessor: GitProcessor?) {
         val runCoverage = calculateRunCoverage(mutationStorage)
         logger.info("-----------------------------------------------------------------------")
         logger.info("Mutation Coverage of this run: " + "%.2f".format(runCoverage) + "%")
@@ -63,7 +63,7 @@ class Metrics(private val mutationStorage: MutationStorage) {
             logger.debug("Saving new entry to project history")
             val temp = ProjectTestHistory()
             temp.entry = mutableMapOf(
-                "commit_id" to gitProcessor.headCommit.name,
+                "commit_id" to gitProcessor!!.headCommit.name,
                 "branch" to gitProcessor.branch, "run_operators" to filteredMuOpNames.joinToString(","),
                 "run_coverage" to runCoverage.toString(), "accumulated_coverage" to accumulatedCoverage.toString(),
                 "git_mode" to Configuration.currentConfig!!.gitMode.toString()

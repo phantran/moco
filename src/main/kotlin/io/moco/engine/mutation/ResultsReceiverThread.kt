@@ -18,6 +18,7 @@
 package io.moco.engine.mutation
 
 import io.moco.engine.ClassName
+import io.moco.engine.Configuration
 import io.moco.persistence.MutationStorage
 import io.moco.utils.DataStreamUtils
 import java.io.*
@@ -173,8 +174,9 @@ class ResultsReceiverThread(
         val classPath: String,
         val includedOperators: List<String>,
         val filter: String,
-        val testTimeOut: String,
-        val debugEnabled: Boolean,
-        val verbose: Boolean
+        val testTimeOut: String = Configuration.currentConfig!!.preprocessTestTimeout,
+        val debugEnabled: Boolean = Configuration.currentConfig?.debugEnabled == true,
+        val verbose: Boolean = Configuration.currentConfig?.verbose == true,
+        val noLogAtAll: Boolean = Configuration.currentConfig?.noLogAtAll == true
     ) : Serializable
 }

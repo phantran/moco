@@ -30,22 +30,22 @@ import kotlin.system.exitProcess
 
 
 object PreprocessorWorker {
-    private lateinit var mocoBuildPath: String
-    private lateinit var codeRoot: String
-    private lateinit var testRoot: String
-    private lateinit var excludedSourceClasses: List<String>
-    private lateinit var excludedSourceFolders: List<String>
-    private lateinit var excludedTestClasses: List<String>
-    private lateinit var excludedTestFolders: List<String>
-    private lateinit var preprocessResultsFolder: String
-    private var recordedTestMapping: List<String>? = null
-    private var isRerun: Boolean = false
+    lateinit var mocoBuildPath: String
+    lateinit var codeRoot: String
+    lateinit var testRoot: String
+    lateinit var excludedSourceClasses: List<String>
+    lateinit var excludedSourceFolders: List<String>
+    lateinit var excludedTestClasses: List<String>
+    lateinit var excludedTestFolders: List<String>
+    lateinit var preprocessResultsFolder: String
+    var recordedTestMapping: List<String>? = null
+    var isRerun: Boolean = false
     // filteredClsByGitCommit is null of empty if
     // 1. Git mode is off
     // 2. Project run for the first time and no project meta exists
-    private var filteredClsByGitCommit: List<String>? = null
-    private val logger = MoCoLogger()
-    private lateinit var jsonConverter: JsonSource
+    var filteredClsByGitCommit: List<String>? = null
+    val logger = MoCoLogger()
+    lateinit var jsonConverter: JsonSource
     /**
      * Main
      *
@@ -101,7 +101,7 @@ object PreprocessorWorker {
         }
     }
 
-    private fun prepareWorker(args: Array<String>) {
+    fun prepareWorker(args: Array<String>) {
         mocoBuildPath = args[1]  // path to build or target folder of project
         codeRoot = args[2]
         testRoot = args[3]
@@ -113,20 +113,21 @@ object PreprocessorWorker {
         TestItemWrapper.configuredTestTimeOut = if (args[9].toIntOrNull() != null) args[9].toLong() else -1L
         MoCoLogger.debugEnabled = args[10] == "true"
         MoCoLogger.verbose = args[11] == "true"
+        if (args[12] == "true") MoCoLogger.noLogAtAll = true
         // filteredClsByGitCommit is null of empty if
         // 1. Git mode is off
         // 2. Project run for the first time and no project meta exists
         filteredClsByGitCommit =
-            if (args[12] != "") args[12].split(",").map { it.trim() } else null
-        recordedTestMapping = if (args[13] != "") args[13].split(",").map { it.trim() } else null
-        isRerun = if (args.getOrNull(14) != null) args[14].toBoolean() else false
+            if (args[13] != "") args[13].split(",").map { it.trim() } else null
+        recordedTestMapping = if (args[14] != "") args[14].split(",").map { it.trim() } else null
+        isRerun = if (args.getOrNull(15) != null) args[15].toBoolean() else false
         MoCoLogger.useKotlinLog()
         jsonConverter = JsonSource(
             "$mocoBuildPath${File.separator}$preprocessResultsFolder", "preprocess"
         )
     }
 
-    private fun getRelevantTests(
+    fun getRelevantTests(
         filteredClsByGitCommit: List<String>?, codebase: Codebase,
         recordedTestMapping: List<String>?
     ): List<ClassName> {

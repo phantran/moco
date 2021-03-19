@@ -50,7 +50,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     private var clsByGit: List<String>? = listOf()
     private var projectMeta: ProjectMeta? = null
     private var recordedTestMapping: String? = null
-    private var gitProcessor = GitProcessor(configuration.baseDir)
+    private var gitProcessor = if (gitMode) GitProcessor(configuration.baseDir) else null
     private var newOp: Boolean = false
 
     init {
@@ -61,6 +61,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         logger.info("START")
         projectMeta = ProjectMeta()
         byteLoader = ByteArrayLoader(classPath)
+        if (!gitMode) logger.info("Git mode: OFF")
     }
 
     fun execute() {
@@ -85,7 +86,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         // Save meta before exit
         if (gitMode) {
             logger.debug("Saving project meta data before exiting...")
-            gitProcessor.setHeadCommitMeta(projectMeta!!)
+            gitProcessor!!.setHeadCommitMeta(projectMeta!!)
             projectMeta!!.meta["sourceBuildFolder"] = configuration.codeRoot
             projectMeta!!.meta["testBuildFolder"] = configuration.testRoot
 
@@ -141,7 +142,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
                 clsByGit = listOf("")
                 logger.info("Last commit info does not exist - skip Git commits diff analysis - proceed in normal mode")
             } else {
-                clsByGit = gitProcessor.getChangedClsSinceLastStoredCommit(
+                clsByGit = gitProcessor!!.getChangedClsSinceLastStoredCommit(
                     configuration.artifactId.replace(".", "/"), projectMeta?.meta!!
                 )
                 if (clsByGit != null) {
@@ -164,7 +165,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         return true
     }
 
-    private fun shouldResetDB(): Boolean  {
+    private fun shouldResetDB(): Boolean {
         if (!gitMode) {
             return false
         }
@@ -179,7 +180,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         return false
     }
 
-    private fun shouldRunFromScratch(): Boolean {
+    fun shouldRunFromScratch(): Boolean {
         if (gitMode) {
             // MoCo will rerun (execute all tests on all cut when users change mutation operator set configuration
             val recordedOps = projectMeta?.meta?.get("runOperators")?.split("-")
@@ -190,7 +191,6 @@ class MoCoEntryPoint(private val configuration: Configuration) {
                 }
             }
         } else {
-            logger.info("Git mode: OFF")
             return true
         }
         return false

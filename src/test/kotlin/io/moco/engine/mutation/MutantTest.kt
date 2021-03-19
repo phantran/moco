@@ -15,15 +15,15 @@
  *
  */
 
-package io.moco.engine.mutator.deletion
+package io.moco.engine.mutation
 
 import io.kotest.core.spec.style.AnnotationSpec
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.mockk.mockkClass
 import io.mockk.unmockkAll
-import io.moco.engine.Codebase
-import java.nio.file.Paths
 
-class AODTest: AnnotationSpec() {
+class MutantTest: AnnotationSpec() {
 
     @BeforeEach
     fun init() {
@@ -35,8 +35,20 @@ class AODTest: AnnotationSpec() {
     }
 
     @Test
-    fun testCodeBase2() {
-        1 shouldNotBe 2
+    fun testEquals() {
+        val temp = mockkClass(Mutation::class)
+        val temp1 = ByteArray(1)
+        val temp2 = Mutant(temp, temp1)
+        val temp3 = Mutant(temp, temp1)
+        (temp2 == temp3) shouldBe true
+    }
 
+
+    @Test
+    fun testHashcode() {
+        val temp = mockkClass(Mutation::class)
+        val temp1 = ByteArray(1)
+        val temp2 = Mutant(temp, temp1)
+        temp2.hashCode() shouldNotBe 0
     }
 }

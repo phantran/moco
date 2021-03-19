@@ -42,6 +42,7 @@ data class Configuration(
     val debugEnabled: Boolean,
     val verbose: Boolean,
     val numberOfThreads: Int,
+    val noLogAtAll: Boolean = false,
 ) {
     companion object {
         var currentConfig: Configuration? = null
@@ -50,7 +51,7 @@ data class Configuration(
     fun getPreprocessProcessArgs(): MutableList<String> {
         return mutableListOf(mocoBuildPath, codeRoot, testRoot, excludedSourceClasses, excludedSourceFolders,
             excludedTestClasses, excludedTestFolders, preprocessResultsFolder,
-            preprocessTestTimeout, debugEnabled.toString(), verbose.toString()
+            preprocessTestTimeout, debugEnabled.toString(), verbose.toString(), noLogAtAll.toString()
         )
     }
 }

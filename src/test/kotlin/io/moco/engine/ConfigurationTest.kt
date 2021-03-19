@@ -96,6 +96,5 @@ class ConfigurationTest: AnnotationSpec() {
         configuration.verbose shouldBe true
         configuration.numberOfThreads shouldBe 2
         configuration.getPreprocessProcessArgs()[0] shouldBe "$buildRoot${File.separator}moco"
-        Configuration.currentConfig shouldBe null
     }
 }

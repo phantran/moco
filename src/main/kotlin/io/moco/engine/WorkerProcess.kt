@@ -87,10 +87,7 @@ class WorkerProcess(
     ): ResultsReceiverThread {
         val mutationWorkerArgs =
             ResultsReceiverThread.MutationWorkerArguments(
-                mutations, tests, testsExecutionTime, processArgs["classPath"] as String, filteredMuOpNames,
-                "", Configuration.currentConfig!!.preprocessTestTimeout, Configuration.currentConfig!!.debugEnabled,
-                Configuration.currentConfig!!.verbose
-            )
+                mutations, tests, testsExecutionTime, processArgs["classPath"] as String, filteredMuOpNames, "")
         return ResultsReceiverThread(processArgs["port"] as ServerSocket, mutationWorkerArgs, mutationStorage)
     }
 

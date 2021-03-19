@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit
 class MutationEntryPoint(
     private val byteArrLoader: ByteArrayLoader,
     private val mutationStorage: MutationStorage,
-    private val gitProcessor: GitProcessor,
+    private val gitProcessor: GitProcessor?,
     private val createdAgentLocation: String?,
     private val clsByGit: List<String>?,
     private val fOpNames: List<String> = Configuration.currentConfig!!.fOpNames,
@@ -60,7 +60,7 @@ class MutationEntryPoint(
             return
         }
         // persist preprocess result to database
-        TestsCutMapping().saveMappingInfo(preprocessedStorage.classRecord, gitProcessor.headCommit.name)
+        gitProcessor?.headCommit?.name?.let { TestsCutMapping().saveMappingInfo(preprocessedStorage.classRecord, it) }
         // Mutations collecting
         logger.debug("Start mutation collecting")
 
@@ -78,7 +78,8 @@ class MutationEntryPoint(
         logger.debug("Start mutation testing")
         handleMutations(filteredMutations, preprocessedStorage)
 
-        persistMutationResults()
+        if (gitProcessor != null) persistMutationResults()
+
         logger.debug("Complete mutation testing")
     }
 
@@ -220,7 +221,7 @@ class MutationEntryPoint(
             .save(mutationStorage)
         if (gitMode) {
             logger.debug("Persist mutation test results")
-            val gh = gitProcessor.headCommit.name
+            val gh = gitProcessor!!.headCommit.name
             // Mutants black list UPDATE - ADD (mutation results with status as run_error)
             MutantsBlackList().saveErrorMutants(mutationStorage)
             // Progress Class Test UPDATE - ADD (class progress - mutation results with status as survived and killed)

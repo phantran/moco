@@ -267,6 +267,12 @@
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.22.1</version>
+                    <configuration>
+                        <excludes>
+                            <exclude>**/test-artifacts/**</exclude>
+                            <exclude>**/dev/**</exclude>
+                        </excludes>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>
@@ -387,6 +393,12 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <excludes>
+                        <exclude>**/test-artifacts/**</exclude>
+                        <exclude>**/dev/**</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
 
             <plugin>
