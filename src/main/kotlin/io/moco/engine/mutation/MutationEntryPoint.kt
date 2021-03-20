@@ -220,6 +220,7 @@ class MutationEntryPoint(
         JsonSource(
             "${mocoBuildPath}${File.separator}$mutationResultsFolder", "moco"
         ).save(mutationStorage)
+        logger.infoVerbose("Saved mutation test results to moco.json")
         if (gitMode && gitProcessor != null) {
             logger.debug("Persist mutation test results")
             val gh = gitProcessor.headCommit.name

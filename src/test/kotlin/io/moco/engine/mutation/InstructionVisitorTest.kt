@@ -56,7 +56,6 @@ class InstructionVisitorTest : AnnotationSpec() {
         every { mt setProperty "instructionIndex" value less(5)} just runs
         every { mt.instructionIndex } returns 1
         val temp = InstructionVisitor(mockMv, mt)
-        val temp1 = mockkClass(Handle::class)
         every { mockMv.visitMultiANewArrayInsn(any(), any()) } answers { }
         temp.visitMultiANewArrayInsn("a", 5)
         mt.instructionIndex shouldBe 1
@@ -69,7 +68,6 @@ class InstructionVisitorTest : AnnotationSpec() {
         every { mt setProperty "instructionIndex" value less(5)} just runs
         every { mt.instructionIndex } returns 1
         val temp = InstructionVisitor(mockMv, mt)
-        val temp1 = mockkClass(Handle::class)
         every { mockMv.visitLookupSwitchInsn(any(), any(), any()) } answers { }
         temp.visitLookupSwitchInsn(Label(), IntArray(5), arrayOf())
         mt.instructionIndex shouldBe 1
@@ -82,7 +80,6 @@ class InstructionVisitorTest : AnnotationSpec() {
         every { mt setProperty "instructionIndex" value less(5)} just runs
         every { mt.instructionIndex } returns 1
         val temp = InstructionVisitor(mockMv, mt)
-        val temp1 = mockkClass(Handle::class)
         every { mockMv.visitTableSwitchInsn(any(), any(), any()) } answers { }
         temp.visitTableSwitchInsn(1, 1, Label())
         mt.instructionIndex shouldBe 1

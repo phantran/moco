@@ -25,7 +25,7 @@ import org.junit.runner.notification.StoppedByUserException
 import java.lang.Exception
 
 
-internal class JUnit34RunListener(
+class JUnit34RunListener(
     private val desc: io.moco.engine.test.Description,
     private val tra: TestResultAggregator
 ) : RunListener() {

@@ -123,6 +123,7 @@ class ResultsReceiverThread(
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     @Synchronized
     private fun updateMutationStorage() {
         for (mutation: Mutation in workerArguments.mutations) {

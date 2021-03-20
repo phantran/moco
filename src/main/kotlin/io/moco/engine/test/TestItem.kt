@@ -20,11 +20,8 @@ package io.moco.engine.test
 import io.moco.engine.ClassName
 import io.moco.utils.MoCoLogger
 import junit.framework.TestCase
-import junit.framework.TestSuite
-import org.junit.Test
 import org.junit.platform.suite.api.SelectClasses
 import org.junit.platform.suite.api.SelectPackages
-import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
 open class TestItem(val cls: Class<*>, var executionTime: Long = -1) {
@@ -32,7 +29,6 @@ open class TestItem(val cls: Class<*>, var executionTime: Long = -1) {
     val logger = MoCoLogger()
 
     enum class TestFramework {
-        //TODO: Support for TestNG later
         JUNIT34, JUNIT5, TESTNG, UNKNOWN
     }
 
@@ -55,8 +51,9 @@ open class TestItem(val cls: Class<*>, var executionTime: Long = -1) {
                         allowedTime = if (testsExecutionTime[item.name] != null) testsExecutionTime[item.name]!! else -1
                     }
                     when (typeFramework) {
-                        TestFramework.JUNIT34 -> res.add(Junit34TestItem(item, executionTime = allowedTime))
+                        TestFramework.JUNIT34 -> res.add(JUnit34TestItem(item, executionTime = allowedTime))
                         TestFramework.JUNIT5 -> Junit5TestItem.getTests(res, item, executionTime = allowedTime)
+                        TestFramework.TESTNG -> res.add(TestNGTestItem(item, executionTime = allowedTime))
                         else -> {
                         }
                     }
@@ -80,6 +77,7 @@ open class TestItem(val cls: Class<*>, var executionTime: Long = -1) {
                         return true
                     }
                 }
+                TestFramework.TESTNG -> return true
                 else -> return false
             }
             return false
@@ -102,6 +100,12 @@ open class TestItem(val cls: Class<*>, var executionTime: Long = -1) {
                     }
                 }) {
                 return TestFramework.JUNIT5
+            } else if (cls.declaredMethods.any {
+                    it.annotations.any { it1 ->
+                        it1.annotationClass.java == org.testng.annotations.Test::class.java
+                    }
+                }) {
+                return TestFramework.TESTNG
             }
             return TestFramework.UNKNOWN
         }

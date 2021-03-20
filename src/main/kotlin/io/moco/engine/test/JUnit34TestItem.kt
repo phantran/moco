@@ -28,7 +28,7 @@ import org.junit.runner.notification.RunNotifier
 import kotlin.system.measureTimeMillis
 
 
-class Junit34TestItem(cls: Class<*>, executionTime: Long = -1): TestItem(cls, executionTime) {
+class JUnit34TestItem(cls: Class<*>, executionTime: Long = -1): TestItem(cls, executionTime) {
 
     override suspend fun execute(tra: TestResultAggregator, timeOut: Long) {
         val runner: Runner = createRunner(cls)
