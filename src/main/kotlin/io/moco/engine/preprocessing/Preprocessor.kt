@@ -18,7 +18,6 @@
 package io.moco.engine.preprocessing
 
 import io.moco.engine.ClassName
-import io.moco.engine.Codebase
 import io.moco.engine.test.TestItem
 import io.moco.engine.test.TestItemWrapper
 import io.moco.persistence.JsonSource

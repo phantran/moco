@@ -24,5 +24,13 @@ data class ClassInfo(
 ) {
     val isEnum: Boolean
         get() = superClassName == "java/lang/Enum"
+/*
+    fun hasAnnotation(annotation: String): Boolean {
+        return this.annotations.contains(annotation)
+    }
+
+    fun isSubClassOf(cls: Class<*>): Boolean {
+        return this.superClassName == cls.name
+    }*/
 }
 

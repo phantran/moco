@@ -141,10 +141,17 @@ class MoCo : AbstractMojo() {
     private val numberOfThreads: Int = 2
 
     /**
-     * Number of max threads to use by the main process of MoCo
+     * Set to true to calculate mutation score for each run
      */
     @Parameter(defaultValue = "false", property = "enableMetrics", required = false)
     private val enableMetrics: Boolean = false
+
+    /**
+     * Turn off to skip dumbing mutation test results to moco.json file at the end
+     */
+    @Parameter(defaultValue = "true", property = "useForCICD", required = false)
+    private val useForCICD: Boolean = true
+
 
     @Parameter(defaultValue = "\${localRepository}", readonly = true, required = true)
     private val localRepository: ArtifactRepository? = null
@@ -202,7 +209,8 @@ class MoCo : AbstractMojo() {
                 debugEnabled,
                 verbose,
                 numberOfThreads,
-                enableMetrics
+                enableMetrics,
+                useForCICD // TODO: implement dumbing of mutation results info to json file
             )
 
             Configuration.currentConfig = configuration

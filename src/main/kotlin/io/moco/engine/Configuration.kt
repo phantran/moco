@@ -44,6 +44,7 @@ data class Configuration(
     val numberOfThreads: Int,
     val noLogAtAll: Boolean = false,
     val enableMetrics: Boolean = false,
+    val useForCICD: Boolean = true
 ) {
     companion object {
         var currentConfig: Configuration? = null

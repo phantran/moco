@@ -19,97 +19,91 @@ package io.moco.engine.test
 
 import io.moco.engine.ClassName
 import io.moco.utils.MoCoLogger
-import kotlinx.coroutines.*
-import org.junit.internal.builders.AllDefaultPossibilitiesBuilder
-import org.junit.internal.runners.ErrorReportingRunner
-import org.junit.runner.Runner
-import org.junit.runner.notification.RunListener
-import java.lang.Exception
-
-import org.junit.runner.notification.RunNotifier
+import junit.framework.TestCase
+import junit.framework.TestSuite
+import org.junit.Test
+import org.junit.platform.suite.api.SelectClasses
+import org.junit.platform.suite.api.SelectPackages
+import org.junit.runner.RunWith
 import org.junit.runners.Suite
-import kotlin.system.measureTimeMillis
 
+open class TestItem(val cls: Class<*>, var executionTime: Long = -1) {
+    open val desc: Description = Description(this.cls.name, this.cls.name)
+    val logger = MoCoLogger()
 
-class TestItem(
-    val cls: Class<*>,
-    var executionTime: Long = -1
-) {
-    val desc: Description = Description(this.cls.name, this.cls.name)
-    private val logger = MoCoLogger()
-
-    suspend fun execute(tra: TestResultAggregator, timeOut: Long = -1) {
-        val runner: Runner = createRunner(cls)
-        if (runner is ErrorReportingRunner) {
-            logger.debug("Error while running test of $cls")
-        }
-        var job: Job? = null
-        try {
-            val runNotifier = RunNotifier()
-            val listener: RunListener = CustomRunListener(desc, tra)
-            runNotifier.addFirstListener(listener)
-            job = GlobalScope.launch {
-                withTimeout(timeOut) {
-                    val temp = measureTimeMillis {
-                        runner.run(runNotifier)
-                    }
-                    if (executionTime == -1L) {
-                        executionTime = temp
-                    }
-                    logger.debug("Test ${desc.name} finished after $executionTime ms")
-                }
-            }
-            job.join()
-        } catch (e: Exception) {
-            when (e) {
-                is TimeoutCancellationException -> {
-                    tra.results.add(TestResult(desc, e, TestResult.TestState.TIMEOUT))
-                    logger.debug("Test ${desc.name} execution TIMEOUT - allowed time $timeOut ms")
-                }
-            }
-            throw e
-        } finally {
-            job!!.cancel()
-        }
-
+    enum class TestFramework {
+        //TODO: Support for TestNG later
+        JUNIT34, JUNIT5, TESTNG, UNKNOWN
     }
 
+    open suspend fun execute(tra: TestResultAggregator, timeOut: Long = -1) {}
+
     companion object {
-        fun createRunner(cls: Class<*>): Runner {
-            val builder = AllDefaultPossibilitiesBuilder(true)
-            try {
-                return builder.runnerForClass(cls)
-            } catch (ex: Throwable) {
-                throw RuntimeException(ex)
-            }
-        }
-
-        fun testClassesToTestItems(testClassNames: List<ClassName>,
-                                   testsExecutionTime: MutableMap<String, Long>? = null): List<TestItem> {
+        fun testClassesToTestItems(
+            testClassNames: List<ClassName>,
+            testsExecutionTime: MutableMap<String, Long>? = null
+        ): List<TestItem> {
             // convert from test classes to test items so it can be executed
-            var testClsNames = testClassNames.mapNotNull { ClassName.clsNameToClass(it) }
-            testClsNames = testClsNames.filter { isNotTestSuite(it) }
-            return if (testsExecutionTime.isNullOrEmpty()) {
-                testClsNames.map {
-                    TestItem(it)
-                }
-            } else {
-                testClsNames.map {
-                    TestItem(it, testsExecutionTime[it.name]!!)
+            var testClasses = testClassNames.mapNotNull { ClassName.clsNameToClass(it) }
+            testClasses = testClasses.filter { isNotTestSuite(it, checkTestFramework(it)) }
+            val res: MutableList<TestItem> = mutableListOf()
+            for (item in testClasses) {
+                val typeFramework = checkTestFramework(item)
+                if (isNotTestSuite(item, typeFramework)) {
+                    var allowedTime = -1L
+                    if (!testsExecutionTime.isNullOrEmpty()) {
+                        allowedTime = if (testsExecutionTime[item.name] != null) testsExecutionTime[item.name]!! else -1
+                    }
+                    when (typeFramework) {
+                        TestFramework.JUNIT34 -> res.add(Junit34TestItem(item, executionTime = allowedTime))
+                        TestFramework.JUNIT5 -> Junit5TestItem.getTests(res, item, executionTime = allowedTime)
+                        else -> {
+                        }
+                    }
                 }
             }
+            return res
         }
 
-        private fun isNotTestSuite(cls: Class<*>): Boolean {
+        private fun isNotTestSuite(cls: Class<*>, testFramework: TestFramework): Boolean {
             // Ignore test suite class since all normal test classes are recorded.
-            if (cls.getAnnotation(Suite.SuiteClasses::class.java) == null) {
-                return true
+            when (testFramework) {
+                TestFramework.JUNIT34 -> {
+                    if (cls.getAnnotation(Suite.SuiteClasses::class.java) == null) {
+                        return true
+                    }
+                }
+                TestFramework.JUNIT5 -> {
+                    if (cls.getAnnotation(SelectClasses::class.java) == null &&
+                        cls.getAnnotation(SelectPackages::class.java) == null
+                    ) {
+                        return true
+                    }
+                }
+                else -> return false
             }
             return false
         }
-    }
 
-    override fun toString(): String {
-        return ("TestItem [cls=$cls description=$desc executionTime=$executionTime]")
+
+        private fun checkTestFramework(cls: Class<*>): TestFramework {
+            // junit3 extends test case or testsuite class, junit4 has RunWith or Test annotation
+            if (cls.superclass == TestCase::class.java ||
+                cls.declaredMethods.any {
+                    it.annotations.any { it1 ->
+                        it1.annotationClass.java == org.junit.Test::class.java
+                    }
+                }
+            ) {
+                return TestFramework.JUNIT34
+            } else if (cls.declaredMethods.any {
+                    it.annotations.any { it1 ->
+                        it1.annotationClass.java == org.junit.jupiter.api.Test::class.java
+                    }
+                }) {
+                return TestFramework.JUNIT5
+            }
+            return TestFramework.UNKNOWN
+        }
     }
 }

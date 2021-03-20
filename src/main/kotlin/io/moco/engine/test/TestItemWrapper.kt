@@ -40,7 +40,7 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
                 testItem.execute(testResultAggregator, timeOut)
             }
         } catch (ex: Exception) {
-            logger.debug("Error while executing test ${testItem.desc.name}")
+            logger.debug("Error while executing test $testItem")
             throw ex
         }
     }

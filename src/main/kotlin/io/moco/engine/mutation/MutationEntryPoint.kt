@@ -78,7 +78,7 @@ class MutationEntryPoint(
         logger.debug("Start mutation testing")
         handleMutations(filteredMutations, preprocessedStorage)
 
-        if (gitProcessor != null) persistMutationResults()
+        persistMutationResults()
 
         logger.debug("Complete mutation testing")
     }
@@ -217,11 +217,12 @@ class MutationEntryPoint(
     }
 
     private fun persistMutationResults() {
-        JsonSource("${mocoBuildPath}${File.separator}$mutationResultsFolder", "moco")
-            .save(mutationStorage)
-        if (gitMode) {
+        JsonSource(
+            "${mocoBuildPath}${File.separator}$mutationResultsFolder", "moco"
+        ).save(mutationStorage)
+        if (gitMode && gitProcessor != null) {
             logger.debug("Persist mutation test results")
-            val gh = gitProcessor!!.headCommit.name
+            val gh = gitProcessor.headCommit.name
             // Mutants black list UPDATE - ADD (mutation results with status as run_error)
             MutantsBlackList().saveErrorMutants(mutationStorage)
             // Progress Class Test UPDATE - ADD (class progress - mutation results with status as survived and killed)
