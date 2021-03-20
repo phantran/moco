@@ -67,6 +67,7 @@ class JUnit34TestItem(cls: Class<*>, executionTime: Long = -1): TestItem(cls, ex
 
     }
 
+    @Suppress("DEPRECATION")
     companion object {
         fun createRunner(cls: Class<*>): Runner {
             val builder = AllDefaultPossibilitiesBuilder(true)

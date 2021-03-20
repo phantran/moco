@@ -72,15 +72,15 @@ class MutationGenerator(
     /**
      * Create actual mutant`
      *
-     * @param mutationID
+     * @param mutation
+     * @param byteArray
      * @return
      */
     fun createMutant(mutation: Mutation, byteArray: ByteArray?): Mutant? {
         // ASM support automatic frame computation since java 7, user COMPUTE_MAXS for version less than 7
         val java7Version = 51
-        val cwOption =
-            if (JavaInfo.bytecodeJVersion(byteArray) > java7Version)
-                ClassWriter.COMPUTE_FRAMES else ClassWriter.COMPUTE_MAXS
+        val cwOption = if (JavaInfo.bytecodeJVersion(byteArray) > java7Version)
+            ClassWriter.COMPUTE_FRAMES else ClassWriter.COMPUTE_MAXS
         val tracker = MutatedClassTracker(targetMutation = mutation)
         val cr = ClassReader(byteArray)
         val cw = ClassWriter(cwOption)
