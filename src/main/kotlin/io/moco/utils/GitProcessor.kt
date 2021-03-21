@@ -43,7 +43,7 @@ class GitProcessor(gitRootPath: String) {
 
     @Throws(IOException::class)
     fun getChangedClsSinceLastStoredCommit(
-        projectArtifactID: String,
+        projectGroupID: String,
         projectMeta: MutableMap<String, String>
     ): List<String>? {
         // Return value meaning
@@ -58,7 +58,7 @@ class GitProcessor(gitRootPath: String) {
             val commits = git.log().all().call()
             for (commit in commits) {
                 if (commit.name == lastCommitName) {
-                    return listDiff(repo, git, lastCommitName, headCommit.name, projectArtifactID)
+                    return listDiff(repo, git, lastCommitName, headCommit.name, projectGroupID)
                 }
             }
         }
@@ -99,20 +99,18 @@ class GitProcessor(gitRootPath: String) {
     private fun listDiff(
         repository: Repository, git: Git,
         oldCommit: String, newCommit: String,
-        artifactID: String
+        groupId: String
     ): List<String> {
-
         val diff = git.diff()
             .setOldTree(prepareTreeParser(repository, oldCommit))
             .setNewTree(prepareTreeParser(repository, newCommit))
             .call()
 
         val classFiles = diff.map { it.newPath }.filter { it.endsWith(".java") }
-
         val res = mutableListOf<String>()
         classFiles.map {
             try {
-                val startIndex = it.indexOf(artifactID, 0)
+                val startIndex = it.indexOf(groupId, 0)
                 if (startIndex > -1) {
                     res.add(it.substring(startIndex, it.length - 5))
                 }

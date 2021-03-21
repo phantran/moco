@@ -82,7 +82,6 @@ class MoCoLogger {
         var verbose = true
         var noLogAtAll = false
 
-        @SuppressWarnings
         fun useMvnLog(logger: Log? = null) {
             useMvnLog = true
             mvnLogger = logger

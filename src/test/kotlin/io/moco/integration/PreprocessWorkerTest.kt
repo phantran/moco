@@ -58,6 +58,7 @@ class PreprocessWorkerTest: AnnotationSpec() {
         buildRoot,
         listOf(),
         "dev",
+        "m0c0-maven-plugin",
         false,
         "200",
         5,

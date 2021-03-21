@@ -19,3 +19,10 @@ MoCo is available in Maven Central and it could be used by adding it to the pom.
 
 
 
+###License
+
+This software is licensed under the terms in the file named "LICENSE" in the root directory of this project. This project has dependencies that are under different licenses.
+
+###Author Information
+
+Tran Phan

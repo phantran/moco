@@ -27,6 +27,8 @@ data class ProjectMeta(
         "latestStoredCommitID" to "",
         "latestStoredBranchName" to "",
         "sourceBuildFolder" to "",
+        "artifactId" to "",
+        "groupId" to "",
         "testBuildFolder" to "",
         "runOperators" to "",)
 ) : MoCoModel() {

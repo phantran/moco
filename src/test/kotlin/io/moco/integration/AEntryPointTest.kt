@@ -19,7 +19,6 @@ package io.moco.integration
 
 import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.ints.shouldBeInRange
-import io.kotest.matchers.shouldBe
 import io.mockk.unmockkAll
 import io.moco.engine.Configuration
 import io.moco.engine.MoCoEntryPoint
@@ -30,6 +29,7 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 import java.nio.file.Paths
 import kotlin.math.roundToInt
+
 
 class AEntryPointTest: AnnotationSpec() {
 
@@ -68,6 +68,7 @@ class AEntryPointTest: AnnotationSpec() {
             buildRoot,
             listOf(),
             "dev",
+            "m0c0-maven-plugin",
             false,
             "200",
             5,

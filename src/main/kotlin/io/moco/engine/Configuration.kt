@@ -35,6 +35,7 @@ data class Configuration(
     val fOpNames: List<String>,
     val baseDir: String,
     val compileSourceRoots: List<String>?,
+    val groupId: String,
     val artifactId: String,
     val gitMode: Boolean,
     val preprocessTestTimeout: String,

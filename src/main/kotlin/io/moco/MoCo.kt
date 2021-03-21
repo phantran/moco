@@ -31,7 +31,6 @@ import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.plugins.annotations.ResolutionScope
 import java.io.File
 import org.apache.maven.project.MavenProject
-import org.h2.jdbc.JdbcSQLNonTransientConnectionException
 import java.lang.Exception
 
 /**
@@ -46,7 +45,6 @@ class MoCo : AbstractMojo() {
 
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     var project: MavenProject? = null
-
 
     /**
      * Preprocess storage file name
@@ -203,6 +201,7 @@ class MoCo : AbstractMojo() {
                 fOpNames,
                 project?.basedir.toString(),
                 project?.compileSourceRoots,
+                project?.groupId!!,
                 project?.artifactId!!,
                 gitMode,
                 preprocessTestTimeout,
@@ -225,11 +224,7 @@ class MoCo : AbstractMojo() {
             H2Database().initDBTablesIfNotExists()
             MoCoEntryPoint(configuration).execute()
         } catch (e: Exception) {
-            when (e) {
-                is JdbcSQLNonTransientConnectionException -> log.error("Exit - MoCo Embedded database Error - ${e.message}")
-                else -> log.error(e.message)
-
-            }
+            log.error(e.message)
         } finally {
             H2Database.shutDownDB()
         }

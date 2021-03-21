@@ -61,7 +61,7 @@ class MutationEntryPoint(
                 return
             }
             // persist preprocess result to database
-            gitProcessor?.headCommit?.name?.let { TestsCutMapping().saveMappingInfo(preprocessedStorage.classRecord, it) }
+            TestsCutMapping().saveMappingInfo(preprocessedStorage.classRecord)
             // Mutations collecting
             logger.debug("Start mutation collecting")
 

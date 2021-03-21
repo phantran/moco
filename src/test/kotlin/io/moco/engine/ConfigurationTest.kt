@@ -65,6 +65,7 @@ class ConfigurationTest: AnnotationSpec() {
             "",
             listOf(),
             "io.moco",
+            "moco",
             false,
             "1000",
             5,
@@ -88,7 +89,8 @@ class ConfigurationTest: AnnotationSpec() {
         configuration.fOpNames shouldBe fOpNames
         configuration.baseDir shouldBe ""
         configuration.compileSourceRoots shouldBe listOf()
-        configuration.artifactId shouldBe "io.moco"
+        configuration.groupId shouldBe "io.moco"
+        configuration.artifactId shouldBe "moco"
         configuration.gitMode shouldBe false
         configuration.preprocessTestTimeout shouldBe "1000"
         configuration.mutationPerClass shouldBe 5

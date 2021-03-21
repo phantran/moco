@@ -22,30 +22,29 @@ import io.moco.engine.preprocessing.PreprocessClassResult
 data class TestsCutMapping(
     override var entry: MutableMap<String, String> =
         mutableMapOf(
-            "className" to "", "testClass" to "", "coveredLines" to "", "commitID" to ""
+            "className" to "", "testClass" to ""
         ),
 ) : MoCoModel() {
 
     override val sourceName = "TestsCutMapping"
 
-    fun getRecordedMapping(classes: List<String>, commitID: String): String {
+    fun getRecordedMapping(classes: List<String>): String {
         // This method query classes by their names and git commit  id and
         // return list of corresponding tests
         val queryRes = this.getData(
-            "commitID = \'$commitID\' AND className IN (\'${classes.joinToString("\',\'")}\')")
-        var res = ""
-        for (item in queryRes) {
-            res += item.entry["testClass"]
+            "className IN (\'${classes.joinToString("\',\'")}\')")
+        val temp: MutableSet<String> = mutableSetOf()
+        for (i in queryRes.indices) {
+            queryRes[i].entry["testClass"]?.let { temp.addAll(it.split(",")) }
         }
-        return res
+        return temp.joinToString(",")
     }
 
-    fun saveMappingInfo(data: List<PreprocessClassResult>, commitID: String) {
+    fun saveMappingInfo(data: List<PreprocessClassResult>) {
         val entries: List<MutableMap<String, String?>> = data.map {
             mutableMapOf(
                 "className" to it.classUnderTestName,
                 "testClass" to it.testClasses.joinToString(","),
-                "commitID" to commitID
             )
         }
         saveMultipleEntries(sourceName, entries)
@@ -56,7 +55,6 @@ data class TestsCutMapping(
             "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY," +
                     "className VARCHAR(255)," +
                     "testClass VARCHAR(255)," +
-                    "commitID VARCHAR(255)," +
                     "createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
     }
 }

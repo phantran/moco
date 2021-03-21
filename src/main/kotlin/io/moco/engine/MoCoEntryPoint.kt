@@ -24,7 +24,6 @@ import io.moco.utils.GitProcessor
 import io.moco.persistence.*
 import io.moco.utils.JarUtil
 import java.io.File
-
 import io.moco.utils.MoCoLogger
 import kotlin.jvm.Throws
 import kotlin.system.measureTimeMillis
@@ -95,12 +94,17 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         logger.info("-----------------------------------------------------------------------")
         logger.info("START")
         if (!gitMode) logger.info("Git mode: OFF")
-        projectMeta = ProjectMeta()
         byteLoader = ByteArrayLoader(classPath)
         if (fOpNames.isEmpty()) {
             // List of mutation operators after filtering is empty
             return false
         }
+        if (shouldResetDB()) {
+            logger.info("First run...")
+            H2Database().dropAllMoCoTables()
+            H2Database().initDBTablesIfNotExists()
+        }
+        projectMeta = ProjectMeta()
         logger.info("${fOpNames.size} selected mutation operators: " + fOpNames.joinToString(", "))
         if (excludedMuOpNames != "") logger.info("Excluded operators: $excludedMuOpNames")
         if (excludedSourceClasses != "") logger.info("Excluded sources classes: $excludedSourceClasses")
@@ -121,11 +125,6 @@ class MoCoEntryPoint(private val configuration: Configuration) {
             "${mocoBuildPath}${File.separator}${preprocessResultsFolder}",
             "preprocess"
         ).removeJSONFileIfExists()
-
-        if (shouldResetDB()) {
-            H2Database().dropAllMoCoTables()
-            H2Database().initDBTablesIfNotExists()
-        }
         return true
     }
 
@@ -139,6 +138,8 @@ class MoCoEntryPoint(private val configuration: Configuration) {
 
         projectMeta!!.meta["sourceBuildFolder"] = configuration.codeRoot
         projectMeta!!.meta["testBuildFolder"] = configuration.testRoot
+        projectMeta!!.meta["artifactId"] = configuration.artifactId
+        projectMeta!!.meta["groupId"] = configuration.groupId
 
         if (newOp) {
             projectMeta!!.meta["runOperators"] += "-" + fOpNames.joinToString(",")
@@ -169,7 +170,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
                 logger.info("Last commit info does not exist - skip Git commits diff analysis - proceed in normal mode")
             } else {
                 clsByGit = gitProcessor!!.getChangedClsSinceLastStoredCommit(
-                    configuration.artifactId.replace(".", "/"), projectMeta?.meta!!
+                    configuration.groupId.replace(".", "/"), projectMeta?.meta!!
                 )
                 if (clsByGit != null) {
                     if (clsByGit?.isEmpty() == true) {
@@ -179,9 +180,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
                     }
                     logger.info("Preprocessing: Git mode - ${clsByGit!!.size} changed classes by git commits diff")
                     logger.debug("Classes found: $clsByGit")
-                    recordedTestMapping = projectMeta?.meta!!["latestStoredCommitID"]?.let {
-                        TestsCutMapping().getRecordedMapping(clsByGit!!, it)
-                    }
+                    recordedTestMapping = TestsCutMapping().getRecordedMapping(clsByGit!!)
                 } else {
                     clsByGit = listOf("")
                     logger.info("Preprocessing: Git mode: last stored commit not found - proceed in normal mode")
@@ -195,12 +194,16 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         // MoCo will not used database if Git Mode is off -> proceed in normal mode
         // No execution data and meta data will be collected
         if (!gitMode) return false
-        val sourceBuildFolder = projectMeta?.meta?.get("sourceBuildFolder")
-        val recordedTestFolder = projectMeta?.meta?.get("testBuildFolder")
+        val sourceBuildFolder = projectMeta?.meta?.get("sourceBuildFolder")?: return false
+        val recordedTestFolder = projectMeta?.meta?.get("testBuildFolder")?: return false
+        val recordedArtifactId = projectMeta?.meta?.get("artifactId")?: return false
+        val recordedGroupId = projectMeta?.meta?.get("groupId")?: return false
         // If one changes the target build folder and test folder -> MoCo will erase the existing database and
         // run from scratch to avoid saving conflicting mutation data to database
         if (sourceBuildFolder != Configuration.currentConfig?.buildRoot) return true
         if (recordedTestFolder != Configuration.currentConfig?.testRoot) return true
+        if (recordedArtifactId != Configuration.currentConfig?.artifactId) return true
+        if (recordedGroupId != Configuration.currentConfig?.groupId) return true
         return false
     }
 
@@ -214,9 +217,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
                     return true
                 }
             }
-        } else {
-            return true
-        }
+        } else return true
         return false
     }
 }
