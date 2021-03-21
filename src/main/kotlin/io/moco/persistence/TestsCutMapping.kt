@@ -22,7 +22,7 @@ import io.moco.engine.preprocessing.PreprocessClassResult
 data class TestsCutMapping(
     override var entry: MutableMap<String, String> =
         mutableMapOf(
-            "class_name" to "", "test_class" to "", "covered_lines" to "", "commit_id" to ""
+            "className" to "", "testClass" to "", "coveredLines" to "", "commitID" to ""
         ),
 ) : MoCoModel() {
 
@@ -32,10 +32,10 @@ data class TestsCutMapping(
         // This method query classes by their names and git commit  id and
         // return list of corresponding tests
         val queryRes = this.getData(
-            "commit_id = \'$commitID\' AND class_name IN (\'${classes.joinToString("\',\'")}\')")
+            "commitID = \'$commitID\' AND className IN (\'${classes.joinToString("\',\'")}\')")
         var res = ""
         for (item in queryRes) {
-            res += item.entry["test_class"]
+            res += item.entry["testClass"]
         }
         return res
     }
@@ -43,9 +43,9 @@ data class TestsCutMapping(
     fun saveMappingInfo(data: List<PreprocessClassResult>, commitID: String) {
         val entries: List<MutableMap<String, String?>> = data.map {
             mutableMapOf(
-                "class_name" to it.classUnderTestName,
-                "test_class" to it.testClasses.joinToString(","),
-                "commit_id" to commitID
+                "className" to it.classUnderTestName,
+                "testClass" to it.testClasses.joinToString(","),
+                "commitID" to commitID
             )
         }
         saveMultipleEntries(sourceName, entries)
@@ -54,9 +54,9 @@ data class TestsCutMapping(
     companion object {
         const val schema: String =
             "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY," +
-                    "class_name VARCHAR(255)," +
-                    "test_class VARCHAR(255)," +
-                    "commit_id VARCHAR(255)," +
-                    "created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
+                    "className VARCHAR(255)," +
+                    "testClass VARCHAR(255)," +
+                    "commitID VARCHAR(255)," +
+                    "createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
     }
 }

@@ -155,7 +155,7 @@ class ResultsReceiverThread(
                         )
                     } else {
                         // add new class name entry to storage
-                        mutationStorage.entries[clsName] = mutableListOf(
+                        mutationStorage.entries[clsName] = mutableSetOf(
                             mapOf(
                                 "mutationDetails" to mutation,
                                 "result" to status,

@@ -31,6 +31,7 @@ import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.plugins.annotations.ResolutionScope
 import java.io.File
 import org.apache.maven.project.MavenProject
+import org.h2.jdbc.JdbcSQLNonTransientConnectionException
 import java.lang.Exception
 
 /**
@@ -210,7 +211,7 @@ class MoCo : AbstractMojo() {
                 verbose,
                 numberOfThreads,
                 enableMetrics,
-                useForCICD // TODO: implement dumbing of mutation results info to json file
+                useForCICD
             )
 
             Configuration.currentConfig = configuration
@@ -224,7 +225,11 @@ class MoCo : AbstractMojo() {
             H2Database().initDBTablesIfNotExists()
             MoCoEntryPoint(configuration).execute()
         } catch (e: Exception) {
-            log.error(e.message)
+            when (e) {
+                is JdbcSQLNonTransientConnectionException -> log.error("Exit - MoCo Embedded database Error - ${e.message}")
+                else -> log.error(e.message)
+
+            }
         } finally {
             H2Database.shutDownDB()
         }

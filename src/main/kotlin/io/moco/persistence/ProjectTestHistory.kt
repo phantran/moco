@@ -21,9 +21,9 @@ package io.moco.persistence
 data class ProjectTestHistory(
     override var entry: MutableMap<String, String> =
         mutableMapOf(
-            "commit_id" to "", "branch" to "", "run_operators" to "",
-            "run_coverage" to "", "accumulated_coverage" to "",
-            "git_mode" to "", "timestamp" to ""
+            "commitID" to "", "branch" to "", "runOperators" to "",
+            "runCoverage" to "", "accumulatedCoverage" to "",
+            "gitMode" to "", "timestamp" to ""
         ),
 ) : MoCoModel() {
 
@@ -32,13 +32,12 @@ data class ProjectTestHistory(
     companion object {
         const val schema: String =
             "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY," +
-            "commit_id VARCHAR(255)," +
+            "commitID VARCHAR(255)," +
             "branch VARCHAR(255)," +
-            "run_operators VARCHAR(255)," +
-            "run_coverage VARCHAR(255)," +
-            "accumulated_coverage VARCHAR(255)," +
-            "git_mode BOOL NOT NULL DEFAULT FALSE," +
+            "runOperators VARCHAR(255)," +
+            "runCoverage VARCHAR(255)," +
+            "accumulatedCoverage VARCHAR(255)," +
             "timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP," +
-            "UNIQUE KEY unique_test_run (commit_id, run_operators, timestamp)"
+            "UNIQUE KEY uniqueTestRun (commitID, runOperators, timestamp)"
     }
 }

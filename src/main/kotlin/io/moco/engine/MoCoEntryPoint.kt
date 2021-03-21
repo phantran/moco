@@ -26,6 +26,7 @@ import io.moco.utils.JarUtil
 import java.io.File
 
 import io.moco.utils.MoCoLogger
+import kotlin.jvm.Throws
 import kotlin.system.measureTimeMillis
 
 
@@ -44,68 +45,58 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     private var excludedMuOpNames = configuration.excludedMuOpNames
     private var mocoBuildPath = configuration.mocoBuildPath
     private var gitMode = configuration.gitMode
-    private var byteLoader: ByteArrayLoader
+    private lateinit var byteLoader: ByteArrayLoader
     private var agentLoc: String? = null
-    private val mutationStorage: MutationStorage = MutationStorage(mutableMapOf())
+    private val mutationStorage: MutationStorage =
+        MutationStorage(mutableMapOf(), System.currentTimeMillis().toString())
     private var clsByGit: List<String>? = listOf()
     private var projectMeta: ProjectMeta? = null
     private var recordedTestMapping: String? = null
     private var gitProcessor: GitProcessor? = null
     private var newOp: Boolean = false
+
     companion object {
         var runScore = 0.0
     }
 
-    init {
+    fun execute() {
+        try {
+            val executionTime = measureTimeMillis {
+                if (!initMoCoOK()) logger.info("EXIT: Nothing to do")
+                else {
+                    logger.info("Preprocessing started......")
+                    PreprocessEntryPoint().preprocessing(clsByGit!!, recordedTestMapping, agentLoc!!)
+                    logger.info("Preprocessing completed")
+                    logger.info("Mutation Test started......")
+                    MutationEntryPoint(
+                        byteLoader, mutationStorage, gitProcessor, agentLoc,
+                        clsByGit, projectMeta?.meta?.get("lastRunID")
+                    ).mutationTest(newOp)
+                    logger.info("Mutation Test completed")
+                }
+            }
+            logger.info("Execution done after ${executionTime / 1000}s")
+            if (Configuration.currentConfig!!.enableMetrics) {
+                Metrics(mutationStorage).reportResults(fOpNames, gitProcessor)
+            }
+            cleanBeforeExit()
+            logger.info("DONE")
+        } catch (ex: Exception) {
+            JarUtil.removeTemporaryAgentJar(agentLoc)
+            throw ex
+        }
+    }
+
+    @Throws(Exception::class)
+    private fun initMoCoOK(): Boolean {
         MoCoLogger.verbose = configuration.verbose
         logger.info("-----------------------------------------------------------------------")
         logger.info("                               M O C O")
         logger.info("-----------------------------------------------------------------------")
         logger.info("START")
+        if (!gitMode) logger.info("Git mode: OFF")
         projectMeta = ProjectMeta()
         byteLoader = ByteArrayLoader(classPath)
-        if (!gitMode) logger.info("Git mode: OFF")
-    }
-
-    fun execute() {
-        val executionTime = measureTimeMillis {
-            if (!initMoCoOK()) logger.info("EXIT: Nothing to do")
-            else {
-                logger.info("Preprocessing started......")
-                PreprocessEntryPoint().preprocessing(clsByGit!!, recordedTestMapping, agentLoc!!)
-                logger.info("Preprocessing completed")
-                logger.info("Mutation Test started......")
-                MutationEntryPoint(byteLoader, mutationStorage, gitProcessor, agentLoc, clsByGit).mutationTest(newOp)
-                logger.info("Mutation Test completed")
-            }
-        }
-        logger.info("Execution done after ${executionTime / 1000}s")
-        if (Configuration.currentConfig!!.enableMetrics) {
-            Metrics(mutationStorage).reportResults(fOpNames, gitProcessor)
-        }
-        cleanBeforeExit()
-        logger.info("DONE")
-    }
-
-    private fun cleanBeforeExit() {
-        // Save meta before exit
-        if (gitMode) {
-            logger.debug("Saving project meta data before exiting...")
-            gitProcessor!!.setHeadCommitMeta(projectMeta!!)
-            projectMeta!!.meta["sourceBuildFolder"] = configuration.codeRoot
-            projectMeta!!.meta["testBuildFolder"] = configuration.testRoot
-
-            if (newOp) {
-                projectMeta!!.meta["runOperators"] += "-" + fOpNames.joinToString(",")
-            }
-            projectMeta?.saveMetaData()
-        }
-        // Remove generated agent after finishing
-        JarUtil.removeTemporaryAgentJar(agentLoc)
-        logger.debug("Remove temporary moco agent jar successfully")
-    }
-
-    private fun initMoCoOK(): Boolean {
         if (fOpNames.isEmpty()) {
             // List of mutation operators after filtering is empty
             return false
@@ -138,13 +129,33 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         return true
     }
 
+    private fun cleanBeforeExit() {
+        // Remove generated agent after finishing
+        JarUtil.removeTemporaryAgentJar(agentLoc)
+        // Save meta before exit
+        logger.debug("Saving project meta data before exiting...")
+        projectMeta!!.meta["lastRunID"] = mutationStorage.runID
+        if (gitMode) gitProcessor!!.setHeadCommitMeta(projectMeta!!, gitMode)
+
+        projectMeta!!.meta["sourceBuildFolder"] = configuration.codeRoot
+        projectMeta!!.meta["testBuildFolder"] = configuration.testRoot
+
+        if (newOp) {
+            projectMeta!!.meta["runOperators"] += "-" + fOpNames.joinToString(",")
+        }
+        projectMeta?.saveMetaData()
+        logger.debug("Remove temporary moco agent jar successfully")
+    }
+
     private fun gitInfoProcessing(): Boolean {
         if (gitMode) {
             try {
                 gitProcessor = GitProcessor(configuration.baseDir)
             } catch (e: Exception) {
-                logger.error("Git Mode is ON but Git information couldn't be processed, " +
-                        "make sure this source code was initialized as a Git repository")
+                logger.error(
+                    "Git Mode is ON but Git information couldn't be processed, " +
+                            "make sure this source code was initialized as a Git repository"
+                )
                 return false
             }
         }

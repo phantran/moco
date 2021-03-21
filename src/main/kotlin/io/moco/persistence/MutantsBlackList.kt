@@ -23,8 +23,8 @@ import io.moco.engine.mutation.Mutation
 data class MutantsBlackList(
     override var entry: MutableMap<String, String> =
         mutableMapOf(
-            "class_name" to "", "line_of_code" to "",
-            "instruction_indices" to "", "mutator_id" to ""
+            "className" to "", "loc" to "",
+            "instructionIndices" to "", "mutatorID" to ""
         ),
 ) : MoCoModel() {
 
@@ -40,10 +40,10 @@ data class MutantsBlackList(
                     val mutationID = mutationDetails.mutationID
                     entries.add(
                         mutableMapOf(
-                            "class_name" to key,
-                            "line_of_code" to mutationDetails.lineOfCode.toString(),
-                            "instruction_indices" to mutationID.instructionIndices!!.joinToString(","),
-                            "mutator_id" to mutationID.mutatorID,
+                            "className" to key,
+                            "loc" to mutationDetails.lineOfCode.toString(),
+                            "instructionIndices" to mutationID.instructionIndices!!.joinToString(","),
+                            "mutatorID" to mutationID.mutatorID,
                         )
                     )
                 }
@@ -55,10 +55,10 @@ data class MutantsBlackList(
     companion object {
         const val schema: String =
             "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY," +
-            "class_name VARCHAR(255)," +
-            "line_of_code INT(8) UNSIGNED NOT NULL," +
-            "instruction_indices VARCHAR(255)," +
-            "mutator_id VARCHAR(255)," +
-            "created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
+            "className VARCHAR(255)," +
+            "loc INT(8) UNSIGNED NOT NULL," +
+            "instructionIndices VARCHAR(255)," +
+            "mutatorID VARCHAR(255)," +
+            "createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
     }
 }

@@ -66,9 +66,18 @@ class GitProcessor(gitRootPath: String) {
     }
 
     @Throws(IOException::class)
-    fun setHeadCommitMeta(projectMeta: ProjectMeta) {
-        projectMeta.meta["latestStoredCommitID"] = headCommit.name
-        projectMeta.meta["latestStoredBranchName"] = repo.fullBranch
+    fun setHeadCommitMeta(projectMeta: ProjectMeta, gitMode: Boolean) {
+        if (gitMode) {
+            projectMeta.meta["latestStoredCommitID"] = headCommit.name
+            projectMeta.meta["latestStoredBranchName"] = repo.fullBranch
+        } else {
+            if (projectMeta.meta["latestStoredCommitID"].isNullOrEmpty()) {
+                projectMeta.meta["latestStoredCommitID"] = ""
+            }
+            if (projectMeta.meta["latestStoredBranchName"].isNullOrEmpty()) {
+                projectMeta.meta["latestStoredBranchName"] = ""
+            }
+        }
     }
 
 
