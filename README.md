@@ -1,3 +1,6 @@
+
+[![pipeline status](https://gitlab.infosun.fim.uni-passau.de/phan/moco/badges/master/pipeline.svg)](https://gitlab.infosun.fim.uni-passau.de/phan/moco/-/commits/master)
+
 # MoCo
 
 A Maven plugin written in Kotlin that supports mutation testing for Java projects 
