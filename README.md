@@ -1,3 +1,6 @@
+
+[![pipeline status](https://gitlab.infosun.fim.uni-passau.de/phan/moco/badges/master/pipeline.svg)](https://gitlab.infosun.fim.uni-passau.de/phan/moco/-/commits/master)
+
 # MoCo
 
 A Maven plugin written in Kotlin that supports mutation testing for Java projects 
@@ -19,10 +22,10 @@ MoCo is available in Maven Central and it could be used by adding it to the pom.
 
 
 
-###License
+### License
 
 This software is licensed under the terms in the file named "LICENSE" in the root directory of this project. This project has dependencies that are under different licenses.
 
-###Author Information
+### Author Information
 
 Tran Phan
