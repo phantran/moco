@@ -20,8 +20,8 @@ package io.moco.persistence
 data class ProgressClassTest(
     override var entry: MutableMap<String, String> =
         mutableMapOf(
-            "class_name" to "", "covered_operators" to "",
-            "total_mutants" to "", "killed_mutants" to "",
+            "className" to "", "coveredOperators" to "",
+            "totalMutants" to "", "killedMutants" to "",
         ),
 ) : MoCoModel() {
 
@@ -32,10 +32,10 @@ data class ProgressClassTest(
         for ((key, value) in data.entries) {
             entries.add(
                 mutableMapOf(
-                    "class_name" to key,
-                    "covered_operators" to configuredOperators,
-                    "total_mutants" to value.count { it["result"] != "run_error" }.toString(),
-                    "killed_mutants" to value.count { it["result"] == "killed" }.toString(),
+                    "className" to key,
+                    "coveredOperators" to configuredOperators,
+                    "totalMutants" to value.count { it["result"] != "run_error" }.toString(),
+                    "killedMutants" to value.count { it["result"] == "killed" }.toString(),
                 )
             )
         }
@@ -45,11 +45,11 @@ data class ProgressClassTest(
     companion object {
         const val schema: String =
             "id INT NOT NULL AUTO_INCREMENT," +
-                    "class_name VARCHAR(255)," +
-                    "covered_operators VARCHAR(255)," +
-                    "total_mutants MEDIUMINT(8) UNSIGNED NOT NULL," +
-                    "killed_mutants MEDIUMINT(8) UNSIGNED NOT NULL," +
-                    "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
-                    "UNIQUE KEY unique_class_progress (class_name, covered_operators)"
+                    "className VARCHAR(255)," +
+                    "coveredOperators VARCHAR(255)," +
+                    "totalMutants MEDIUMINT(8) UNSIGNED NOT NULL," +
+                    "killedMutants MEDIUMINT(8) UNSIGNED NOT NULL," +
+                    "createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                    "UNIQUE KEY uniqueClassProgress (className, coveredOperators)"
     }
 }

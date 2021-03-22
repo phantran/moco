@@ -33,7 +33,6 @@ class JUnit34TestItem(cls: Class<*>, executionTime: Long = -1): TestItem(cls, ex
     override suspend fun execute(tra: TestResultAggregator, timeOut: Long) {
         val runner: Runner = createRunner(cls)
         if (runner is ErrorReportingRunner) {
-            println(runner)
             logger.debug("Error while running test of $cls")
         }
         var job: Job? = null

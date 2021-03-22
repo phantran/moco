@@ -17,13 +17,19 @@
 
 package io.moco.persistence
 
+import kotlin.jvm.Throws
+
 
 data class ProjectMeta(
-    override var entry: MutableMap<String, String> = mutableMapOf("meta_key" to "", "meta_value" to ""),
+    override var entry: MutableMap<String, String> = mutableMapOf("metaKey" to "", "metaValue" to ""),
     var meta: MutableMap<String, String> = mutableMapOf(
+        "lastRunID" to "",
         "latestStoredCommitID" to "",
         "latestStoredBranchName" to "",
         "sourceBuildFolder" to "",
+        "artifactId" to "",
+        "groupId" to "",
+        "mocoVersion" to "",
         "testBuildFolder" to "",
         "runOperators" to "",)
 ) : MoCoModel() {
@@ -34,12 +40,13 @@ data class ProjectMeta(
         getMetaData()
     }
 
+    @Throws(Exception::class)
     private fun getMetaData() {
         val retrieved = this.getData("")
         for (item in retrieved) {
-            val metaKey: String? = item.entry["meta_key"]
+            val metaKey: String? = item.entry["metaKey"]
             if (meta.keys.contains(metaKey)) {
-                meta[metaKey!!] = item.entry["meta_value"]!!
+                meta[metaKey!!] = item.entry["metaValue"]!!
             }
         }
     }
@@ -47,7 +54,7 @@ data class ProjectMeta(
     fun saveMetaData() {
         val entries: MutableList<MutableMap<String, String?>> = mutableListOf()
         for ((k,v) in meta) {
-            entries.add(mutableMapOf("meta_key" to k, "meta_value" to v))
+            entries.add(mutableMapOf("metaKey" to k, "metaValue" to v))
         }
         saveMultipleEntries(sourceName, entries)
     }
@@ -55,7 +62,7 @@ data class ProjectMeta(
     companion object {
         const val schema: String =
             "id INT NOT NULL AUTO_INCREMENT," +
-            "meta_key VARCHAR(255) PRIMARY KEY," +
-            "meta_value VARCHAR(255)"
+            "metaKey VARCHAR(255) PRIMARY KEY," +
+            "metaValue VARCHAR(255)"
     }
 }

@@ -17,37 +17,48 @@
 
 package io.moco.persistence
 
+import io.moco.engine.ClassName
+import io.moco.engine.MethodName
+import io.moco.engine.mutation.MutatedMethodLocation
 import io.moco.engine.mutation.Mutation
+import io.moco.engine.mutation.MutationID
+import org.json.JSONObject
 
 
 data class PersistentMutationResult(
     override var entry: MutableMap<String, String> =
         mutableMapOf(
-            "commit_id" to "", "file_name" to "", "class_name" to "", "method_name" to "",
-            "line_of_code" to "", "instruction_indices" to "", "mutator_id" to "",
-            "mutation_description" to "", "operator_name" to "", "test_status" to "",
+            "className" to "", "methodName" to "", "methodDesc" to "",
+            "instructionIndices" to "", "mutationOperatorName" to "", "mutatorID" to "",
+            "fileName" to "", "loc" to "", "mutationDescription" to "", "instructionOrder" to "",
+            "additionalInfo" to "", "result" to "", "uniqueID" to "",
         ),
 ) : MoCoModel() {
 
     override val sourceName = "PersistentMutationResult"
 
-    fun saveMutationResult(data: MutationStorage, commitID: String) {
+    fun saveMutationResult(data: MutationStorage) {
         val entries: MutableSet<MutableMap<String, String?>> = mutableSetOf()
-        for ((key, value) in data.entries) {
+        for ((_, value) in data.entries) {
             for (item in value) {
                 if (item["result"] as String != "run_error") {
                     val mutationDetails = item["mutationDetails"] as Mutation
                     val mutationID = mutationDetails.mutationID
                     entries.add(
                         mutableMapOf(
-                            "class_name" to key, "commit_id" to commitID,
-                            "file_name" to mutationDetails.fileName,
-                            "line_of_code" to mutationDetails.lineOfCode.toString(),
-                            "instruction_indices" to mutationID.instructionIndices!!.joinToString(","),
-                            "mutator_id" to mutationID.mutatorID,
-                            "mutation_description" to mutationDetails.description,
-                            "operator_name" to mutationID.operatorName,
-                            "test_status" to item["result"] as String,
+                            "className" to mutationDetails.mutationID.location.className?.name,
+                            "methodName" to mutationDetails.mutationID.location.methodName.name,
+                            "methodDesc" to mutationDetails.mutationID.location.methodDesc,
+                            "instructionIndices" to mutationID.instructionIndices!!.joinToString(","),
+                            "mutationOperatorName" to mutationID.operatorName,
+                            "mutatorID" to mutationID.mutatorID,
+                            "fileName" to mutationDetails.fileName,
+                            "loc" to mutationDetails.lineOfCode.toString(),
+                            "mutationDescription" to mutationDetails.description,
+                            "instructionOrder" to mutationDetails.instructionsOrder.joinToString(","),
+                            "additionalInfo" to JSONObject(mutationDetails.additionalInfo).toString(),
+                            "result" to item["result"] as String,
+                            "uniqueID" to item["uniqueID"].toString(),
                         )
                     )
                 }
@@ -56,19 +67,61 @@ data class PersistentMutationResult(
         saveMultipleEntries(sourceName, entries.toList())
     }
 
+    @Suppress("UNCHECKED_CAST")
+    fun getAllData(): MutableMap<String, MutableSet<Map<String, Any?>>> {
+        // This method will be used to retrieve all persisted mutation results in case
+        // moco.json has not been created or it has been deleted
+        val retrieved = this.getData("result = 'survived'")
+        val res: MutableMap<String, MutableSet<Map<String, Any?>>> = mutableMapOf()
+        retrieved.map {
+            val mutation = Mutation(
+                MutationID(
+                    MutatedMethodLocation(
+                    ClassName(it.entry["className"]!!),
+                    MethodName(it.entry["methodName"]!!),
+                    it.entry["methodDesc"]!!),
+                    it.entry["instructionIndices"]!!.split(",").map{it1 -> it1.toInt()},
+                    it.entry["mutationOperatorName"]!!,
+                    it.entry["mutatorID"]!!,
+                ),
+                it.entry["fileName"]!!,
+                it.entry["loc"]!!.toInt(),
+                it.entry["mutationDescription"]!!,
+                mutableSetOf(),
+                it.entry["instructionOrder"]!!.split(",").toMutableList(),
+                JSONObject(it.entry["additionalInfo"]!!).toMap() as MutableMap<String, String>,
+                )
+            val mutationInfo: MutableMap<String, Any?> = mutableMapOf(
+                "mutationDetails" to mutation,
+                "result" to it.entry["result"]!!,
+                "uniqueID" to it.entry["uniqueID"]!!
+            )
+            if (it.entry["className"] in res) {
+                res[it.entry["className"]]!!.add(mutationInfo)
+            } else {
+                res[it.entry["className"]!!] = mutableSetOf(mutationInfo)
+            }
+        }
+        return res
+    }
+
     companion object {
         const val schema: String =
             "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY," +
-            "commit_id VARCHAR(255)," +
-            "file_name VARCHAR(255)," +
-            "class_name VARCHAR(255)," +
-            "line_of_code INT(8) UNSIGNED NOT NULL," +
-            "instruction_indices VARCHAR(255)," +
-            "mutator_id VARCHAR(255)," +
-            "mutation_description VARCHAR(255)," +
-            "operator_name VARCHAR(255)," +
-            "test_status VARCHAR(255)," +
-            "created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP," +
-            "UNIQUE KEY unique_mutation (class_name, line_of_code, instruction_indices, mutator_id, commit_id)"
+                    "className VARCHAR(255)," +
+                    "methodName VARCHAR(255)," +
+                    "methodDesc VARCHAR(255)," +
+                    "instructionIndices VARCHAR(255)," +
+                    "mutationOperatorName VARCHAR(255)," +
+                    "mutatorID VARCHAR(255)," +
+                    "fileName VARCHAR(255)," +
+                    "loc INT(8) UNSIGNED NOT NULL," +
+                    "mutationDescription VARCHAR(255)," +
+                    "instructionOrder VARCHAR(255)," +
+                    "additionalInfo VARCHAR(255)," +
+                    "result VARCHAR(255)," +
+                    "uniqueID VARCHAR(255)," +
+                    "updatedAt TIMESTAMP NOT NULL DEFAULT NOW() ON UPDATE NOW()," +
+                    "UNIQUE KEY uniqueMutation (uniqueID)"
     }
 }

@@ -58,13 +58,15 @@ class PreprocessWorkerTest: AnnotationSpec() {
         buildRoot,
         listOf(),
         "dev",
+        "m0c0-maven-plugin",
         false,
         "200",
         5,
         debugEnabled = true,
         verbose = true,
         2,
-        noLogAtAll = true
+        noLogAtAll = true,
+        mocoPluginVersion = "1.0-SNAPSHOT"
     )
 
     @AfterAll

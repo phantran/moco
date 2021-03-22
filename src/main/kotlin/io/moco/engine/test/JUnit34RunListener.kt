@@ -15,7 +15,6 @@
  *
  */
 
-
 package io.moco.engine.test
 
 import org.junit.runner.Description

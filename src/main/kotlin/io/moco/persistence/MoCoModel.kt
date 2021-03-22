@@ -18,6 +18,7 @@
 package io.moco.persistence
 
 import io.moco.utils.MoCoLogger
+import kotlin.jvm.Throws
 
 
 open class MoCoModel(
@@ -31,6 +32,7 @@ open class MoCoModel(
         H2Database().insertOrUpdateIfExist(sourceName, entry)
     }
 
+    @Throws(Exception::class)
     open fun getData(condition: String): List<MoCoModel> {
         // This method return a list of (PersistentMutationResult) recorded mutation test results
         // each record contains (location, killed or survived...)

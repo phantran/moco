@@ -35,6 +35,7 @@ data class Configuration(
     val fOpNames: List<String>,
     val baseDir: String,
     val compileSourceRoots: List<String>?,
+    val groupId: String,
     val artifactId: String,
     val gitMode: Boolean,
     val preprocessTestTimeout: String,
@@ -44,7 +45,8 @@ data class Configuration(
     val numberOfThreads: Int,
     val noLogAtAll: Boolean = false,
     val enableMetrics: Boolean = false,
-    val useForCICD: Boolean = true
+    val useForCICD: Boolean = true,
+    val mocoPluginVersion: String?
 ) {
     companion object {
         var currentConfig: Configuration? = null

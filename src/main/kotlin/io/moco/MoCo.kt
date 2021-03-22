@@ -29,9 +29,12 @@ import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.plugins.annotations.ResolutionScope
-import java.io.File
 import org.apache.maven.project.MavenProject
-import java.lang.Exception
+import java.io.File
+import org.apache.maven.plugin.MojoExecution
+
+
+
 
 /**
  * Goal which perform mutation tests, collect mutation information and store mutation information into JSON file
@@ -45,7 +48,6 @@ class MoCo : AbstractMojo() {
 
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     var project: MavenProject? = null
-
 
     /**
      * Preprocess storage file name
@@ -66,13 +68,13 @@ class MoCo : AbstractMojo() {
     private val excludedSourceClasses: String = ""
 
     /**
-     * Excluded source folder, comma separated string
+     * Excluded source folder (built class), comma separated string
      */
     @Parameter(defaultValue = "", property = "excludedSourceFolder", required = false)
     private val excludedSourceFolders: String = ""
 
     /**
-     * Set to false to display succinct console messages during MoCo execution
+     * moco build folder that contains all generated sources by MoCo
      */
     @Parameter(defaultValue = "moco", property = "mocoRoot", required = false)
     private val mocoRoot: String = "moco"
@@ -131,8 +133,8 @@ class MoCo : AbstractMojo() {
     /**
      * Set to false to display succinct console messages during MoCo execution
      */
-    @Parameter(defaultValue = "true", property = "verbose", required = false)
-    private val verbose: Boolean = true
+    @Parameter(defaultValue = "false", property = "verbose", required = false)
+    private val verbose: Boolean = false
 
     /**
      * Number of max threads to use by the main process of MoCo
@@ -152,81 +154,100 @@ class MoCo : AbstractMojo() {
     @Parameter(defaultValue = "true", property = "useForCICD", required = false)
     private val useForCICD: Boolean = true
 
+    /**
+     * Set to true to disable MoCo
+     */
+    @Parameter(defaultValue = "false", property = "turnOff", required = false)
+    private val turnOff: Boolean = false
+
+    @Parameter(defaultValue = "\${mojoExecution}", readonly = true, required = true)
+    private val mojo: MojoExecution? = null
 
     @Parameter(defaultValue = "\${localRepository}", readonly = true, required = true)
     private val localRepository: ArtifactRepository? = null
 
-
     @Throws(MojoExecutionException::class)
     override fun execute() {
         try {
-            val persistencePath = localRepository?.basedir + "/io/moco/persistence/moco"
-            // Often named as "target" or "build" folder, contains compiled classes, JaCoCo report, MoCo report, etc...
-            val buildRoot =
-                project?.build?.directory.toString()
-            // contains compiled source classes .class files
-            val codeRoot =
-                project?.build?.outputDirectory.toString()
-            // contains compiled test classes .class files
-            val testRoot =
-                project?.build?.testOutputDirectory.toString()
+            if (!turnOff) {
+                if (project != null && project!!.build != null) {
+                    MoCoLogger.useMvnLog(log)
+                    log.info("-----------------------------------------------------------------------")
+                    log.info("                               M O C O")
+                    log.info("-----------------------------------------------------------------------")
+                    log.info("START")
+                    val persistencePath = localRepository?.basedir + "/io/moco/persistence/moco"
+                    // Often named as "target" or "build" folder, contains compiled classes, JaCoCo report, MoCo report, etc...
+                    val buildRoot =
+                        project?.build?.directory.toString()
+                    // contains compiled source classes .class files
+                    val codeRoot =
+                        project?.build?.outputDirectory.toString()
+                    // contains compiled test classes .class files
+                    val testRoot =
+                        project?.build?.testOutputDirectory.toString()
 
-            val runtimeCp = project?.runtimeClasspathElements
-            val compileCp = project?.compileClasspathElements
+                    val runtimeCp = project?.runtimeClasspathElements
+                    val compileCp = project?.compileClasspathElements
 
 
-            val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
-            val mocoBuildPath = "$buildRoot${File.separator}$mocoRoot"
+                    val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
+                    val mocoBuildPath = "$buildRoot${File.separator}$mocoRoot"
 
-            val fOpNames = Operator.supportedOperatorNames.filter { !excludedMuOpNames.contains(it) }
+                    val fOpNames = Operator.supportedOperatorNames.filter { !excludedMuOpNames.contains(it) }
 
-            val temp = System.getProperty("java.class.path").split(File.pathSeparator)
-                .union(runtimeCp!!.toSet()).union(compileCp!!.toSet()).toList()
-                .joinToString(separator = File.pathSeparator)
-            val classPath = "$temp:$codeRoot:${testRoot}:${buildRoot}"
+                    val temp = System.getProperty("java.class.path").split(File.pathSeparator)
+                        .union(runtimeCp!!.toSet()).union(compileCp!!.toSet()).toList()
+                        .joinToString(separator = File.pathSeparator)
+                    val classPath = "$temp:$codeRoot:${testRoot}:${buildRoot}"
 
-            val configuration = Configuration(
-                buildRoot,
-                codeRoot,
-                testRoot,
-                mocoBuildPath,
-                excludedSourceClasses,
-                excludedSourceFolders,
-                excludedTestClasses,
-                excludedTestFolders,
-                classPath,
-                jvm,
-                preprocessResultsFolder,
-                mutationResultsFolder,
-                excludedMuOpNames,
-                fOpNames,
-                project?.basedir.toString(),
-                project?.compileSourceRoots,
-                project?.artifactId!!,
-                gitMode,
-                preprocessTestTimeout,
-                mutationPerClass,
-                debugEnabled,
-                verbose,
-                numberOfThreads,
-                enableMetrics,
-                useForCICD // TODO: implement dumbing of mutation results info to json file
-            )
-
-            Configuration.currentConfig = configuration
-            MoCoLogger.useMvnLog(log)
-            MoCoLogger.debugEnabled = Configuration.currentConfig!!.debugEnabled
-            H2Database.initPool(
-                url = "jdbc:h2:file:${persistencePath};mode=MySQL;",
-                user = "moco",
-                password = "moco",
-            )
-            H2Database().initDBTablesIfNotExists()
-            MoCoEntryPoint(configuration).execute()
+                    val configuration = Configuration(
+                        buildRoot = buildRoot,
+                        codeRoot = codeRoot,
+                        testRoot = testRoot,
+                        mocoBuildPath = mocoBuildPath,
+                        excludedSourceClasses = excludedSourceClasses,
+                        excludedSourceFolders = excludedSourceFolders,
+                        excludedTestClasses = excludedTestClasses,
+                        excludedTestFolders = excludedTestFolders,
+                        classPath = classPath,
+                        jvm = jvm,
+                        preprocessResultsFolder = preprocessResultsFolder,
+                        mutationResultsFolder = mutationResultsFolder,
+                        excludedMuOpNames = excludedMuOpNames,
+                        fOpNames = fOpNames,
+                        baseDir = project?.basedir.toString(),
+                        compileSourceRoots = project?.compileSourceRoots,
+                        groupId = project?.groupId!!,
+                        artifactId = project?.artifactId!!,
+                        gitMode = gitMode,
+                        preprocessTestTimeout = preprocessTestTimeout,
+                        mutationPerClass = mutationPerClass,
+                        debugEnabled = debugEnabled,
+                        verbose = verbose,
+                        numberOfThreads = numberOfThreads,
+                        noLogAtAll = false,
+                        enableMetrics = enableMetrics,
+                        useForCICD = useForCICD,
+                        mocoPluginVersion = mojo?.plugin?.version
+                    )
+                    Configuration.currentConfig = configuration
+                    MoCoLogger.debugEnabled = Configuration.currentConfig!!.debugEnabled
+                    H2Database.initPool(
+                        url = "jdbc:h2:file:${persistencePath};mode=MySQL;",
+                        user = "moco",
+                        password = "moco",
+                    )
+                    H2Database().initDBTablesIfNotExists()
+                    MoCoEntryPoint(configuration).execute()
+                } else log.info("MoCo can't detect your project, please check configuration in pom.xml")
+            } else {
+                log.info("MoCo is currently disabled in pom.xml file")
+            }
         } catch (e: Exception) {
             log.error(e.message)
         } finally {
-            H2Database.shutDownDB()
+            if (!turnOff) H2Database.shutDownDB()
         }
     }
 }

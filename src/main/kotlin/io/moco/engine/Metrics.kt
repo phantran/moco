@@ -41,12 +41,12 @@ class Metrics(private val mutationStorage: MutationStorage) {
     }
 
     fun calculateAccumulatedCoverage(configuredOperators: String): Double {
-        val savedProgress = ProgressClassTest().getData("covered_operators = \'$configuredOperators\'")
+        val savedProgress = ProgressClassTest().getData("coveredOperators = \'$configuredOperators\'")
         var killedMutants = 0.0
         var totalMutants = 0.0
         for (item in savedProgress) {
-            killedMutants += item.entry["killed_mutants"]?.toIntOrNull() ?: 0
-            totalMutants += item.entry["total_mutants"]?.toIntOrNull() ?: 0
+            killedMutants += item.entry["killedMutants"]?.toIntOrNull() ?: 0
+            totalMutants += item.entry["totalMutants"]?.toIntOrNull() ?: 0
         }
         return if (totalMutants == 0.0) 0.0
         else ((killedMutants / totalMutants) * 100)
@@ -64,10 +64,11 @@ class Metrics(private val mutationStorage: MutationStorage) {
             logger.debug("Saving new entry to project history")
             val temp = ProjectTestHistory()
             temp.entry = mutableMapOf(
-                "commit_id" to gitProcessor!!.headCommit.name,
-                "branch" to gitProcessor.branch, "run_operators" to filteredMuOpNames.joinToString(","),
-                "run_coverage" to runCoverage.toString(), "accumulated_coverage" to accumulatedCoverage.toString(),
-                "git_mode" to Configuration.currentConfig!!.gitMode.toString()
+                "commitID" to gitProcessor!!.headCommit.name,
+                "branch" to gitProcessor.branch,
+                "runOperators" to filteredMuOpNames.joinToString(","),
+                "runCoverage" to runCoverage.toString(),
+                "accumulatedCoverage" to accumulatedCoverage.toString(),
             )
             temp.save()
         }

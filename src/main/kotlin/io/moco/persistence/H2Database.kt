@@ -34,6 +34,7 @@ class H2Database : Database() {
                 con?.createStatement().use { st -> st?.execute(statement) }
             }
         } catch (ex: Exception) {
+            println(ex.printStackTrace().toString())
             logger.error("Cannot create database table $tableName")
         }
     }

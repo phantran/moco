@@ -38,10 +38,10 @@ class MetricsTest: AnnotationSpec() {
     @Test
     fun testCalculateRunCoverage() {
         val temp = mockkClass(MutationStorage::class)
-        every { temp.entries } returns mutableMapOf("a" to mutableListOf(mapOf("result" to "run_error"),
+        every { temp.entries } returns mutableMapOf("a" to mutableSetOf(mapOf("result" to "run_error"),
                                                                         mapOf("result" to "killed"),
                                                                          mapOf("result" to "survived")),
-            "b" to mutableListOf(mapOf("result" to "run_error"),
+            "b" to mutableSetOf(mapOf("result" to "run_error"),
                 mapOf("result" to "killed"),
                 mapOf("result" to "survived"))
         )

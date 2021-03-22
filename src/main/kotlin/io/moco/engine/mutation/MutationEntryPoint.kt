@@ -40,47 +40,52 @@ class MutationEntryPoint(
     private val gitProcessor: GitProcessor?,
     private val createdAgentLocation: String?,
     private val clsByGit: List<String>?,
+    private val lastRunIDFromMeta: String?,
     private val fOpNames: List<String> = Configuration.currentConfig!!.fOpNames,
     private val mocoBuildPath: String = Configuration.currentConfig!!.mocoBuildPath,
     private val mutationResultsFolder: String = Configuration.currentConfig!!.mutationResultsFolder,
     private val buildRoot: String = Configuration.currentConfig!!.buildRoot,
-    private val gitMode: Boolean = Configuration.currentConfig!!.gitMode
-
+    private val gitMode: Boolean = Configuration.currentConfig!!.gitMode,
 ) {
     val logger = MoCoLogger()
 
     fun mutationTest(newOperatorsSelected: Boolean) {
-        val preprocessedStorage = PreprocessStorage.getPreprocessStorage(mocoBuildPath)
-        if (preprocessedStorage == null) {
-            logger.info("No preprocess results, skip mutation testing")
-            return
+        try {
+            val preprocessedStorage = PreprocessStorage.getPreprocessStorage(mocoBuildPath)
+            if (preprocessedStorage == null) {
+                logger.info("No preprocess results, skip mutation testing")
+                return
+            }
+            if (preprocessedStorage.classRecord.isNullOrEmpty() || preprocessedStorage.testsExecutionTime.isNullOrEmpty()) {
+                logger.info("No preprocess information available, skip mutation testing")
+                return
+            }
+            // persist preprocess result to database
+            TestsCutMapping().saveMappingInfo(preprocessedStorage.classRecord)
+            // Mutations collecting
+            logger.debug("Start mutation collecting")
+
+            val mGen = MutationGenerator(byteArrLoader, fOpNames.mapNotNull { Operator.nameToOperator(it) })
+            val foundMutations: MutableMap<String, List<Mutation>> = mutableMapOf()
+            for (item in preprocessedStorage.classRecord) {
+                foundMutations[item.classUnderTestName] =
+                    mGen.findPossibleMutationsOfClass(item.classUnderTestName, item.coveredLines).distinct()
+            }
+            val filteredMutations = filterMutations(foundMutations, newOperatorsSelected)
+            logger.debug("Found ${filteredMutations.size} class(es) can be mutated")
+            logger.debug("Complete mutation collecting step")
+
+            // Mutants generation and tests execution
+            logger.debug("Start mutation testing")
+            handleMutations(filteredMutations, preprocessedStorage)
+
+            persistMutationResults()
+
+            logger.debug("Complete mutation testing")
+        } catch (ex: Exception) {
+            logger.error("Error while executing mutation test phase - ${ex.message}")
+            logger.error(ex.printStackTrace().toString())
         }
-        if (preprocessedStorage.classRecord.isNullOrEmpty() || preprocessedStorage.testsExecutionTime.isNullOrEmpty()) {
-            logger.info("No preprocess information available, skip mutation testing")
-            return
-        }
-        // persist preprocess result to database
-        gitProcessor?.headCommit?.name?.let { TestsCutMapping().saveMappingInfo(preprocessedStorage.classRecord, it) }
-        // Mutations collecting
-        logger.debug("Start mutation collecting")
-
-        val mGen = MutationGenerator(byteArrLoader, fOpNames.mapNotNull { Operator.nameToOperator(it) })
-        val foundMutations: MutableMap<String, List<Mutation>> = mutableMapOf()
-        for (item in preprocessedStorage.classRecord) {
-            foundMutations[item.classUnderTestName] =
-                mGen.findPossibleMutationsOfClass(item.classUnderTestName, item.coveredLines).distinct()
-        }
-        val filteredMutations = filterMutations(foundMutations, newOperatorsSelected)
-        logger.debug("Found ${filteredMutations.size} class(es) can be mutated")
-        logger.debug("Complete mutation collecting step")
-
-        // Mutants generation and tests execution
-        logger.debug("Start mutation testing")
-        handleMutations(filteredMutations, preprocessedStorage)
-
-        persistMutationResults()
-
-        logger.debug("Complete mutation testing")
     }
 
     private fun filterMutations(
@@ -123,7 +128,7 @@ class MutationEntryPoint(
         chunkedMutationsList.forEach label@{ (cls, mutationList) ->
             if (curCls != cls) {
                 curCls = cls
-                logger.info("Mutation test for class ${cls} - with ${filteredMutations[cls]?.size} mutants")
+                logger.infoVerbose("Mutation test for class $cls - with ${filteredMutations[cls]?.size} mutants")
             }
             executor.execute(
                 Executor(
@@ -134,7 +139,7 @@ class MutationEntryPoint(
         }
         executor.shutdown()
         try {
-            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
         } catch (e: InterruptedException) {
             logger.error(e.toString())
         }
@@ -217,18 +222,57 @@ class MutationEntryPoint(
     }
 
     private fun persistMutationResults() {
-        JsonSource(
-            "${mocoBuildPath}${File.separator}$mutationResultsFolder", "moco"
-        ).save(mutationStorage)
-        logger.infoVerbose("Saved mutation test results to moco.json")
+        val jsonSource = JsonSource("${mocoBuildPath}${File.separator}$mutationResultsFolder", "moco")
+        var updatedMutationStorage = mutationStorage
         if (gitMode && gitProcessor != null) {
-            logger.debug("Persist mutation test results")
-            val gh = gitProcessor.headCommit.name
+            logger.debug("Persistence of mutation test results...")
             // Mutants black list UPDATE - ADD (mutation results with status as run_error)
             MutantsBlackList().saveErrorMutants(mutationStorage)
             // Progress Class Test UPDATE - ADD (class progress - mutation results with status as survived and killed)
             ProgressClassTest().saveProgress(mutationStorage, fOpNames.joinToString(","))
-            PersistentMutationResult().saveMutationResult(mutationStorage, gh)
+            PersistentMutationResult().saveMutationResult(mutationStorage)
+            updatedMutationStorage = updateWithExistingMutationResults(mutationStorage, jsonSource)
         }
+        if (Configuration.currentConfig!!.useForCICD) {
+            logger.infoVerbose("Saved mutation test results to moco.json")
+            jsonSource.save(updatedMutationStorage)
+        } else logger.infoVerbose("Skip saving mutation results to json file because useForCICD is currently off")
+    }
+
+    private fun updateWithExistingMutationResults(
+        additionalMutationStorage: MutationStorage,
+        jsonSource: JsonSource
+    ): MutationStorage {
+        val data = jsonSource.getData(MutationStorage::class.java)
+        var existingMocoJSON: MutationStorage? = null
+        if (data != null) existingMocoJSON = data as MutationStorage
+
+        val updatedMocoJSON: MutationStorage
+        if (existingMocoJSON != null && existingMocoJSON.runID == lastRunIDFromMeta) {
+            // Everything is synchronized -> proceed by updating existing moco.json with new mutation results.
+            existingMocoJSON.runID = additionalMutationStorage.runID
+            updatedMocoJSON = existingMocoJSON
+            logger.debug("Update mutation storage with existing mutation results from moco.json")
+            additionalMutationStorage.entries.map {
+                if (updatedMocoJSON.entries.keys.contains(it.key)) {
+                    updatedMocoJSON.entries[it.key]?.addAll(it.value)
+                } else {
+                    updatedMocoJSON.entries[it.key] = it.value
+                }
+            }
+        } else {
+            // moco.json file can't be used -> use database
+            logger.debug("Update mutation storage with existing mutation results from Database")
+            val retrieveEntries = PersistentMutationResult().getAllData()
+            updatedMocoJSON = MutationStorage(retrieveEntries, additionalMutationStorage.runID)
+            additionalMutationStorage.entries.map {
+                if (it.key in updatedMocoJSON.entries.keys) {
+                    updatedMocoJSON.entries[it.key]?.addAll(it.value)
+                } else {
+                    updatedMocoJSON.entries[it.key] = it.value
+                }
+            }
+        }
+        return updatedMocoJSON
     }
 }
