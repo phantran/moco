@@ -36,7 +36,6 @@ data class TestsCutMapping(
         for (i in queryRes.indices) {
             queryRes[i].entry["testClass"]?.let { res.addAll(it.split(",")) }
         }
-        println(res)
         return res.joinToString(",")
     }
 

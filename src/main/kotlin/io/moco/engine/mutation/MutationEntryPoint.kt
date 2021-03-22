@@ -254,11 +254,7 @@ class MutationEntryPoint(
             updatedMocoJSON = existingMocoJSON
             logger.debug("Update mutation storage with existing mutation results from moco.json")
             additionalMutationStorage.entries.map {
-                if (updatedMocoJSON.entries.keys.contains(it.key)) {
-                    updatedMocoJSON.entries[it.key]?.addAll(it.value)
-                } else {
-                    updatedMocoJSON.entries[it.key] = it.value
-                }
+                updatedMocoJSON.entries[it.key] = it.value
             }
         } else {
             // moco.json file can't be used -> use database

@@ -102,6 +102,7 @@ object MutationTestExecutor {
     }
 
     private fun checkIfMutantWasKilled(tra: TestResultAggregator?): Boolean {
+        logger.debug("Test ${tra?.results?.last()?.desc?.name} result: ${tra?.results?.last()}")
         if (tra != null) {
             for (r: TestResult in tra.results) {
                 if ((r.state == TestResult.TestState.FINISHED) && (r.error != null)) {
