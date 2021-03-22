@@ -76,8 +76,13 @@ class Preprocessor(
                     PreprocessorTracker.clearTracker()
                     try {
                         testItem?.call()
-                        PreprocessorTracker.registerMappingCutToTestInfo(testItem!!.testItem)
-                        PreprocessorTracker.clearTracker()
+                        if (testItem?.testResultAggregator?.results?.any { it.error is AssertionError } == true) {
+                            logger.error("Ignore tests in ${testItem.testItem.desc.name} as it " +
+                                            "contains failed test case(s), please fix it.")
+                        } else {
+                            PreprocessorTracker.registerMappingCutToTestInfo(testItem!!.testItem)
+                            PreprocessorTracker.clearTracker()
+                        }
                     } catch (e: Exception) {
                         if (i == wrappedTests.size - 1) {
                             return@runBlocking

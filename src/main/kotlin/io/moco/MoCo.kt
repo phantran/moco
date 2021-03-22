@@ -176,6 +176,7 @@ class MoCo : AbstractMojo() {
                     log.info("                               M O C O")
                     log.info("-----------------------------------------------------------------------")
                     log.info("START")
+                    log.info("Note: make sure to use MoCo after test phase")
                     val persistencePath = localRepository?.basedir + "/io/moco/persistence/moco"
                     // Often named as "target" or "build" folder, contains compiled classes, JaCoCo report, MoCo report, etc...
                     val buildRoot =

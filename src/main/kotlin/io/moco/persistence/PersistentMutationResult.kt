@@ -39,7 +39,8 @@ data class PersistentMutationResult(
 
     fun saveMutationResult(data: MutationStorage) {
         val entries: MutableSet<MutableMap<String, String?>> = mutableSetOf()
-        for ((_, value) in data.entries) {
+        for ((cls, value) in data.entries) {
+            this.removeData("className = '$cls'")
             for (item in value) {
                 if (item["result"] as String != "run_error") {
                     val mutationDetails = item["mutationDetails"] as Mutation
