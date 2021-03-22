@@ -76,7 +76,8 @@ class AEntryPointTest: AnnotationSpec() {
             verbose = false,
             2,
             noLogAtAll = true,
-            enableMetrics = true
+            enableMetrics = true,
+            mocoPluginVersion = "1.0-SNAPSHOT"
         )
         Configuration.currentConfig = configuration
         MoCoLogger.useKotlinLog()

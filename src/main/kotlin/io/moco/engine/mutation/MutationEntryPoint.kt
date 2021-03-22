@@ -128,7 +128,7 @@ class MutationEntryPoint(
         chunkedMutationsList.forEach label@{ (cls, mutationList) ->
             if (curCls != cls) {
                 curCls = cls
-                logger.info("Mutation test for class $cls - with ${filteredMutations[cls]?.size} mutants")
+                logger.infoVerbose("Mutation test for class $cls - with ${filteredMutations[cls]?.size} mutants")
             }
             executor.execute(
                 Executor(
@@ -250,6 +250,7 @@ class MutationEntryPoint(
         val updatedMocoJSON: MutationStorage
         if (existingMocoJSON != null && existingMocoJSON.runID == lastRunIDFromMeta) {
             // Everything is synchronized -> proceed by updating existing moco.json with new mutation results.
+            existingMocoJSON.runID = additionalMutationStorage.runID
             updatedMocoJSON = existingMocoJSON
             logger.debug("Update mutation storage with existing mutation results from moco.json")
             additionalMutationStorage.entries.map {

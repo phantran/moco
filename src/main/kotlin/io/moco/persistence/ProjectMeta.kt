@@ -29,6 +29,7 @@ data class ProjectMeta(
         "sourceBuildFolder" to "",
         "artifactId" to "",
         "groupId" to "",
+        "mocoVersion" to "",
         "testBuildFolder" to "",
         "runOperators" to "",)
 ) : MoCoModel() {

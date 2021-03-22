@@ -65,7 +65,8 @@ class PreprocessWorkerTest: AnnotationSpec() {
         debugEnabled = true,
         verbose = true,
         2,
-        noLogAtAll = true
+        noLogAtAll = true,
+        mocoPluginVersion = "1.0-SNAPSHOT"
     )
 
     @AfterAll

@@ -71,7 +71,8 @@ class ConfigurationTest: AnnotationSpec() {
             5,
             debugEnabled = true,
             verbose = true,
-            2
+            2,
+            mocoPluginVersion = "1.0-SNAPSHOT"
         )
         configuration.buildRoot shouldBe buildRoot
         configuration.codeRoot shouldBe codeRoot

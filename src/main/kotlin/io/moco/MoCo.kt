@@ -29,9 +29,12 @@ import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.plugins.annotations.ResolutionScope
-import java.io.File
 import org.apache.maven.project.MavenProject
-import java.lang.Exception
+import java.io.File
+import org.apache.maven.plugin.MojoExecution
+
+
+
 
 /**
  * Goal which perform mutation tests, collect mutation information and store mutation information into JSON file
@@ -157,9 +160,11 @@ class MoCo : AbstractMojo() {
     @Parameter(defaultValue = "false", property = "turnOff", required = false)
     private val turnOff: Boolean = false
 
+    @Parameter(defaultValue = "\${mojoExecution}", readonly = true, required = true)
+    private val mojo: MojoExecution? = null
+
     @Parameter(defaultValue = "\${localRepository}", readonly = true, required = true)
     private val localRepository: ArtifactRepository? = null
-
 
     @Throws(MojoExecutionException::class)
     override fun execute() {
@@ -197,32 +202,34 @@ class MoCo : AbstractMojo() {
                     val classPath = "$temp:$codeRoot:${testRoot}:${buildRoot}"
 
                     val configuration = Configuration(
-                        buildRoot,
-                        codeRoot,
-                        testRoot,
-                        mocoBuildPath,
-                        excludedSourceClasses,
-                        excludedSourceFolders,
-                        excludedTestClasses,
-                        excludedTestFolders,
-                        classPath,
-                        jvm,
-                        preprocessResultsFolder,
-                        mutationResultsFolder,
-                        excludedMuOpNames,
-                        fOpNames,
-                        project?.basedir.toString(),
-                        project?.compileSourceRoots,
-                        project?.groupId!!,
-                        project?.artifactId!!,
-                        gitMode,
-                        preprocessTestTimeout,
-                        mutationPerClass,
-                        debugEnabled,
-                        verbose,
-                        numberOfThreads,
-                        enableMetrics,
-                        useForCICD
+                        buildRoot = buildRoot,
+                        codeRoot = codeRoot,
+                        testRoot = testRoot,
+                        mocoBuildPath = mocoBuildPath,
+                        excludedSourceClasses = excludedSourceClasses,
+                        excludedSourceFolders = excludedSourceFolders,
+                        excludedTestClasses = excludedTestClasses,
+                        excludedTestFolders = excludedTestFolders,
+                        classPath = classPath,
+                        jvm = jvm,
+                        preprocessResultsFolder = preprocessResultsFolder,
+                        mutationResultsFolder = mutationResultsFolder,
+                        excludedMuOpNames = excludedMuOpNames,
+                        fOpNames = fOpNames,
+                        baseDir = project?.basedir.toString(),
+                        compileSourceRoots = project?.compileSourceRoots,
+                        groupId = project?.groupId!!,
+                        artifactId = project?.artifactId!!,
+                        gitMode = gitMode,
+                        preprocessTestTimeout = preprocessTestTimeout,
+                        mutationPerClass = mutationPerClass,
+                        debugEnabled = debugEnabled,
+                        verbose = verbose,
+                        numberOfThreads = numberOfThreads,
+                        noLogAtAll = false,
+                        enableMetrics = enableMetrics,
+                        useForCICD = useForCICD,
+                        mocoPluginVersion = mojo?.plugin?.version
                     )
                     Configuration.currentConfig = configuration
                     MoCoLogger.debugEnabled = Configuration.currentConfig!!.debugEnabled

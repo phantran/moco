@@ -82,6 +82,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
             logger.info("DONE")
         } catch (ex: Exception) {
             JarUtil.removeTemporaryAgentJar(agentLoc)
+            logger.debug("Remove temporary moco agent jar successfully")
             throw ex
         }
     }
@@ -103,10 +104,10 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         projectMeta = ProjectMeta()
         logger.info("${fOpNames.size} selected mutation operators: " + fOpNames.joinToString(", "))
         if (excludedMuOpNames != "") logger.info("Excluded operators: $excludedMuOpNames")
-        if (excludedSourceClasses != "") logger.info("Excluded sources classes: $excludedSourceClasses")
-        if (excludedSourceFolders != "") logger.info("Excluded source folder: $excludedSourceFolders")
-        if (excludedTestClasses != "") logger.info("Excluded test classes: $excludedTestClasses")
-        if (excludedTestFolders != "") logger.info("Excluded test folder: $excludedTestFolders")
+        if (excludedSourceClasses != "") logger.infoVerbose("Excluded sources classes: $excludedSourceClasses")
+        if (excludedSourceFolders != "") logger.infoVerbose("Excluded source folder: $excludedSourceFolders")
+        if (excludedTestClasses != "") logger.infoVerbose("Excluded test classes: $excludedTestClasses")
+        if (excludedTestFolders != "") logger.infoVerbose("Excluded test folder: $excludedTestFolders")
 
         val gitOK = gitInfoProcessing()
         if (!gitOK) return false
@@ -131,11 +132,11 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         logger.debug("Saving project meta data before exiting...")
         projectMeta!!.meta["lastRunID"] = mutationStorage.runID
         if (gitMode) gitProcessor!!.setHeadCommitMeta(projectMeta!!, gitMode)
-
         projectMeta!!.meta["sourceBuildFolder"] = configuration.codeRoot
         projectMeta!!.meta["testBuildFolder"] = configuration.testRoot
         projectMeta!!.meta["artifactId"] = configuration.artifactId
         projectMeta!!.meta["groupId"] = configuration.groupId
+        projectMeta!!.meta["mocoVersion"] = configuration.mocoPluginVersion!!
 
         if (newOp) {
             projectMeta!!.meta["runOperators"] += "-" + fOpNames.joinToString(",")
@@ -158,7 +159,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         }
 
         if (!shouldRunFromScratch()) {
-            logger.info("Git mode: on")
+            logger.info("Git mode: ON")
             logger.info("Latest stored commit: ${projectMeta?.meta?.get("latestStoredCommitID")}")
 
             if (projectMeta?.meta?.get("latestStoredCommitID").isNullOrEmpty()) {
@@ -187,6 +188,11 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     }
 
     private fun shouldResetDB(): Boolean {
+        // Reset if different version of MoCo
+        val recordedMocoVersion = projectMeta?.meta?.get("mocoVersion")?: return false
+        if (Configuration.currentConfig?.mocoPluginVersion != recordedMocoVersion) {
+            return true
+        }
         // MoCo will not used database if Git Mode is off -> proceed in normal mode
         // No execution data and meta data will be collected
         if (!gitMode) return false
