@@ -89,10 +89,6 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     @Throws(Exception::class)
     private fun initMoCoOK(): Boolean {
         MoCoLogger.verbose = configuration.verbose
-        logger.info("-----------------------------------------------------------------------")
-        logger.info("                               M O C O")
-        logger.info("-----------------------------------------------------------------------")
-        logger.info("START")
         if (!gitMode) logger.info("Git mode: OFF")
         byteLoader = ByteArrayLoader(classPath)
         if (fOpNames.isEmpty()) {

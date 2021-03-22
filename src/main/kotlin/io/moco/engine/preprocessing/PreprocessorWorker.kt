@@ -67,7 +67,7 @@ object PreprocessorWorker {
     fun main(args: Array<String>) {
         prepareWorker(args)
         try {
-            if (isRerun) logger.info("Continue processing step due to the previous test error")
+            if (isRerun) logger.debug("Continue processing step due to the previous test error")
             val analysedCodeBase = Codebase(
                 codeRoot, testRoot, excludedSourceClasses,
                 excludedSourceFolders, excludedTestClasses, excludedTestFolders
@@ -82,16 +82,16 @@ object PreprocessorWorker {
                 // filter by git is null which means proceed in normal processing
                 Preprocessor(relevantTests).preprocessing(isRerun, jsonConverter)
                 jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())
-                logger.info("Preprocessing: Data saved and exit")
+                logger.debug("Preprocessing: Data saved and exit")
             } else {
-                logger.info("Preprocessing: 0 relevant tests left after filtering")
-                logger.info("Preprocessing: Exit - nothing to run")
+                logger.debug("Preprocessing: 0 relevant tests left after filtering")
+                logger.debug("Preprocessing: Exit - nothing to run")
             }
             exitProcess(MoCoProcessCode.OK.code)
         } catch (ex: Exception) {
             jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())
-            logger.info("Preprocessing: Data saved and exit")
-            logger.info("Preprocessing: Exit because of error")
+            logger.debug("Preprocessing: Data saved and exit")
+            logger.debug("Preprocessing: Exit because of error")
             if (!ex.message.isNullOrEmpty()) {
                 val exitIndex = ex.message!!.toIntOrNull()
                 if (exitIndex != null) {

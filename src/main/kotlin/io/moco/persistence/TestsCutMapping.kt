@@ -22,39 +22,61 @@ import io.moco.engine.preprocessing.PreprocessClassResult
 data class TestsCutMapping(
     override var entry: MutableMap<String, String> =
         mutableMapOf(
-            "className" to "", "testClass" to ""
+            "testClass" to "", "classesName" to ""
         ),
 ) : MoCoModel() {
 
     override val sourceName = "TestsCutMapping"
 
     fun getRecordedMapping(classes: List<String>): String {
-        // This method query classes by their names and git commit  id and
-        // return list of corresponding tests
-        val queryRes = this.getData(
-            "className IN (\'${classes.joinToString("\',\'")}\')")
-        val temp: MutableSet<String> = mutableSetOf()
+        // This method return list of test classes that test the query classes
+        val queryRes: MutableList<MoCoModel> = mutableListOf()
+        classes.map { queryRes.addAll(this.getData("classesName LIKE '%${it}%'")) }
+        val res: MutableSet<String> = mutableSetOf()
         for (i in queryRes.indices) {
-            queryRes[i].entry["testClass"]?.let { temp.addAll(it.split(",")) }
+            queryRes[i].entry["testClass"]?.let { res.addAll(it.split(",")) }
         }
-        return temp.joinToString(",")
+        println(res)
+        return res.joinToString(",")
     }
 
     fun saveMappingInfo(data: List<PreprocessClassResult>) {
-        val entries: List<MutableMap<String, String?>> = data.map {
-            mutableMapOf(
-                "className" to it.classUnderTestName,
-                "testClass" to it.testClasses.joinToString(","),
-            )
+        val temp: MutableMap<String, MutableSet<String>> = mutableMapOf()
+        for (item in data) {
+            for (test in item.testClasses) {
+                if (!temp.keys.contains(test)) {
+                    temp[test] = mutableSetOf(item.classUnderTestName)
+                } else {
+                    temp[test]?.add(item.classUnderTestName)
+                }
+            }
         }
-        saveMultipleEntries(sourceName, entries)
+        saveMultipleEntries(sourceName, temp.map {
+            mutableMapOf( "testClass" to it.key, "classesName" to it.value.joinToString(","))
+        })
+
+
+//        val newMapping: List<MutableMap<String, String?>> = data.map {
+//            val currMapping = this.getData("classesName LIKE '%${it.classUnderTestName}%'")
+//            var updatedTestClasses = it.testClasses.joinToString(",")
+//            if (currMapping.isNotEmpty()) {
+//                updatedTestClasses += "," + currMapping[0].entry.values
+//            }
+//            mutableMapOf(
+//                "className" to it.classUnderTestName,
+//                "testClass" to updatedTestClasses,
+//            )
+//        }
+//        saveMultipleEntries(sourceName, newMapping)
     }
 
     companion object {
         const val schema: String =
             "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY," +
-                    "className VARCHAR(255)," +
                     "testClass VARCHAR(255)," +
-                    "createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
+                    "classesName VARCHAR(255)," +
+                    "createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                    "UNIQUE KEY uniqueClassMapping (testClass)"
+
     }
 }
