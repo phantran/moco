@@ -23,7 +23,7 @@ please make sure MoCo is executed after compile phase and test phase so that all
 classes and compiled test classes are available and updated in the build (or target) folder.
 
 Target source classes and test classes for mutation are configurable through `codeRoot` and `testRoot` parameters.
-If codeRoot and testRoot are not specified, MoCo will use the default folder path information given by Maven.
+If `codeRoot` and `testRoot` are not specified, MoCo will use the default folder path information given by Maven.
 You could check the configuration section or use helpmojo goal for more details about all
 configurable parameters of MoCo.
 

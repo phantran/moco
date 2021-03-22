@@ -34,6 +34,22 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 
+/**
+ * Mutation entry point
+ *
+ * @property byteArrLoader
+ * @property mutationStorage
+ * @property gitProcessor
+ * @property createdAgentLocation
+ * @property clsByGit
+ * @property lastRunIDFromMeta
+ * @property fOpNames
+ * @property mocoBuildPath
+ * @property mutationResultsFolder
+ * @property buildRoot
+ * @property gitMode
+ * @constructor Create empty Mutation entry point
+ */
 class MutationEntryPoint(
     private val byteArrLoader: ByteArrayLoader,
     private val mutationStorage: MutationStorage,
@@ -88,6 +104,17 @@ class MutationEntryPoint(
         }
     }
 
+    /**
+     * Filter mutations
+     *
+     * @param mutations
+     * @param newOperatorsSelected
+     * @return
+     *
+     * This method filter out mutations from collected mutations list
+     * for now, we only remove mutations that were recorded in mutants black list
+     * Before performing the filtering, blacklisted mutants of the changed class (by Git commit) are deleted from DB
+     */
     private fun filterMutations(
         mutations: MutableMap<String, List<Mutation>>,
         newOperatorsSelected: Boolean
@@ -96,18 +123,18 @@ class MutationEntryPoint(
             if (!clsByGit.isNullOrEmpty()) {
                 // Mutants black list UPDATE - REMOVAL
                 // remove black listed mutants of the changed classes by Git because their contents have been changed
-                MutantsBlackList().removeData("class_name IN (\'${clsByGit.joinToString("\',\'")}\')")
+                MutantsBlackList().removeData("className IN (\'${clsByGit.joinToString("\',\'")}\')")
             }
             val mutationBlackList = MutantsBlackList().getData("")
             for (item in mutationBlackList) {
                 val bLEntry = item.entry
-                if (mutations.keys.any { it == bLEntry["class_name"] }) {
+                if (mutations.keys.any { it == bLEntry["className"] }) {
                     // Mutants black list USAGE
-                    val mList = mutations[bLEntry["class_name"]]?.toMutableList()
+                    val mList = mutations[bLEntry["className"]]?.toMutableList()
                     for (m in mList!!) {
-                        if (m.lineOfCode.toString() == bLEntry["line_of_code"]
-                            && m.mutationID.instructionIndices!!.joinToString(",") == bLEntry["instruction_indices"]
-                            && m.mutationID.mutatorID == bLEntry["mutator_id"]
+                        if (m.lineOfCode.toString() == bLEntry["loc"]
+                            && m.mutationID.instructionIndices!!.joinToString(",") == bLEntry["instructionIndices"]
+                            && m.mutationID.mutatorID == bLEntry["mutatorID"]
                         ) {
                             mList.remove(m)
                         }

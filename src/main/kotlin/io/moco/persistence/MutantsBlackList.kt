@@ -59,6 +59,8 @@ data class MutantsBlackList(
             "loc INT(8) UNSIGNED NOT NULL," +
             "instructionIndices VARCHAR(255)," +
             "mutatorID VARCHAR(255)," +
-            "createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
+            "createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+            "INDEX classIndex (`className`)"
+
     }
 }
