@@ -125,8 +125,8 @@ class MutationEntryPoint(
                 // remove black listed mutants of the changed classes by Git because their contents have been changed
                 MutantsBlackList().removeData("className IN (\'${clsByGit.joinToString("\',\'")}\')")
             }
-            val mutationBlackList = MutantsBlackList().getData("")
-            for (item in mutationBlackList) {
+            val mutantsBlackList = MutantsBlackList().getData("")
+            for (item in mutantsBlackList) {
                 val bLEntry = item.entry
                 if (mutations.keys.any { it == bLEntry["className"] }) {
                     // Mutants black list USAGE
@@ -290,7 +290,9 @@ class MutationEntryPoint(
             updatedMocoJSON = MutationStorage(retrieveEntries, additionalMutationStorage.runID)
             additionalMutationStorage.entries.map {
                 if (it.key in updatedMocoJSON.entries.keys) {
-                    updatedMocoJSON.entries[it.key]?.addAll(it.value)
+                    val temp = updatedMocoJSON.entries[it.key]!!
+                    val temp1 = it.value.filter { it1 -> temp.any { it2 -> it2["uniqueID"] != it1["uniqueID"] } }
+                    updatedMocoJSON.entries[it.key]?.addAll(temp1)
                 } else {
                     updatedMocoJSON.entries[it.key] = it.value
                 }

@@ -95,12 +95,13 @@ data class PersistentMutationResult(
             val mutationInfo: MutableMap<String, Any?> = mutableMapOf(
                 "mutationDetails" to mutation,
                 "result" to it.entry["result"]!!,
-                "uniqueID" to it.entry["uniqueID"]!!
+                "uniqueID" to it.entry["uniqueID"]!!.toInt()
             )
-            if (it.entry["className"] in res) {
-                res[it.entry["className"]]!!.add(mutationInfo)
+            val clsName = it.entry["className"]?.replace("/", ".")
+            if (clsName in res) {
+                res[clsName]!!.add(mutationInfo)
             } else {
-                res[it.entry["className"]!!] = mutableSetOf(mutationInfo)
+                res[clsName!!] = mutableSetOf(mutationInfo)
             }
         }
         return res
@@ -121,7 +122,7 @@ data class PersistentMutationResult(
                     "instructionOrder VARCHAR(255)," +
                     "additionalInfo VARCHAR(255)," +
                     "result VARCHAR(255)," +
-                    "uniqueID VARCHAR(255)," +
+                    "uniqueID INT NOT NULL," +
                     "updatedAt TIMESTAMP NOT NULL DEFAULT NOW() ON UPDATE NOW()," +
                     "UNIQUE KEY uniqueMutation (uniqueID)"
     }

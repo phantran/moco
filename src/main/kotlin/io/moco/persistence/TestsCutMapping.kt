@@ -53,20 +53,6 @@ data class TestsCutMapping(
         saveMultipleEntries(sourceName, temp.map {
             mutableMapOf( "testClass" to it.key, "classesName" to it.value.joinToString(","))
         })
-
-
-//        val newMapping: List<MutableMap<String, String?>> = data.map {
-//            val currMapping = this.getData("classesName LIKE '%${it.classUnderTestName}%'")
-//            var updatedTestClasses = it.testClasses.joinToString(",")
-//            if (currMapping.isNotEmpty()) {
-//                updatedTestClasses += "," + currMapping[0].entry.values
-//            }
-//            mutableMapOf(
-//                "className" to it.classUnderTestName,
-//                "testClass" to updatedTestClasses,
-//            )
-//        }
-//        saveMultipleEntries(sourceName, newMapping)
     }
 
     companion object {

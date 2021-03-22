@@ -142,7 +142,12 @@ object PreprocessorWorker {
                 filteredClsByGitCommit.any{ it1 -> it1.contains(it.name) }
             }.toMutableSet()
         } else codebase.testClassesNames
-        if (recordedTestMapping != null) res.addAll(recordedTestMapping.map { ClassName(it) })
+        if (recordedTestMapping != null) {
+            val temp = recordedTestMapping.filter { excludedTestFolders.any {
+                    it1 -> !it.contains(it1.substringAfterLast("/")) }
+            }
+            res.addAll(temp.minus(excludedTestClasses).map { ClassName(it) })
+        }
         return res.toList()
     }
 }
