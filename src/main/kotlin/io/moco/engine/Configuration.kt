@@ -19,6 +19,8 @@ package io.moco.engine
 
 
 data class Configuration(
+    val rootProjectBaseDir: String,
+    val mavenSession: String,
     val buildRoot: String,
     val codeRoot: String,
     val testRoot: String,

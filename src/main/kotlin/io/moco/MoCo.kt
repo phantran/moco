@@ -32,17 +32,16 @@ import org.apache.maven.plugins.annotations.ResolutionScope
 import org.apache.maven.project.MavenProject
 import java.io.File
 import org.apache.maven.plugin.MojoExecution
-
-
-
+import org.apache.maven.execution.MavenSession
 
 /**
  * Goal which perform mutation tests, collect mutation information and store mutation information into JSON file
  */
 @Mojo(
     name = "moco",
-    defaultPhase = LifecyclePhase.PROCESS_SOURCES,
-    requiresDependencyResolution = ResolutionScope.COMPILE
+    defaultPhase = LifecyclePhase.VERIFY,
+    requiresDependencyResolution = ResolutionScope.TEST,
+    threadSafe = true
 )
 class MoCo : AbstractMojo() {
 
@@ -166,19 +165,37 @@ class MoCo : AbstractMojo() {
     @Parameter(defaultValue = "\${localRepository}", readonly = true, required = true)
     private val localRepository: ArtifactRepository? = null
 
+    @Parameter(defaultValue = "\${session}", readonly = true)
+    private val session: MavenSession? = null
+
     @Throws(MojoExecutionException::class)
     override fun execute() {
         try {
             if (!turnOff) {
                 if (project != null && project!!.build != null) {
+                    // Skip if MoCo dependency is not in pom.xml
+                    if (project?.dependencies?.any {
+                            it.artifactId == mojo?.artifactId && it.groupId == mojo?.groupId
+                    } == false ) {
+                        log.info("MoCo dependency is not specified in pom.xml")
+                        return
+                    }
+
                     MoCoLogger.useMvnLog(log)
                     log.info("-----------------------------------------------------------------------")
                     log.info("                               M O C O")
                     log.info("-----------------------------------------------------------------------")
                     log.info("START")
                     log.info("Note: make sure to use MoCo after test phase")
-                    val persistencePath = localRepository?.basedir + "/io/moco/persistence/moco"
                     // Often named as "target" or "build" folder, contains compiled classes, JaCoCo report, MoCo report, etc...
+                    var rootProject = project
+                    while (rootProject!!.hasParent()) {
+                        rootProject = rootProject.parent
+                    }
+
+                    val persistencePath = localRepository?.basedir + "/io/moco/" +
+                                          rootProject.artifactId + "/persistence/moco"
+
                     val buildRoot =
                         project?.build?.directory.toString()
                     // contains compiled source classes .class files
@@ -190,7 +207,7 @@ class MoCo : AbstractMojo() {
 
                     val runtimeCp = project?.runtimeClasspathElements
                     val compileCp = project?.compileClasspathElements
-
+                    val testCompileCp = project?.testClasspathElements
 
                     val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
                     val mocoBuildPath = "$buildRoot${File.separator}$mocoRoot"
@@ -198,11 +215,13 @@ class MoCo : AbstractMojo() {
                     val fOpNames = Operator.supportedOperatorNames.filter { !excludedMuOpNames.contains(it) }
 
                     val temp = System.getProperty("java.class.path").split(File.pathSeparator)
-                        .union(runtimeCp!!.toSet()).union(compileCp!!.toSet()).toList()
+                        .union(runtimeCp!!.toSet()).union(compileCp!!.toSet()).union(testCompileCp!!.toSet()).toList()
                         .joinToString(separator = File.pathSeparator)
                     val classPath = "$temp:$codeRoot:${testRoot}:${buildRoot}"
 
                     val configuration = Configuration(
+                        rootProjectBaseDir = rootProject.basedir.toString(),
+                        mavenSession= session.toString(),
                         buildRoot = buildRoot,
                         codeRoot = codeRoot,
                         testRoot = testRoot,
@@ -232,6 +251,7 @@ class MoCo : AbstractMojo() {
                         useForCICD = useForCICD,
                         mocoPluginVersion = mojo?.plugin?.version
                     )
+
                     Configuration.currentConfig = configuration
                     MoCoLogger.debugEnabled = Configuration.currentConfig!!.debugEnabled
                     H2Database.initPool(
@@ -240,6 +260,7 @@ class MoCo : AbstractMojo() {
                         password = "moco",
                     )
                     H2Database().initDBTablesIfNotExists()
+                    log.info("Project: GroupID - ${project?.groupId!!}, artifactId - ${project?.artifactId!!}")
                     MoCoEntryPoint(configuration).execute()
                 } else log.info("MoCo can't detect your project, please check configuration in pom.xml")
             } else {

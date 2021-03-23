@@ -263,7 +263,7 @@ class MutationEntryPoint(
         if (Configuration.currentConfig!!.useForCICD) {
             logger.infoVerbose("Saved mutation test results to moco.json")
             jsonSource.save(updatedMutationStorage)
-        } else logger.infoVerbose("Skip saving mutation results to json file because useForCICD is currently off")
+        } else logger.infoVerbose("Skip saving mutation results to json file because useForCICD is currently false")
     }
 
     private fun updateWithExistingMutationResults(

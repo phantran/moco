@@ -57,7 +57,9 @@ data class ClassName(@JsonProperty("className") val name: String) : Serializable
                     is NoClassDefFoundError -> logger.error("Error NoClassDefFoundError while loading class $clsName using name")
                     is LinkageError -> logger.error("Error LinkageError while loading class $clsName using name")
                     is SecurityException -> logger.error("Error SecurityException while loading class $clsName using name")
+                    is ClassFormatError -> logger.error("Error ClassFormatError while loading class $clsName using name")
                 }
+                println ("herehere")
                 null
             }
         }

@@ -18,6 +18,7 @@
 package io.moco.engine.test
 
 import io.moco.engine.ClassName
+import io.moco.utils.ClassLoaderUtil
 import io.moco.utils.MoCoLogger
 import junit.framework.TestCase
 import org.junit.platform.suite.api.SelectClasses
@@ -40,7 +41,9 @@ open class TestItem(val cls: Class<*>, var executionTime: Long = -1) {
             testsExecutionTime: MutableMap<String, Long>? = null
         ): List<TestItem> {
             // convert from test classes to test items so it can be executed
-            var testClasses = testClassNames.mapNotNull { ClassName.clsNameToClass(it) }
+            var testClasses = testClassNames.mapNotNull {
+                ClassName.clsNameToClass(it, ClassLoaderUtil.contextClsLoader)
+            }
             testClasses = testClasses.filter { isNotTestSuite(it, checkTestFramework(it)) }
             val res: MutableList<TestItem> = mutableListOf()
             for (item in testClasses) {

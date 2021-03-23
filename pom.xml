@@ -13,15 +13,16 @@
     <!-- FIXME change it to the project's website -->
     <url>http://moco.io</url>
 
-    <prerequisites>
-        <maven>${maven.version}</maven>
-    </prerequisites>
+<!--    <prerequisites>-->
+<!--        <maven>${maven.version}</maven>-->
+<!--    </prerequisites>-->
 
     <developers>
         <developer>
             <id>Tran Phan</id>
             <name>Tran Phan</name>
             <email>phantran197@gmail.com</email>
+            <timezone>2</timezone>
         </developer>
     </developers>
 

@@ -41,6 +41,8 @@ class PreprocessWorkerTest: AnnotationSpec() {
     private val excluded = ""
     private val fOpNames = Operator.supportedOperatorNames.filter { !excluded.contains(it) }
     private val configuration = Configuration(
+        "/Users/phantran/Study/Passau/Thesis/TestGamekins/test/",
+        System.currentTimeMillis().toString(),
         buildRoot,
         codeRoot,
         testRoot,

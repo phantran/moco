@@ -48,50 +48,55 @@ class AEntryPointTest: AnnotationSpec() {
 
     @Test
     fun testEntryPoint() {
-        val excluded = ""
-        val fOpNames = Operator.supportedOperatorNames.filter { !excluded.contains(it) }
-        val configuration = Configuration(
-            buildRoot,
-            codeRoot,
-            testRoot,
-            "$buildRoot${File.separator}moco",
-            "dev.Hihi",
-            "",
-            "dev.HihiTest",
-            "io/moco/integration/",
-            classpath,
-            jvm,
-            "preprocess",
-            "mutation",
-            excluded,
-            fOpNames,
-            buildRoot,
-            listOf(),
-            "dev",
-            "m0c0-maven-plugin",
-            false,
-            "200",
-            5,
-            debugEnabled = false,
-            verbose = false,
-            2,
-            noLogAtAll = true,
-            enableMetrics = true,
-            mocoPluginVersion = "1.0-SNAPSHOT"
-        )
-        Configuration.currentConfig = configuration
-        MoCoLogger.useKotlinLog()
-        MoCoLogger.noLogAtAll = true
-        MoCoLogger.debugEnabled = Configuration.currentConfig!!.debugEnabled
-        H2Database.initPool(
-            url = "jdbc:h2:file:${Configuration.currentConfig?.mocoBuildPath}" +
-                    "${File.separator}/persistence/moco;mode=MySQL",
-            user = "moco",
-            password = "moco",
-        )
-        H2Database().initDBTablesIfNotExists()
-        MoCoEntryPoint(configuration).execute()
-        MoCoEntryPoint.runScore.roundToInt() shouldBeInRange IntRange(50, 60)
-        H2Database.shutDownDB()
+        try {
+            val excluded = ""
+            val fOpNames = Operator.supportedOperatorNames.filter { !excluded.contains(it) }
+            val configuration = Configuration(
+                "/Users/phantran/Study/Passau/Thesis/TestGamekins/test/",
+                System.currentTimeMillis().toString(),
+                buildRoot,
+                codeRoot,
+                testRoot,
+                "$buildRoot${File.separator}moco",
+                "dev.Hihi",
+                "",
+                "dev.HihiTest",
+                "io/moco/integration/",
+                classpath,
+                jvm,
+                "preprocess",
+                "mutation",
+                excluded,
+                fOpNames,
+                buildRoot,
+                listOf(),
+                "dev",
+                "m0c0-maven-plugin",
+                false,
+                "200",
+                5,
+                debugEnabled = false,
+                verbose = false,
+                2,
+                noLogAtAll = true,
+                enableMetrics = true,
+                mocoPluginVersion = "1.0-SNAPSHOT"
+            )
+            Configuration.currentConfig = configuration
+            MoCoLogger.useKotlinLog()
+            MoCoLogger.noLogAtAll = true
+            MoCoLogger.debugEnabled = Configuration.currentConfig!!.debugEnabled
+            H2Database.initPool(
+                url = "jdbc:h2:file:${Configuration.currentConfig?.mocoBuildPath}" +
+                        "${File.separator}/persistence/moco;mode=MySQL",
+                user = "moco",
+                password = "moco",
+            )
+            H2Database().initDBTablesIfNotExists()
+            MoCoEntryPoint(configuration).execute()
+            MoCoEntryPoint.runScore.roundToInt() shouldBeInRange IntRange(50, 100)
+        } finally {
+            H2Database.shutDownDB()
+        }
     }
 }

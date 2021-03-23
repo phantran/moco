@@ -135,8 +135,8 @@ object PreprocessorWorker {
         // Return list of relevant tests to be executed
         // tests that are changed according to git diff and tests that were mapped before to
         // corresponding changed source classes
-        logger.debug("Recorded test relevant tests from previous runs: $recordedTestMapping")
-        logger.debug("Changed classes by Git: $filteredClsByGitCommit")
+        logger.debug("Recorded test relevant tests from previous runs: ${recordedTestMapping ?: "None"}")
+        logger.debug("Changed classes by Git: ${filteredClsByGitCommit ?: "None"}")
         val res = if (!filteredClsByGitCommit.isNullOrEmpty()) {
             codebase.testClassesNames.filter {
                 filteredClsByGitCommit.any{ it1 -> it1.contains(it.name) }

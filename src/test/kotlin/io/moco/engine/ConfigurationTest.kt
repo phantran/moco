@@ -48,6 +48,8 @@ class ConfigurationTest: AnnotationSpec() {
         val fOpNames = Operator.supportedOperatorNames.filter { !excluded.contains(it) }
 
         val configuration = Configuration(
+            "/Users/phantran/Study/Passau/Thesis/TestGamekins/test/",
+            System.currentTimeMillis().toString(),
             buildRoot,
             codeRoot,
             testRoot,

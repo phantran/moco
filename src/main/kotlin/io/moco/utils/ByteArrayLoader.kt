@@ -25,6 +25,7 @@ import java.util.zip.ZipFile
 
 class ByteArrayLoader(cp: String?) {
     private val clsPaths: Set<File>
+    private val logger = MoCoLogger()
 
     init {
         clsPaths = cp?.split(File.pathSeparator)?.map { File(it.trim()) }?.toSet() ?: initClsPath()
@@ -59,22 +60,27 @@ class ByteArrayLoader(cp: String?) {
         }
     }
 
-    @Throws(IOException::class)
+    @Throws(Exception::class)
     fun getByteArray(className: String?): ByteArray? {
-        val fn = className?.replace('.', File.separatorChar) + ".class"
-        for (root in this.clsPaths) {
-            if (root.isDirectory) {
-                val f = File(root, fn)
-                if (f.exists() && f.canRead()) {
-                    return streamToByteArr(FileInputStream(f))
+        try {
+            val fn = className?.replace('.', File.separatorChar) + ".class"
+            for (root in this.clsPaths) {
+                if (root.isDirectory) {
+                    val f = File(root, fn)
+                    if (f.exists() && f.canRead()) {
+                        return streamToByteArr(FileInputStream(f))
+                    }
+                } else if (root.isFile) {
+                    val temp = ZipFile(root)
+                    val entry = temp.getEntry(fn) ?: continue
+                    return streamToByteArr(temp.getInputStream(entry))
                 }
-            } else if (root.isFile) {
-                val temp = ZipFile(root)
-                val entry = temp.getEntry(fn) ?: continue
-                return streamToByteArr(temp.getInputStream(entry))
             }
+            return null
+        } catch (e: Exception) {
+            logger.error(e.printStackTrace().toString())
+            throw e
         }
-        return null
     }
 
     @Throws(IOException::class)
