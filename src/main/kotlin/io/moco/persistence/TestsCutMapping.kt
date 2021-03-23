@@ -59,7 +59,7 @@ data class TestsCutMapping(
         const val schema: String =
             "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY," +
                     "testClass VARCHAR(255)," +
-                    "classesName VARCHAR(255)," +
+                    "classesName TEXT," +
                     "createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP," +
                     "UNIQUE KEY uniqueClassMapping (testClass)"
 

@@ -209,15 +209,24 @@ class MoCo : AbstractMojo() {
                     val compileCp = project?.compileClasspathElements
                     val testCompileCp = project?.testClasspathElements
 
+                    val runtimeRootCp = rootProject.runtimeClasspathElements
+                    val compileRootCp = rootProject.compileClasspathElements
+                    val testCompileRootCp = rootProject.testClasspathElements
+
+                    val systemCp = System.getProperty("java.class.path").split(File.pathSeparator)
+                        .union(runtimeCp!!.toSet())
+                        .union(compileCp!!.toSet())
+                        .union(testCompileCp!!.toSet())
+                        .union(runtimeRootCp!!.toSet())
+                        .union(compileRootCp!!.toSet())
+                        .union(testCompileRootCp!!.toSet())
+                        .toList()
+                        .joinToString(separator = File.pathSeparator)
+                    val classPath = "$systemCp:${buildRoot}:$codeRoot:${testRoot}"
+
                     val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
                     val mocoBuildPath = "$buildRoot${File.separator}$mocoRoot"
-
                     val fOpNames = Operator.supportedOperatorNames.filter { !excludedMuOpNames.contains(it) }
-
-                    val temp = System.getProperty("java.class.path").split(File.pathSeparator)
-                        .union(runtimeCp!!.toSet()).union(compileCp!!.toSet()).union(testCompileCp!!.toSet()).toList()
-                        .joinToString(separator = File.pathSeparator)
-                    val classPath = "$temp:$codeRoot:${testRoot}:${buildRoot}"
 
                     val configuration = Configuration(
                         rootProjectBaseDir = rootProject.basedir.toString(),
@@ -259,6 +268,7 @@ class MoCo : AbstractMojo() {
                         user = "moco",
                         password = "moco",
                     )
+                    println(persistencePath)
                     H2Database().initDBTablesIfNotExists()
                     log.info("Project: GroupID - ${project?.groupId!!}, artifactId - ${project?.artifactId!!}")
                     MoCoEntryPoint(configuration).execute()

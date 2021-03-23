@@ -59,7 +59,7 @@ data class ClassName(@JsonProperty("className") val name: String) : Serializable
                     is SecurityException -> logger.error("Error SecurityException while loading class $clsName using name")
                     is ClassFormatError -> logger.error("Error ClassFormatError while loading class $clsName using name")
                 }
-                println ("herehere")
+                println(clsName)
                 null
             }
         }
