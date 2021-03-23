@@ -189,40 +189,14 @@ class MoCo : AbstractMojo() {
                     log.info("Note: make sure to use MoCo after test phase")
                     // Often named as "target" or "build" folder, contains compiled classes, JaCoCo report, MoCo report, etc...
                     var rootProject = project
-                    while (rootProject!!.hasParent()) {
-                        rootProject = rootProject.parent
-                    }
+                    while (rootProject!!.hasParent()) rootProject = rootProject.parent
 
-                    val persistencePath = localRepository?.basedir + "/io/moco/" +
-                                          rootProject.artifactId + "/persistence/moco"
+                    val persistencePath = localRepository?.basedir + "/io/moco/" + rootProject.artifactId + "/persistence"
 
-                    val buildRoot =
-                        project?.build?.directory.toString()
-                    // contains compiled source classes .class files
-                    val codeRoot =
-                        project?.build?.outputDirectory.toString()
-                    // contains compiled test classes .class files
-                    val testRoot =
-                        project?.build?.testOutputDirectory.toString()
-
-                    val runtimeCp = project?.runtimeClasspathElements
-                    val compileCp = project?.compileClasspathElements
-                    val testCompileCp = project?.testClasspathElements
-
-                    val runtimeRootCp = rootProject.runtimeClasspathElements
-                    val compileRootCp = rootProject.compileClasspathElements
-                    val testCompileRootCp = rootProject.testClasspathElements
-
-                    val systemCp = System.getProperty("java.class.path").split(File.pathSeparator)
-                        .union(runtimeCp!!.toSet())
-                        .union(compileCp!!.toSet())
-                        .union(testCompileCp!!.toSet())
-                        .union(runtimeRootCp!!.toSet())
-                        .union(compileRootCp!!.toSet())
-                        .union(testCompileRootCp!!.toSet())
-                        .toList()
-                        .joinToString(separator = File.pathSeparator)
-                    val classPath = "$systemCp:${buildRoot}:$codeRoot:${testRoot}"
+                    val buildRoot = project?.build?.directory.toString()
+                    val codeRoot = project?.build?.outputDirectory.toString()
+                    val testRoot = project?.build?.testOutputDirectory.toString()
+                    val classPath = prepareAllClassPaths(rootProject)
 
                     val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
                     val mocoBuildPath = "$buildRoot${File.separator}$mocoRoot"
@@ -268,7 +242,6 @@ class MoCo : AbstractMojo() {
                         user = "moco",
                         password = "moco",
                     )
-                    println(persistencePath)
                     H2Database().initDBTablesIfNotExists()
                     log.info("Project: GroupID - ${project?.groupId!!}, artifactId - ${project?.artifactId!!}")
                     MoCoEntryPoint(configuration).execute()
@@ -281,6 +254,38 @@ class MoCo : AbstractMojo() {
         } finally {
             if (!turnOff) H2Database.shutDownDB()
         }
+    }
+
+    private fun prepareAllClassPaths(rootProject: MavenProject?): String {
+        val buildRoot = project?.build?.directory.toString()
+        val codeRoot = project?.build?.outputDirectory.toString()
+        val testRoot = project?.build?.testOutputDirectory.toString()
+        val runtimeCp = project?.runtimeClasspathElements
+        val compileCp = project?.compileClasspathElements
+        val testCompileCp = project?.testClasspathElements
+        val runtimeRootCp = rootProject?.runtimeClasspathElements
+        val compileRootCp = rootProject?.compileClasspathElements
+        val testCompileRootCp = rootProject?.testClasspathElements
+        val resPath = System.getProperty("java.class.path").split(File.pathSeparator)
+            .union(runtimeCp!!.toSet())
+            .union(compileCp!!.toSet())
+            .union(testCompileCp!!.toSet())
+            .union(runtimeRootCp!!.toSet())
+            .union(compileRootCp!!.toSet())
+            .union(testCompileRootCp!!.toSet())
+            .toMutableSet()
+        val collectedProjects = rootProject.collectedProjects
+        if (!collectedProjects.isNullOrEmpty()) {
+            for (p in collectedProjects) {
+                val runtime = p.runtimeClasspathElements
+                val compile = p.compileClasspathElements
+                val testCompile = p.testClasspathElements
+                resPath.addAll(runtime.toSet())
+                resPath.addAll(compile.toSet())
+                resPath.addAll(testCompile.toSet())
+            }
+        }
+        return "${resPath.joinToString(separator = File.pathSeparator)}:${buildRoot}:$codeRoot:${testRoot}"
     }
 }
 
