@@ -48,7 +48,7 @@ data class ClassName(@JsonProperty("className") val name: String) : Serializable
             return ClassName(name)
         }
 
-        fun clsNameToClass(clsName: ClassName, loader: ClassLoader? = ClassLoaderUtil.clsLoader): Class<*>? {
+        fun clsNameToClass(clsName: ClassName, loader: ClassLoader? = ClassLoaderUtil.contextClsLoader): Class<*>? {
             return try {
                 Class.forName(clsName.javaName, false, loader)
             } catch (ex: Exception) {
@@ -59,7 +59,6 @@ data class ClassName(@JsonProperty("className") val name: String) : Serializable
                     is SecurityException -> logger.error("Error SecurityException while loading class $clsName using name")
                     is ClassFormatError -> logger.error("Error ClassFormatError while loading class $clsName using name")
                 }
-                println(clsName)
                 null
             }
         }

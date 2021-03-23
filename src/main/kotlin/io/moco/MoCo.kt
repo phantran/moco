@@ -197,7 +197,6 @@ class MoCo : AbstractMojo() {
                     val codeRoot = project?.build?.outputDirectory.toString()
                     val testRoot = project?.build?.testOutputDirectory.toString()
                     val classPath = prepareAllClassPaths(rootProject)
-
                     val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
                     val mocoBuildPath = "$buildRoot${File.separator}$mocoRoot"
                     val fOpNames = Operator.supportedOperatorNames.filter { !excludedMuOpNames.contains(it) }

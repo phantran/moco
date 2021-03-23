@@ -17,6 +17,7 @@
 
 package io.moco.engine.test
 
+import org.testng.ITestContext
 import org.testng.ITestListener
 import org.testng.ITestResult
 
@@ -55,5 +56,15 @@ class TestNGRunListener : ITestListener {
 
     override fun onTestFailedButWithinSuccessPercentage(result: ITestResult) {
         tra?.results?.add(TestResult(description(result), null, TestResult.TestState.FINISHED))
+    }
+
+    override fun onStart(p0: ITestContext?) {
+        tra?.results?.add(TestResult(Description("", testClass?.name),
+                                            null, TestResult.TestState.RUNNING))
+    }
+
+    override fun onFinish(p0: ITestContext?) {
+        tra?.results?.add(TestResult(Description("", testClass?.name),
+            null, TestResult.TestState.FINISHED))
     }
 }

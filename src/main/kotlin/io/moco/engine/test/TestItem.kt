@@ -42,7 +42,7 @@ open class TestItem(val cls: Class<*>, var executionTime: Long = -1) {
         ): List<TestItem> {
             // convert from test classes to test items so it can be executed
             var testClasses = testClassNames.mapNotNull {
-                ClassName.clsNameToClass(it, ClassLoaderUtil.contextClsLoader)
+                ClassName.clsNameToClass(it)
             }
             testClasses = testClasses.filter { isNotTestSuite(it, checkTestFramework(it)) }
             val res: MutableList<TestItem> = mutableListOf()

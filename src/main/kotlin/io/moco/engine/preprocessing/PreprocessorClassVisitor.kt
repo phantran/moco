@@ -21,17 +21,22 @@ package io.moco.engine.preprocessing
 import io.moco.utils.JavaInfo
 import org.objectweb.asm.*
 
-
 class PreprocessorClassVisitor(cw: ClassVisitor?) :
     ClassVisitor(JavaInfo.ASM_VERSION, cw) {
 
     private var className: String? = null
+    private var isInterface: Boolean = false
+    private var isAbstractClass: Boolean = false
+    private var isSynthetic: Boolean = false
 
     override fun visit(
         version: Int, access: Int, name: String?, signature: String?,
         superName: String?, interfaces: Array<String?>?
     ) {
         super.visit(version, access, name, signature, superName, interfaces)
+        if (access and Opcodes.ACC_INTERFACE != 0) isInterface = true
+        if (access and Opcodes.ACC_ABSTRACT != 0) isAbstractClass = true
+        if (access and Opcodes.ACC_SYNTHETIC != 0) isSynthetic = true
         className = name
     }
 
@@ -43,6 +48,17 @@ class PreprocessorClassVisitor(cw: ClassVisitor?) :
             access, name, desc,
             signature, exceptions
         )
-        return PreprocessorMethodVisitor(className!!, methodVisitor, access, name, desc, signature, exceptions)
+
+        return if (!isSyntheticMethod(access) && name != "<clinit>" &&
+            !isAbstractClass && !isInterface && !isSynthetic
+        ) {
+            PreprocessorMethodVisitor(className!!, methodVisitor, access, name, desc, signature, exceptions)
+        } else {
+            methodVisitor
+        }
+    }
+
+    private fun isSyntheticMethod(access: Int): Boolean {
+        return access and Opcodes.ACC_BRIDGE != 0
     }
 }
