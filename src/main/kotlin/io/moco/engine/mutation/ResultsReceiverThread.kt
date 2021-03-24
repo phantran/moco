@@ -171,6 +171,7 @@ class ResultsReceiverThread(
     class MutationWorkerArguments(
         val mutations: List<Mutation>,
         val tests: List<ClassName>,
+        val lineTestsMapping: MutableMap<Int, MutableSet<String>>,
         val testsExecutionTime: MutableMap<String, Long>,
         val classPath: String,
         val includedOperators: List<String>,

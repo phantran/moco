@@ -86,7 +86,7 @@ class MutationEntryPoint(
             val foundMutations: MutableMap<String, List<Mutation>> = mutableMapOf()
             for (item in preprocessedStorage.classRecord) {
                 foundMutations[item.classUnderTestName] =
-                    mGen.findPossibleMutationsOfClass(item.classUnderTestName, item.coveredLines,
+                    mGen.findPossibleMutationsOfClass(item.classUnderTestName, item.coveredLines?.keys,
                                                      Configuration.currentConfig!!.limitMutantsByType).distinct()
             }
             val filteredMutations = filterMutations(foundMutations, newOperatorsSelected)
@@ -193,6 +193,11 @@ class MutationEntryPoint(
                 className,
                 testsExecutionTime
             )
+            // Map from lines of code of the target class under test to test cases that cover them
+            var lineTestsMapping = (preprocessedStorage.classRecord.find {
+                it.classUnderTestName == className.name
+            })?.coveredLines
+            if (lineTestsMapping == null) lineTestsMapping = mutableMapOf()
             if (relatedTestClasses.isEmpty()) {
                 logger.debug("Class ${className.getJavaName()} has 0 relevant test")
                 return
@@ -212,20 +217,21 @@ class MutationEntryPoint(
 
                 if (relatedTestClasses.size > 10) {
                     val workerThread = workerProcess.createMutationWorkerThread(
-                        listOf(mutationList[i]), relatedTestClasses, testsExecutionTime, fOpNames, mutationStorage
+                        listOf(mutationList[i]), relatedTestClasses, lineTestsMapping,
+                        testsExecutionTime, fOpNames, mutationStorage
                     )
                     workerProcess.execMutationTestProcess(workerThread)
                 } else {
                     temp.add(mutationList[i])
                     if (temp.size * relatedTestClasses.size > 10) {
                         val workerThread = workerProcess.createMutationWorkerThread(
-                            temp, relatedTestClasses, testsExecutionTime, fOpNames, mutationStorage
+                            temp, relatedTestClasses, lineTestsMapping, testsExecutionTime, fOpNames, mutationStorage
                         )
                         workerProcess.execMutationTestProcess(workerThread)
                         temp.clear()
                     } else if (i == mutationList.size - 1) {
                         val workerThread = workerProcess.createMutationWorkerThread(
-                            temp, relatedTestClasses, testsExecutionTime, fOpNames, mutationStorage
+                            temp, relatedTestClasses, lineTestsMapping, testsExecutionTime, fOpNames, mutationStorage
                         )
                         workerProcess.execMutationTestProcess(workerThread)
                     }

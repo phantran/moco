@@ -28,5 +28,5 @@ package io.moco.engine.preprocessing
 data class PreprocessClassResult(
     val classUnderTestName: String,
     val testClasses: MutableSet<String>,
-    val coveredLines: MutableSet<Int>?,
+    val coveredLines: MutableMap<Int, MutableSet<String>>?,
 )

@@ -34,7 +34,7 @@ import java.io.IOException
  * @param folderPath
  * @param fileName
  */
-class JsonSource(private val folderPath: String, private val fileName: String): DataSource() {
+class JsonSource(private val folderPath: String, private val fileName: String) : DataSource() {
 
     private val mapper = jacksonObjectMapper()
     private val logger = MoCoLogger()
@@ -64,19 +64,31 @@ class JsonSource(private val folderPath: String, private val fileName: String): 
         try {
             var existingStorage = getData(PreprocessStorage::class.java)
             if (existingStorage == null) {
+                // No existing storage, just save the result
                 mapper.writeValue(File("$folderPath${File.separator}$fileName.json"), results)
             } else {
+                // Handle the case when a failed test made the preprocess process exited
+                // We need to read the previous storage and append to it
                 existingStorage = existingStorage as PreprocessStorage
+                // First we update test execution time keys values
                 for ((k, v) in results.testsExecutionTime!!) {
                     existingStorage.testsExecutionTime!!.putIfAbsent(k, v)
                 }
-
+                // Next we append to the existing class records
                 for (item in results.classRecord) {
-
-                    val foundIndex = existingStorage.classRecord.indexOfFirst { it.classUnderTestName == item.classUnderTestName }
+                    val foundIndex =
+                        existingStorage.classRecord.indexOfFirst { it.classUnderTestName == item.classUnderTestName }
                     if (foundIndex != -1) {
                         existingStorage.classRecord[foundIndex].testClasses.addAll(item.testClasses)
-                        existingStorage.classRecord[foundIndex].coveredLines?.addAll(item.coveredLines!!)
+                        // Update line to tests mapping
+                        val lineTestMapping = existingStorage.classRecord[foundIndex].coveredLines
+                        item.coveredLines?.map {
+                            if (lineTestMapping?.containsKey(it.key) == true) {
+                                lineTestMapping[it.key]?.addAll(it.value)
+                            } else {
+                                lineTestMapping?.set(it.key, it.value)
+                            }
+                        }
                     } else {
                         existingStorage.classRecord.add(item)
                     }

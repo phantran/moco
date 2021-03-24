@@ -37,7 +37,6 @@ class TestNGTestItem(cls: Class<*>, executionTime: Long = -1) : TestItem(cls, ex
         // needs to be static as jmockit assumes only a single instance per jvm
         private val testng = TestNG(false)
         private val listener: TestNGRunListener = TestNGRunListener()
-
     }
 
     override suspend fun execute(tra: TestResultAggregator, timeOut: Long) {

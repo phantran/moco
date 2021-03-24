@@ -26,8 +26,11 @@ class PreprocessorTracker {
         // map from class name -> set of covered lines (corresponding to a run of a test class)
         var lineTracker: ConcurrentHashMap<String, MutableSet<Int>> = ConcurrentHashMap()
         var cutRecord: MutableSet<String> = mutableSetOf()
-        val cutToLines: MutableMap<String, MutableSet<Int>> = mutableMapOf()
+
+        // {"className1 to ["lineOfCode" to set{testClasses...}], "className2 to ["lineOfCode" to set{testClasses...}]}
+        val cutToLineTestMap: MutableMap<String, MutableMap<Int, MutableSet<String>>> = mutableMapOf()
         val cutToTest: MutableMap<String, MutableSet<String>> = mutableMapOf()
+
         // Internal class name of ProcessorTracker to be called by asm method visitor
         private var testExecutionTime = mutableMapOf<String, Long>()
         val internalClsName: String = PreprocessorTracker::class.qualifiedName.toString().replace(".", "/")
@@ -38,12 +41,19 @@ class PreprocessorTracker {
         @Synchronized
         @JvmStatic
         fun registerMappingCutToTestInfo(testClass: TestItem) {
-            for (item in lineTracker.keys()) {
-                if (cutToLines.keys.contains(item)) {
-                    cutToLines[item]?.addAll(lineTracker[item]!!)
+            for ((cut, lines) in lineTracker.entries) {
+                if (cutToLineTestMap.keys.contains(cut)) {
+                    lines.map {
+                        if (cutToLineTestMap[cut]!!.containsKey(it)) {
+                            cutToLineTestMap[cut]!![it]?.add(testClass.cls.name)
+                        } else cutToLineTestMap[cut]!!.set(it, mutableSetOf(testClass.cls.name))
+                    }
                 } else {
-                    cutToLines[item] = lineTracker[item]!!
+                    cutToLineTestMap[cut] = mutableMapOf()
+                    lines.map { cutToLineTestMap[cut]!![it] = mutableSetOf(testClass.cls.name) }
                 }
+
+
             }
             for (item in cutRecord) {
                 // cutRecord contains a class name means a test has invoked a method of that class
@@ -87,11 +97,11 @@ class PreprocessorTracker {
 
         fun getPreprocessResults(): PreprocessStorage {
             val classRecord = mutableListOf<PreprocessClassResult>()
-            for (item in cutToTest.keys) {
-                if (cutToLines.keys.contains(item)) {
-                    val testClasses = cutToTest[item]
-                    val coveredLines = cutToLines[item]
-                    classRecord.add(PreprocessClassResult(item, testClasses!!, coveredLines))
+            for (cut in cutToTest.keys) {
+                if (cutToLineTestMap.keys.contains(cut)) {
+                    val testClasses = cutToTest[cut]
+                    val coveredLines = cutToLineTestMap[cut]
+                    classRecord.add(PreprocessClassResult(cut, testClasses!!, coveredLines))
                 } else {
                     continue
                 }

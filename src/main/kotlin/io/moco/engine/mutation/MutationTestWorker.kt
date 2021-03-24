@@ -42,6 +42,7 @@ class MutationTestWorker(
     private var duplicatedMutantTracker: MutableSet<ByteArray> = mutableSetOf()
     private val testMonitor = MutationTestMonitor()
     private lateinit var testsExecutionTime: MutableMap<String, Long>
+    private lateinit var lineTestsMapping: MutableMap<Int, MutableSet<String>>
 
     companion object {
         @JvmStatic
@@ -71,6 +72,7 @@ class MutationTestWorker(
             logger = MoCoLogger()
             classPath = givenWorkerArgs.classPath
             testsExecutionTime = givenWorkerArgs.testsExecutionTime
+            lineTestsMapping = givenWorkerArgs.lineTestsMapping
             val byteArrLoader = ByteArrayLoader(classPath)
             mutantIntroducer = MutantIntroducer(byteArrLoader)
             communicator = Communicator(DataOutputStream(socket.getOutputStream()))
@@ -97,12 +99,16 @@ class MutationTestWorker(
         MutationTestExecutor.testMonitor = testMonitor
         for (mutation: Mutation in mutations) {
             if (testMonitor.shouldSkipThisMutation(mutation)) {
-                logger.debug("Skip mutation test for mutant at line " +
-                        "${mutation.lineOfCode} - ${mutation.mutationID.mutatorID}")
+                logger.debug(
+                    "Skip mutation test for mutant at line " +
+                            "${mutation.lineOfCode} - ${mutation.mutationID.mutatorID}"
+                )
                 continue
             }
-            logger.debug("------- Handle mutation of class " +
-                    "${mutation.mutationID.location.className?.getJavaName()} --------------")
+            logger.debug(
+                "------- Handle mutation of class " +
+                        "${mutation.mutationID.location.className?.getJavaName()} --------------"
+            )
             if (targetClassByteArr == null) {
                 val clsJavaName = mutation.mutationID.location.className?.getJavaName()
                 targetClassByteArr = mGen.bytesArrayLoader.getByteArray(clsJavaName)
@@ -115,6 +121,10 @@ class MutationTestWorker(
     private fun runOneByOne(
         mutation: Mutation, tests: List<TestItemWrapper>, byteArray: ByteArray?
     ) {
+        // Filter tests to keep only tests that cover the line of this mutation
+        val filteredTests = filterUnrelatedTestsForLine(mutation, tests, lineTestsMapping)
+        if (filteredTests.isNullOrEmpty()) return
+
         val t0 = System.currentTimeMillis()
         val createdMutant = mGen.createMutant(mutation, byteArray) ?: return
         val mutationId = mutation.mutationID
@@ -125,15 +135,26 @@ class MutationTestWorker(
 
         communicator.registerToMainProcess(mutationId)
 
-        val testResult: MutationTestResult = if (tests.isEmpty()) {
+        val testResult: MutationTestResult = if (filteredTests.isEmpty()) {
             MutationTestResult(0, MutationTestStatus.RUN_ERROR)
         } else {
             MutationTestExecutor.introduceMutantThenExec(
-                mutantIntroducer, mutation, createdMutant, tests
+                mutantIntroducer, mutation, createdMutant, filteredTests
             )
         }
 
         communicator.reportToMainProcess(mutation, testResult)
         logger.debug("------- Done in " + (System.currentTimeMillis() - t0) + " ms -------------")
+    }
+
+    private fun filterUnrelatedTestsForLine(
+        mutation: Mutation,
+        tests: List<TestItemWrapper>,
+        lineTestsMapping: MutableMap<Int, MutableSet<String>>
+    ): List<TestItemWrapper> {
+        val testsOnThisLine = lineTestsMapping[mutation.lineOfCode]
+        return tests.filter {
+            testsOnThisLine?.contains(it.testItem.cls.name) == true
+        }
     }
 }

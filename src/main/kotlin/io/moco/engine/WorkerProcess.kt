@@ -81,13 +81,14 @@ class WorkerProcess(
     fun createMutationWorkerThread(
         mutations: List<Mutation>,
         tests: List<ClassName>,
+        lineTestsMapping: MutableMap<Int, MutableSet<String>>,
         testsExecutionTime: MutableMap<String, Long>,
         filteredMuOpNames: List<String>,
         mutationStorage: MutationStorage
     ): ResultsReceiverThread {
         val mutationWorkerArgs =
             ResultsReceiverThread.MutationWorkerArguments(
-                mutations, tests, testsExecutionTime, processArgs["classPath"] as String, filteredMuOpNames, "")
+                mutations, tests, lineTestsMapping, testsExecutionTime, processArgs["classPath"] as String, filteredMuOpNames, "")
         return ResultsReceiverThread(processArgs["port"] as ServerSocket, mutationWorkerArgs, mutationStorage)
     }
 

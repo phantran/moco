@@ -97,7 +97,7 @@ class ConfigurationTest: AnnotationSpec() {
         configuration.artifactId shouldBe "moco"
         configuration.gitMode shouldBe false
         configuration.preprocessTestTimeout shouldBe "1000"
-        configuration.mutationPerClass shouldBe 0
+        configuration.mutationPerClass shouldBe 5
         configuration.debugEnabled shouldBe  true
         configuration.verbose shouldBe true
         configuration.numberOfThreads shouldBe 2
