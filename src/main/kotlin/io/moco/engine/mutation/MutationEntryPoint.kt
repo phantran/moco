@@ -72,7 +72,8 @@ class MutationEntryPoint(
                 logger.info("No preprocess results, skip mutation testing")
                 return
             }
-            if (preprocessedStorage.classRecord.isNullOrEmpty() || preprocessedStorage.testsExecutionTime.isNullOrEmpty()) {
+            if (preprocessedStorage.classRecord.isNullOrEmpty() ||
+                preprocessedStorage.testsExecutionTime.isNullOrEmpty()) {
                 logger.info("No preprocess information available, skip mutation testing")
                 return
             }
@@ -85,7 +86,8 @@ class MutationEntryPoint(
             val foundMutations: MutableMap<String, List<Mutation>> = mutableMapOf()
             for (item in preprocessedStorage.classRecord) {
                 foundMutations[item.classUnderTestName] =
-                    mGen.findPossibleMutationsOfClass(item.classUnderTestName, item.coveredLines).distinct()
+                    mGen.findPossibleMutationsOfClass(item.classUnderTestName, item.coveredLines,
+                                                     Configuration.currentConfig!!.limitMutantsByType).distinct()
             }
             val filteredMutations = filterMutations(foundMutations, newOperatorsSelected)
             logger.debug("Found ${filteredMutations.size} class(es) can be mutated")

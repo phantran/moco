@@ -43,7 +43,7 @@ object MutationTestExecutor {
             logger.debug("Introduce mutant in " + (System.currentTimeMillis() - t0) + " ms")
             logger.debug("Mutation at line ${mutation.lineOfCode}")
             logger.debug("Mutation operator: ${mutation.description}")
-            mtr = executeTestAndGetResult(tests, mutation)
+            mtr = executeTestAndGetResult(tests.toMutableList(), mutation)
         } else {
             return MutationTestResult(0, MutationTestStatus.RUN_ERROR)
 
@@ -52,7 +52,7 @@ object MutationTestExecutor {
     }
 
     private fun executeTestAndGetResult(
-        tests: List<TestItemWrapper>, mutation: Mutation
+        tests: MutableList<TestItemWrapper>, mutation: Mutation
     ): MutationTestResult {
         var killed = false
         var numberOfExecutedTests = 0
@@ -67,7 +67,12 @@ object MutationTestExecutor {
                         // A mutant is killed if a test is failed
                         killed = checkIfMutantWasKilled(test?.testResultAggregator)
                         // Early exit when the mutant was killed
-                        if (killed) break
+                        if (killed) {
+                            // put the test that killed this mutant to top of the tests list
+                            tests.remove(test)
+                            tests.add(0, test!!)
+                            break
+                        }
                     } catch (e: Exception) {
                         if (e is TimeoutCancellationException) {
                             testMonitor.markTimeoutMutationType(mutation)

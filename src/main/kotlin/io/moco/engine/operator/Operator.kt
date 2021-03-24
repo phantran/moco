@@ -48,4 +48,14 @@ interface Operator {
         methodInfo: MethodInfo,
         delegateMethodVisitor: MethodVisitor
     ): MethodVisitor?
+
+    fun notReachedTypeQuantityLimit(mutationLimitTracker: MutableMap<Int, MutableSet<String>>?, loc: Int): Boolean {
+        if (mutationLimitTracker != null) {
+            if (loc in mutationLimitTracker.keys && mutationLimitTracker[loc]?.contains(operatorName) == true) {
+                return false
+            }
+        }
+        // null mutationLimitTracker implies limitation parameter was set to false or we are in mutation test phase
+        return true
+    }
 }

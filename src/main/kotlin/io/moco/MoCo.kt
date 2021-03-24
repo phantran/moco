@@ -120,8 +120,8 @@ class MoCo : AbstractMojo() {
     /**
      * Set to true to tell MoCo to only generate mutation only for changed classes based on git commit information
      */
-    @Parameter(defaultValue = "5", property = "mutationPerClass", required = false)
-    private val mutationPerClass: Int = 5
+//    @Parameter(defaultValue = "5", property = "mutationPerClass", required = false)
+//    private val mutationPerClass: Int = 5
 
     /**
      * Set to true to tell MoCo to only generate mutation only for changed classes based on git commit information
@@ -144,14 +144,21 @@ class MoCo : AbstractMojo() {
     /**
      * Set to true to calculate mutation score for each run
      */
-    @Parameter(defaultValue = "false", property = "enableMetrics", required = false)
-    private val enableMetrics: Boolean = false
+    @Parameter(defaultValue = "true", property = "enableMetrics", required = false)
+    private val enableMetrics: Boolean = true
 
     /**
      * Turn off to skip dumbing mutation test results to moco.json file at the end
      */
     @Parameter(defaultValue = "true", property = "useForCICD", required = false)
     private val useForCICD: Boolean = true
+
+    /**
+     * Limit mutation of each mutation operator on each line of code to 1
+     * Set this parameter to false to tell MoCo to generate all possible mutations that it could collect
+     */
+    @Parameter(defaultValue = "true", property = "numberOfThreads", required = false)
+    private val limitMutantsByType: Boolean = true
 
     /**
      * Set to true to disable MoCo
@@ -168,6 +175,8 @@ class MoCo : AbstractMojo() {
     @Parameter(defaultValue = "\${session}", readonly = true)
     private val session: MavenSession? = null
 
+
+
     @Throws(MojoExecutionException::class)
     override fun execute() {
         try {
@@ -177,7 +186,7 @@ class MoCo : AbstractMojo() {
                     if (project?.dependencies?.any {
                             it.artifactId == mojo?.artifactId && it.groupId == mojo?.groupId
                     } == false ) {
-                        log.info("MoCo dependency is not specified in pom.xml")
+                        log.info("Skipped because MoCo dependency is not specified in pom.xml")
                         return
                     }
 
@@ -224,7 +233,8 @@ class MoCo : AbstractMojo() {
                         artifactId = project?.artifactId!!,
                         gitMode = gitMode,
                         preprocessTestTimeout = preprocessTestTimeout,
-                        mutationPerClass = mutationPerClass,
+                        mutationPerClass = 0,
+                        limitMutantsByType = limitMutantsByType,
                         debugEnabled = debugEnabled,
                         verbose = verbose,
                         numberOfThreads = numberOfThreads,
@@ -256,6 +266,7 @@ class MoCo : AbstractMojo() {
     }
 
     private fun prepareAllClassPaths(rootProject: MavenProject?): String {
+        // Loop through the hierarchy of maven project and add all relevant classpaths
         val buildRoot = project?.build?.directory.toString()
         val codeRoot = project?.build?.outputDirectory.toString()
         val testRoot = project?.build?.testOutputDirectory.toString()
