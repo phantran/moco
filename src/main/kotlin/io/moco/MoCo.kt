@@ -118,13 +118,7 @@ class MoCo : AbstractMojo() {
     private val gitMode: Boolean = true
 
     /**
-     * Set to true to tell MoCo to only generate mutation only for changed classes based on git commit information
-     */
-//    @Parameter(defaultValue = "5", property = "mutationPerClass", required = false)
-//    private val mutationPerClass: Int = 5
-
-    /**
-     * Set to true to tell MoCo to only generate mutation only for changed classes based on git commit information
+     * Turn off debug messages to console, turn on to check MoCo Execution
      */
     @Parameter(defaultValue = "false", property = "debugEnabled", required = false)
     private val debugEnabled: Boolean = false
@@ -132,8 +126,8 @@ class MoCo : AbstractMojo() {
     /**
      * Set to false to display succinct console messages during MoCo execution
      */
-    @Parameter(defaultValue = "false", property = "verbose", required = false)
-    private val verbose: Boolean = false
+    @Parameter(defaultValue = "true", property = "verbose", required = false)
+    private val verbose: Boolean = true
 
     /**
      * Number of max threads to use by the main process of MoCo
@@ -277,12 +271,12 @@ class MoCo : AbstractMojo() {
         val compileRootCp = rootProject?.compileClasspathElements
         val testCompileRootCp = rootProject?.testClasspathElements
         val resPath = System.getProperty("java.class.path").split(File.pathSeparator)
-            .union(runtimeCp!!.toSet())
             .union(compileCp!!.toSet())
-            .union(testCompileCp!!.toSet())
-            .union(runtimeRootCp!!.toSet())
             .union(compileRootCp!!.toSet())
+            .union(runtimeCp!!.toSet())
+            .union(runtimeRootCp!!.toSet())
             .union(testCompileRootCp!!.toSet())
+            .union(testCompileCp!!.toSet())
             .toMutableSet()
         val collectedProjects = rootProject.collectedProjects
         if (!collectedProjects.isNullOrEmpty()) {
@@ -290,8 +284,8 @@ class MoCo : AbstractMojo() {
                 val runtime = p.runtimeClasspathElements
                 val compile = p.compileClasspathElements
                 val testCompile = p.testClasspathElements
-                resPath.addAll(runtime.toSet())
                 resPath.addAll(compile.toSet())
+                resPath.addAll(runtime.toSet())
                 resPath.addAll(testCompile.toSet())
             }
         }

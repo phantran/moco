@@ -51,11 +51,14 @@ class Preprocessor(
                 return
             }
             PreprocessorTracker.errorTests = recoveredResult.errorTests
-            logger.debug("Preprocessing: ${remainingTests.size} test class(es) to run after filtering")
-            collectInfo(wrapped.first, isRerun, remainingTests)
+            logger.debug("Preprocessing: ${remainingTests.size} test cases to run after filtering")
+            val filtered = wrapped.filter { remainingTests.contains(it.testItem.toString()) }
+            val sorted = filtered.sortedBy { it.testItem.toString() }
+            collectInfo(sorted)
         } else {
-            logger.debug("Preprocessing: ${wrapped.first.size} test class(es) to run after filtering")
-            collectInfo(wrapped.first)
+            logger.debug("Preprocessing: ${wrapped.size} test cases to run after filtering")
+            val sorted = wrapped.sortedBy { it.testItem.toString() }
+            collectInfo(sorted)
         }
     }
 
@@ -63,24 +66,20 @@ class Preprocessor(
         private val logger = MoCoLogger()
 
         @Throws(IOException::class, InterruptedException::class, ExecutionException::class, RuntimeException::class)
-        fun collectInfo(
-            wrappedTests: List<TestItemWrapper?>, isRerun: Boolean = false, remainingTests: List<String?> = listOf()
-        ) {
-
+        fun collectInfo(wrappedTests: List<TestItemWrapper?>) {
             runBlocking {
                 for (i in wrappedTests.indices) {
-                    val testItem = wrappedTests.elementAt(i)
-                    if (isRerun && !remainingTests.contains(testItem?.testItem?.cls?.name)) {
-                        continue
-                    }
+                    val test = wrappedTests.elementAt(i)
                     PreprocessorTracker.clearTracker()
                     try {
-                        testItem?.call()
-                        if (testItem?.testResultAggregator?.results?.any { it.error is AssertionError } == true) {
-                            logger.error("Ignore tests in ${testItem.testItem.desc.name} as it " +
-                                            "contains failed test case(s), please fix it.")
+                        test?.call()
+                        if (test?.testResultAggregator?.results?.any { it.error is AssertionError } == true) {
+                            logger.error(
+                                "Ignore tests in ${test.testItem.desc.testCls} as it " +
+                                        "contains failed test case(s), please fix it."
+                            )
                         } else {
-                            PreprocessorTracker.registerMappingCutToTestInfo(testItem!!.testItem)
+                            PreprocessorTracker.registerMappingCutToTestInfo(test!!.testItem)
                             PreprocessorTracker.clearTracker()
                         }
                     } catch (e: Exception) {
@@ -88,8 +87,8 @@ class Preprocessor(
                             return@runBlocking
                         } else {
                             val temp = wrappedTests.subList(i + 1, wrappedTests.size)
-                            PreprocessorTracker.previousRemainingTests = temp.map { it?.testItem?.cls?.name }
-                            testItem?.testItem?.cls?.name?.let { PreprocessorTracker.errorTests.add(it) }
+                            PreprocessorTracker.previousRemainingTests = temp.map { it?.testItem.toString() }
+                            test?.testItem?.let { PreprocessorTracker.errorTests.add("$it") }
                             throw Exception(i.toString())
                         }
                     }

@@ -71,9 +71,6 @@ class JsonSource(private val folderPath: String, private val fileName: String) :
                 // We need to read the previous storage and append to it
                 existingStorage = existingStorage as PreprocessStorage
                 // First we update test execution time keys values
-                for ((k, v) in results.testsExecutionTime!!) {
-                    existingStorage.testsExecutionTime!!.putIfAbsent(k, v)
-                }
                 // Next we append to the existing class records
                 for (item in results.classRecord) {
                     val foundIndex =
@@ -125,6 +122,7 @@ class JsonSource(private val folderPath: String, private val fileName: String) :
             mapper.readValue(temp, cls)
         } catch (e: Exception) {
             logger.error("Error while reading JSON file")
+            logger.error(e.printStackTrace().toString())
             null
         }
     }

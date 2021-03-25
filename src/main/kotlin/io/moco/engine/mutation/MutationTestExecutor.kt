@@ -17,6 +17,7 @@
 
 package io.moco.engine.mutation
 
+import io.moco.engine.test.TestItem
 import io.moco.engine.test.TestItemWrapper
 import io.moco.engine.test.TestResult
 import io.moco.engine.test.TestResultAggregator
@@ -43,6 +44,7 @@ object MutationTestExecutor {
             logger.debug("Introduce mutant in " + (System.currentTimeMillis() - t0) + " ms")
             logger.debug("Mutation at line ${mutation.lineOfCode}")
             logger.debug("Mutation operator: ${mutation.description}")
+            logger.debug("Mutator ID: ${mutation.mutationID.mutatorID}")
             mtr = executeTestAndGetResult(tests.toMutableList(), mutation)
         } else {
             return MutationTestResult(0, MutationTestStatus.RUN_ERROR)
@@ -57,6 +59,7 @@ object MutationTestExecutor {
         var killed = false
         var numberOfExecutedTests = 0
         var finalStatus: MutationTestStatus
+        var killedByTest: TestItem? = null
         try {
             runBlocking {
                 var errorCount = 0
@@ -69,6 +72,8 @@ object MutationTestExecutor {
                         // Early exit when the mutant was killed
                         if (killed) {
                             // put the test that killed this mutant to top of the tests list
+                            logger.debug("${mutation.mutationID.mutatorID} was killed")
+                            killedByTest = test?.testItem
                             tests.remove(test)
                             tests.add(0, test!!)
                             break
@@ -100,7 +105,7 @@ object MutationTestExecutor {
                 // Reset test result aggregator of test classes before moving on to the next mutant
                 tests.map { it.testResultAggregator.results.clear() }
             }
-            return MutationTestResult(numberOfExecutedTests, finalStatus)
+            return MutationTestResult(numberOfExecutedTests, finalStatus, killedByTest.toString())
         } catch (ex: Exception) {
             return MutationTestResult(numberOfExecutedTests, MutationTestStatus.RUN_ERROR)
         }

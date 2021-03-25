@@ -25,6 +25,7 @@ import org.testng.ITestResult
 class TestNGRunListener : ITestListener {
     private var tra: TestResultAggregator? = null
     private var testClass: Class<*>? = null
+    private var desc: Description? = null
 
     fun setTra(tra: TestResultAggregator?) {
         this.tra = tra
@@ -34,28 +35,32 @@ class TestNGRunListener : ITestListener {
         this.testClass = cls
     }
 
-    fun description(result: ITestResult): Description {
-        return Description(result.method.methodName, testClass?.name)
+    fun setDesc(desc: Description?) {
+        this.desc = desc
     }
 
+//    fun description(result: ITestResult): Description {
+//        return Description(result.method.methodName, testClass?.name)
+//    }
+
     override fun onTestStart(result: ITestResult) {
-        tra?.results?.add(TestResult(description(result), null, TestResult.TestState.RUNNING))
+        tra?.results?.add(TestResult(desc!!, null, TestResult.TestState.RUNNING))
     }
 
     override fun onTestSuccess(result: ITestResult) {
-        tra?.results?.add(TestResult(description(result), null, TestResult.TestState.FINISHED))
+        tra?.results?.add(TestResult(desc!!, null, TestResult.TestState.FINISHED))
     }
 
     override fun onTestFailure(result: ITestResult) {
-        tra?.results?.add(TestResult(description(result), result.throwable, TestResult.TestState.FINISHED))
+        tra?.results?.add(TestResult(desc!!, result.throwable, TestResult.TestState.FINISHED))
     }
 
     override fun onTestSkipped(result: ITestResult) {
-        tra?.results?.add(TestResult(description(result), null, TestResult.TestState.NOT_STARTED))
+        tra?.results?.add(TestResult(desc!!, null, TestResult.TestState.NOT_STARTED))
     }
 
     override fun onTestFailedButWithinSuccessPercentage(result: ITestResult) {
-        tra?.results?.add(TestResult(description(result), null, TestResult.TestState.FINISHED))
+        tra?.results?.add(TestResult(desc!!, null, TestResult.TestState.FINISHED))
     }
 
     override fun onStart(p0: ITestContext?) {

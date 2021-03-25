@@ -28,14 +28,12 @@ open class MoCoModel(
     open val sourceName: String = ""
 
     open fun save() {
-        // This method insert or update (if exists) a PersistentMutationResult record to its table
         H2Database().insertOrUpdateIfExist(sourceName, entry)
     }
 
     @Throws(Exception::class)
     open fun getData(condition: String): List<MoCoModel> {
-        // This method return a list of (PersistentMutationResult) recorded mutation test results
-        // each record contains (location, killed or survived...)
+        // This method return a list of MoCoModel results
         val con = H2Database.getConnection()
         val temp = H2Database().fetch(con, sourceName, condition)
         val res: MutableList<MoCoModel> = mutableListOf()
@@ -50,13 +48,29 @@ open class MoCoModel(
         return res
     }
 
+    fun isEmptyTable(): Boolean {
+        val con = H2Database.getConnection()
+        val temp = H2Database().executeQuery(con, "select exists (select 1 from $sourceName) AS Output;")
+        while (temp?.next() == true) {
+            val res = temp.getBoolean("Output")
+            if (!res) return true
+        }
+        return false
+    }
+
+    override fun toString(): String {
+        val res = ""
+        entry.map{ res + " -${it.key}:${it.value} " }
+        return res
+    }
+
     open fun removeData(condition: String) {
         H2Database().delete(sourceName, condition)
     }
 
     companion object {
         fun saveMultipleEntries(sourceName: String, entries: List<MutableMap<String, String?>>) {
-            // This method insert or update (if exists) a PersistentMutationResult record to its table
+            // This method insert or update (if exists) a record to its table
             H2Database().multipleInsertOrUpdateIfExist(sourceName, entries)
         }
     }

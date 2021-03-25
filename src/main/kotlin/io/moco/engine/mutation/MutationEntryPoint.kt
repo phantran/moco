@@ -22,7 +22,7 @@ import io.moco.engine.Configuration
 import io.moco.engine.WorkerProcess
 import io.moco.engine.operator.Operator
 import io.moco.engine.preprocessing.PreprocessStorage
-import io.moco.engine.test.RelatedTestRetriever
+import io.moco.engine.test.SerializableTestInfo
 import io.moco.persistence.*
 import io.moco.utils.ByteArrayLoader
 import io.moco.utils.GitProcessor
@@ -72,8 +72,7 @@ class MutationEntryPoint(
                 logger.info("No preprocess results, skip mutation testing")
                 return
             }
-            if (preprocessedStorage.classRecord.isNullOrEmpty() ||
-                preprocessedStorage.testsExecutionTime.isNullOrEmpty()) {
+            if (preprocessedStorage.classRecord.isNullOrEmpty()) {
                 logger.info("No preprocess information available, skip mutation testing")
                 return
             }
@@ -97,7 +96,7 @@ class MutationEntryPoint(
             logger.debug("Start mutation testing")
             handleMutations(filteredMutations, preprocessedStorage)
 
-            persistMutationResults()
+            persistMutationResults(preprocessedStorage)
 
             logger.debug("Complete mutation testing")
         } catch (ex: Exception) {
@@ -151,10 +150,9 @@ class MutationEntryPoint(
         filteredMutations: Map<String, List<Mutation>>, preprocessedStorage: PreprocessStorage?
     ) {
         val executor = Executors.newFixedThreadPool(Configuration.currentConfig!!.numberOfThreads) as ThreadPoolExecutor
-        val chunkedMutationsList: List<Pair<String, List<Mutation>>> = mutationsSplitting(filteredMutations)
         var curCls = ""  // This curCls var is only used for info logging purpose
-        if (chunkedMutationsList.isEmpty()) logger.info("No mutations to run")
-        chunkedMutationsList.forEach label@{ (cls, mutationList) ->
+        if (filteredMutations.isEmpty()) logger.info("No mutations to run")
+        filteredMutations.forEach label@{ (cls, mutationList) ->
             if (curCls != cls) {
                 curCls = cls
                 logger.infoVerbose("Mutation test for class $cls - with ${filteredMutations[cls]?.size} mutants")
@@ -187,23 +185,15 @@ class MutationEntryPoint(
     ) : Runnable {
         override fun run() {
             val className = ClassName(cls)
-            val testRetriever = RelatedTestRetriever(buildRoot)
-            val testsExecutionTime = preprocessedStorage?.testsExecutionTime!!
-            val relatedTestClasses: List<ClassName> = testRetriever.retrieveRelatedTest(
-                className,
-                testsExecutionTime
-            )
+//            val testRetriever = RelatedTestRetriever(buildRoot)
             // Map from lines of code of the target class under test to test cases that cover them
-            var lineTestsMapping = (preprocessedStorage.classRecord.find {
+            val lineTestsMapping = (preprocessedStorage?.classRecord?.find {
                 it.classUnderTestName == className.name
             })?.coveredLines
-            if (lineTestsMapping == null) lineTestsMapping = mutableMapOf()
-            if (relatedTestClasses.isEmpty()) {
-                logger.debug("Class ${className.getJavaName()} has 0 relevant test")
+            if (lineTestsMapping.isNullOrEmpty()) {
+                logger.debug("Skip -- Line to tests mapping of ${className.getJavaName()} is unavailable")
                 return
             }
-
-            logger.debug("Class ${className.getJavaName()} has ${relatedTestClasses.size} relevant tests")
 
             val temp = mutableListOf<Mutation>()
             for (i in mutationList.indices) {
@@ -214,24 +204,18 @@ class MutationEntryPoint(
                     MutationTestWorker::class.java, processArgs,
                     listOf((processArgs["port"] as ServerSocket).localPort.toString())
                 )
-
-                if (relatedTestClasses.size > 10) {
+                temp.add(mutationList[i])
+                val numberOfTestsToRun: Int = getNumberOfTestsToRun(temp, lineTestsMapping)
+                if (numberOfTestsToRun >= 50) {
                     val workerThread = workerProcess.createMutationWorkerThread(
-                        listOf(mutationList[i]), relatedTestClasses, lineTestsMapping,
-                        testsExecutionTime, fOpNames, mutationStorage
+                        temp, lineTestsMapping, fOpNames, mutationStorage
                     )
                     workerProcess.execMutationTestProcess(workerThread)
+                    temp.clear()
                 } else {
-                    temp.add(mutationList[i])
-                    if (temp.size * relatedTestClasses.size > 10) {
+                    if (i == mutationList.size - 1) {
                         val workerThread = workerProcess.createMutationWorkerThread(
-                            temp, relatedTestClasses, lineTestsMapping, testsExecutionTime, fOpNames, mutationStorage
-                        )
-                        workerProcess.execMutationTestProcess(workerThread)
-                        temp.clear()
-                    } else if (i == mutationList.size - 1) {
-                        val workerThread = workerProcess.createMutationWorkerThread(
-                            temp, relatedTestClasses, lineTestsMapping, testsExecutionTime, fOpNames, mutationStorage
+                            temp, lineTestsMapping, fOpNames, mutationStorage
                         )
                         workerProcess.execMutationTestProcess(workerThread)
                     }
@@ -239,24 +223,16 @@ class MutationEntryPoint(
             }
             return
         }
-    }
 
-    private fun mutationsSplitting(mutationsMap: Map<String, List<Mutation>>): MutableList<Pair<String, List<Mutation>>> {
-        // Split 10 mutants per class entry (1 class can have many entry in the map)
-        // to make sure a process launch does not crash because of memory issue
-        val res: MutableList<Pair<String, List<Mutation>>> = mutableListOf()
-        for ((clsName, ml) in mutationsMap) {
-            if (ml.size > 10) {
-                val temp = ml.chunked(10)
-                temp.forEach { res.add(Pair(clsName, it)) }
-            } else {
-                res.add(Pair(clsName, ml))
-            }
+        private fun getNumberOfTestsToRun(mutationList: List<Mutation>,
+                                          lineTestsMapping: MutableMap<Int, MutableSet<SerializableTestInfo>>): Int {
+            var res = 0
+            mutationList.map { res += lineTestsMapping[it.lineOfCode]?.size ?: 0 }
+            return res
         }
-        return res
     }
 
-    private fun persistMutationResults() {
+    private fun persistMutationResults(preprocessedStorage: PreprocessStorage) {
         val jsonSource = JsonSource("${mocoBuildPath}${File.separator}$mutationResultsFolder", "moco")
         var updatedMutationStorage = mutationStorage
         if (gitMode && gitProcessor != null) {
@@ -264,9 +240,9 @@ class MutationEntryPoint(
             // Mutants black list UPDATE - ADD (mutation results with status as run_error)
             MutantsBlackList().saveErrorMutants(mutationStorage)
             // Progress Class Test UPDATE - ADD (class progress - mutation results with status as survived and killed)
-            ProgressClassTest().saveProgress(mutationStorage, fOpNames.joinToString(","))
-            PersistentMutationResult().saveMutationResult(mutationStorage)
+            PersistentMutationResult().saveMutationResult(mutationStorage, clsByGit, preprocessedStorage)
             updatedMutationStorage = updateWithExistingMutationResults(mutationStorage, jsonSource)
+            ProgressClassTest().saveProgress(mutationStorage, fOpNames.joinToString(","))
         }
         if (Configuration.currentConfig!!.useForCICD) {
             logger.infoVerbose("Saved mutation test results to moco.json")
@@ -278,6 +254,7 @@ class MutationEntryPoint(
         additionalMutationStorage: MutationStorage,
         jsonSource: JsonSource
     ): MutationStorage {
+        // returned storage contains all mutation results to be used in 3rd application
         val data = jsonSource.getData(MutationStorage::class.java)
         var existingMocoJSON: MutationStorage? = null
         if (data != null) existingMocoJSON = data as MutationStorage

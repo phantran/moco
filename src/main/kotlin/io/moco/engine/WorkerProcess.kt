@@ -20,6 +20,7 @@ package io.moco.engine
 
 import io.moco.engine.mutation.Mutation
 import io.moco.engine.mutation.ResultsReceiverThread
+import io.moco.engine.test.SerializableTestInfo
 import io.moco.persistence.MutationStorage
 import java.io.IOException
 import java.lang.Exception
@@ -80,15 +81,13 @@ class WorkerProcess(
 
     fun createMutationWorkerThread(
         mutations: List<Mutation>,
-        tests: List<ClassName>,
-        lineTestsMapping: MutableMap<Int, MutableSet<String>>,
-        testsExecutionTime: MutableMap<String, Long>,
+        lineTestsMapping: MutableMap<Int, MutableSet<SerializableTestInfo>>,
         filteredMuOpNames: List<String>,
         mutationStorage: MutationStorage
     ): ResultsReceiverThread {
         val mutationWorkerArgs =
             ResultsReceiverThread.MutationWorkerArguments(
-                mutations, tests, lineTestsMapping, testsExecutionTime, processArgs["classPath"] as String, filteredMuOpNames, "")
+                mutations, lineTestsMapping, processArgs["classPath"] as String, filteredMuOpNames, "")
         return ResultsReceiverThread(processArgs["port"] as ServerSocket, mutationWorkerArgs, mutationStorage)
     }
 

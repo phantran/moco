@@ -90,8 +90,8 @@ object PreprocessorWorker {
             exitProcess(MoCoProcessCode.OK.code)
         } catch (ex: Exception) {
             jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())
-            logger.debug("Preprocessing: Data saved and exit")
-            logger.debug("Preprocessing: Exit because of error")
+            logger.debug("Preprocessing: Sub-process exited because of a test error")
+            logger.debug("Preprocessing: Data saved and exited")
             if (!ex.message.isNullOrEmpty()) {
                 val exitIndex = ex.message!!.toIntOrNull()
                 if (exitIndex != null) {

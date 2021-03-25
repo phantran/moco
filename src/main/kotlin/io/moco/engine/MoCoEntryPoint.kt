@@ -46,6 +46,8 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     private var gitMode = configuration.gitMode
     private lateinit var byteLoader: ByteArrayLoader
     private var agentLoc: String? = null
+
+    @get: Synchronized
     private val mutationStorage: MutationStorage =
         MutationStorage(mutableMapOf(), System.currentTimeMillis().toString())
     private var clsByGit: List<String>? = listOf()
@@ -64,8 +66,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
                 if (!initMoCoOK()) {
                     logger.info("EXIT: Nothing to do")
                     return
-                }
-                else {
+                } else {
                     logger.info("Preprocessing started......")
                     PreprocessEntryPoint().preprocessing(clsByGit!!, recordedTestMapping, agentLoc!!)
                     logger.info("Preprocessing completed")
@@ -135,8 +136,10 @@ class MoCoEntryPoint(private val configuration: Configuration) {
             try {
                 gitProcessor = GitProcessor(configuration.rootProjectBaseDir)
             } catch (e: Exception) {
-                logger.error("Git Mode is ON but Git information couldn't be processed, " +
-                            "make sure Git exits for this project")
+                logger.error(
+                    "Git Mode is ON but Git information couldn't be processed, " +
+                            "make sure Git exits for this project"
+                )
                 logger.error(e.printStackTrace().toString())
                 return false
             }
@@ -161,6 +164,8 @@ class MoCoEntryPoint(private val configuration: Configuration) {
                     logger.debug("Classes found: $clsByGit")
                     recordedTestMapping = TestsCutMapping().getRecordedMapping(clsByGit!!)
                 } else {
+                    // clsByGit equals null could mean database has been reset or it's the first run
+                    // if it's null then we set it to empty list as below
                     clsByGit = listOf("")
                     logger.info("Preprocessing: Git mode: last stored commit not found - proceed in normal mode")
                 }

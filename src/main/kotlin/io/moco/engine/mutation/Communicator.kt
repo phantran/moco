@@ -25,8 +25,8 @@ import java.io.Serializable
 
 class Communicator(private val outputStream: DataOutputStream) {
 
-    @Synchronized
     @Throws(IOException::class)
+    @Synchronized
     fun registerToMainProcess(mutationID: MutationID?) {
         outputStream.writeByte(ResultsReceiverThread.register.toInt())
         if (mutationID != null) {
@@ -35,8 +35,8 @@ class Communicator(private val outputStream: DataOutputStream) {
         outputStream.flush()
     }
 
-    @Synchronized
     @Throws(IOException::class)
+    @Synchronized
     fun reportToMainProcess(
         mutation: Mutation?,
         mutationTestResult: MutationTestResult?
@@ -57,8 +57,8 @@ class Communicator(private val outputStream: DataOutputStream) {
         outputStream.flush()
     }
 
-    @Synchronized
     @Throws(IOException::class)
+    @Synchronized
     fun finishedMessageToMainProcess(exitCode: Int) {
         outputStream.writeByte(ResultsReceiverThread.finished.toInt())
         outputStream.writeInt(exitCode)

@@ -17,6 +17,7 @@
 
 package io.moco.engine.preprocessing
 
+import io.moco.engine.test.SerializableTestInfo
 import io.moco.engine.test.TestItem
 import java.util.concurrent.ConcurrentHashMap
 
@@ -27,12 +28,12 @@ class PreprocessorTracker {
         var lineTracker: ConcurrentHashMap<String, MutableSet<Int>> = ConcurrentHashMap()
         var cutRecord: MutableSet<String> = mutableSetOf()
 
-        // {"className1 to ["lineOfCode" to set{testClasses...}], "className2 to ["lineOfCode" to set{testClasses...}]}
-        val cutToLineTestMap: MutableMap<String, MutableMap<Int, MutableSet<String>>> = mutableMapOf()
-        val cutToTest: MutableMap<String, MutableSet<String>> = mutableMapOf()
+        // {"className1 to ["lineOfCode" to set{SerializableTestInfo...}], "className2 to ["lineOfCode" to set{SerializableTestInfo...}]}
+        val cutToLineTestMap: MutableMap<String, MutableMap<Int, MutableSet<SerializableTestInfo>>> = mutableMapOf()
+        val cutToTests: MutableMap<String, MutableSet<String>> = mutableMapOf()
 
         // Internal class name of ProcessorTracker to be called by asm method visitor
-        private var testExecutionTime = mutableMapOf<String, Long>()
+//        private var testExecutionTime = mutableMapOf<String, Long>()
         val internalClsName: String = PreprocessorTracker::class.qualifiedName.toString().replace(".", "/")
         var previousRemainingTests: List<String?> = mutableListOf()
         var errorTests: MutableList<String?> = mutableListOf()
@@ -40,35 +41,31 @@ class PreprocessorTracker {
 
         @Synchronized
         @JvmStatic
-        fun registerMappingCutToTestInfo(testClass: TestItem) {
+        fun registerMappingCutToTestInfo(testItem: TestItem) {
+            // Update cutToLineTestMap
+            val testInfo = SerializableTestInfo(testItem.cls.name,
+                testItem.testIdentifier.toString(),
+                testItem.toString(),
+                testItem.executionTime)
             for ((cut, lines) in lineTracker.entries) {
                 if (cutToLineTestMap.keys.contains(cut)) {
                     lines.map {
                         if (cutToLineTestMap[cut]!!.containsKey(it)) {
-                            cutToLineTestMap[cut]!![it]?.add(testClass.cls.name)
-                        } else cutToLineTestMap[cut]!!.set(it, mutableSetOf(testClass.cls.name))
+                            cutToLineTestMap[cut]!![it]?.add(testInfo)
+                        } else cutToLineTestMap[cut]!!.set(it, mutableSetOf(testInfo))
                     }
                 } else {
                     cutToLineTestMap[cut] = mutableMapOf()
-                    lines.map { cutToLineTestMap[cut]!![it] = mutableSetOf(testClass.cls.name) }
+                    lines.map { cutToLineTestMap[cut]!![it] = mutableSetOf(testInfo) }
                 }
-
-
             }
             for (item in cutRecord) {
                 // cutRecord contains a class name means a test has invoked a method of that class
-                if (!cutToTest.keys.contains(item)) {
-                    cutToTest[item] = mutableSetOf(testClass.cls.name)
+                if (!cutToTests.keys.contains(item)) {
+                    cutToTests[item] = mutableSetOf(testItem.cls.name)
                 } else {
-                    cutToTest[item]?.add(testClass.cls.name)
+                    cutToTests[item]?.add(testItem.cls.name)
                 }
-            }
-            if (testExecutionTime.containsKey(testClass.cls.name)) {
-                if (testClass.executionTime > testExecutionTime[testClass.cls.name]!!) {
-                    testExecutionTime[testClass.cls.name] = testClass.executionTime
-                }
-            } else {
-                testExecutionTime[testClass.cls.name] = testClass.executionTime
             }
         }
 
@@ -97,16 +94,16 @@ class PreprocessorTracker {
 
         fun getPreprocessResults(): PreprocessStorage {
             val classRecord = mutableListOf<PreprocessClassResult>()
-            for (cut in cutToTest.keys) {
+            for (cut in cutToTests.keys) {
                 if (cutToLineTestMap.keys.contains(cut)) {
-                    val testClasses = cutToTest[cut]
+                    val testClasses = cutToTests[cut]
                     val coveredLines = cutToLineTestMap[cut]
                     classRecord.add(PreprocessClassResult(cut, testClasses!!, coveredLines))
                 } else {
                     continue
                 }
             }
-            return PreprocessStorage(classRecord, testExecutionTime, previousRemainingTests, errorTests)
+            return PreprocessStorage(classRecord, previousRemainingTests, errorTests)
         }
     }
 }

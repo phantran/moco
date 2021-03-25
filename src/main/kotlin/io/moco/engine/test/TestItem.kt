@@ -18,27 +18,58 @@
 package io.moco.engine.test
 
 import io.moco.engine.ClassName
-import io.moco.utils.ClassLoaderUtil
 import io.moco.utils.MoCoLogger
 import junit.framework.TestCase
+import junit.framework.TestSuite
 import org.junit.platform.suite.api.SelectClasses
 import org.junit.platform.suite.api.SelectPackages
 import org.junit.runners.Suite
 
-open class TestItem(val cls: Class<*>, var executionTime: Long = -1) {
-    open val desc: Description = Description(this.cls.name, this.cls.name)
+
+open class TestItem(
+    val cls: Class<*>,
+    val testIdentifier: Any,
+    var executionTime: Long = -1
+) {
+    open val desc: Description = Description("", this.cls.name)
     val logger = MoCoLogger()
 
     enum class TestFramework {
-        JUNIT34, JUNIT5, TESTNG, UNKNOWN
+        JUNIT3, JUNIT4, JUNIT5, TESTNG, UNKNOWN
     }
 
     open suspend fun execute(tra: TestResultAggregator, timeOut: Long = -1) {}
 
     companion object {
+        fun testsInfoToTestItems(testsInfo: MutableSet<SerializableTestInfo>?): List<TestItem> {
+            // convert from test classes to test items so it can be executed
+            val res: MutableList<TestItem> = mutableListOf()
+            testsInfo?.mapNotNull {
+                val clsName = ClassName.fromString(it.cls)
+                if (it.executionTime >= 0) {
+                    // execution time < 0 means error tests in preprocessing phase
+                    val testClass = ClassName.clsNameToClass(clsName)
+                    if (it.testIdentifier.isNotEmpty()) {
+                    when (checkTestFramework(testClass as Class<*>)) {
+                            TestFramework.JUNIT3 -> res.add(JUnit34TestItem(testClass, it.testIdentifier, true, it.executionTime))
+                            TestFramework.JUNIT4 -> res.add(JUnit34TestItem(testClass, it.testIdentifier, false, it.executionTime))
+                            TestFramework.JUNIT5 -> {
+                                val testItem = JUnit5TestItem.getTestItem(testClass, it.testIdentifier, it.executionTime)
+                                if (testItem != null) res.add(testItem)
+                                else null
+                            }
+                            TestFramework.TESTNG -> res.add(TestNGTestItem(testClass, it.testIdentifier, it.executionTime))
+
+                        else -> null
+                    }
+                    } else null
+                } else null
+            }
+            return res
+        }
+
         fun testClassesToTestItems(
             testClassNames: List<ClassName>,
-            testsExecutionTime: MutableMap<String, Long>? = null
         ): List<TestItem> {
             // convert from test classes to test items so it can be executed
             var testClasses = testClassNames.mapNotNull {
@@ -49,14 +80,11 @@ open class TestItem(val cls: Class<*>, var executionTime: Long = -1) {
             for (item in testClasses) {
                 val typeFramework = checkTestFramework(item)
                 if (isNotTestSuite(item, typeFramework)) {
-                    var allowedTime = -1L
-                    if (!testsExecutionTime.isNullOrEmpty()) {
-                        allowedTime = if (testsExecutionTime[item.name] != null) testsExecutionTime[item.name]!! else -1
-                    }
                     when (typeFramework) {
-                        TestFramework.JUNIT34 -> res.add(JUnit34TestItem(item, executionTime = allowedTime))
-                        TestFramework.JUNIT5 -> Junit5TestItem.getTests(res, item, executionTime = allowedTime)
-                        TestFramework.TESTNG -> res.add(TestNGTestItem(item, executionTime = allowedTime))
+                        TestFramework.JUNIT3 -> JUnit34TestItem.getTests(res, true, item)
+                        TestFramework.JUNIT4 -> JUnit34TestItem.getTests(res, false, item)
+                        TestFramework.JUNIT5 -> JUnit5TestItem.getTests(res, item)
+                        TestFramework.TESTNG -> TestNGTestItem.getTests(res, item)
                         else -> {
                         }
                     }
@@ -68,7 +96,12 @@ open class TestItem(val cls: Class<*>, var executionTime: Long = -1) {
         private fun isNotTestSuite(cls: Class<*>, testFramework: TestFramework): Boolean {
             // Ignore test suite class since all normal test classes are recorded.
             when (testFramework) {
-                TestFramework.JUNIT34 -> {
+                TestFramework.JUNIT3 -> {
+                    if (cls.superclass != TestSuite::class.java) {
+                        return true
+                    }
+                }
+                TestFramework.JUNIT4 -> {
                     if (cls.getAnnotation(Suite.SuiteClasses::class.java) == null) {
                         return true
                     }
@@ -89,20 +122,20 @@ open class TestItem(val cls: Class<*>, var executionTime: Long = -1) {
 
         private fun checkTestFramework(cls: Class<*>): TestFramework {
             // junit3 extends test case or testsuite class, junit4 has RunWith or Test annotation
-            if (cls.superclass == TestCase::class.java ||
-                cls.declaredMethods.any {
+            if (cls.declaredMethods.any {
                     it.annotations.any { it1 ->
                         it1.annotationClass.java == org.junit.Test::class.java
                     }
-                }
-            ) {
-                return TestFramework.JUNIT34
+                }) {
+                return TestFramework.JUNIT4
             } else if (cls.declaredMethods.any {
                     it.annotations.any { it1 ->
                         it1.annotationClass.java == org.junit.jupiter.api.Test::class.java
                     }
                 }) {
                 return TestFramework.JUNIT5
+            } else if (cls.superclass == TestCase::class.java) {
+                return TestFramework.JUNIT3
             } else if (cls.declaredMethods.any {
                     it.annotations.any { it1 ->
                         it1.annotationClass.java == org.testng.annotations.Test::class.java

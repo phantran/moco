@@ -26,10 +26,15 @@ import org.testng.xml.XmlTest
 import kotlin.system.measureTimeMillis
 
 
-class TestNGTestItem(cls: Class<*>, executionTime: Long = -1) : TestItem(cls, executionTime) {
+class TestNGTestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -1) :
+    TestItem(cls, testIdentifier, executionTime) {
+
+    override val desc: Description = Description(testIdentifier, this.cls.name)
 
     init {
-        testng.addListener(listener as ITestNGListener)
+        if (!testng.testListeners.contains(listener as ITestNGListener)) {
+            testng.addListener(listener as ITestNGListener)
+        }
         testng.setVerbose(0)
     }
 
@@ -37,39 +42,50 @@ class TestNGTestItem(cls: Class<*>, executionTime: Long = -1) : TestItem(cls, ex
         // needs to be static as jmockit assumes only a single instance per jvm
         private val testng = TestNG(false)
         private val listener: TestNGRunListener = TestNGRunListener()
+
+        fun getTests(res: MutableList<TestItem>, item: Class<*>) {
+            item.declaredMethods.map {
+                if (it.annotations.any { it1 ->
+                        it1.annotationClass.java == org.testng.annotations.Test::class.java
+                    }) {
+                    res.add(JUnit34TestItem(item, it.name, false, -1))
+                }
+            }
+        }
     }
 
     override suspend fun execute(tra: TestResultAggregator, timeOut: Long) {
         var job: Job? = null
         try {
-
             job = GlobalScope.launch {
                 withTimeout(timeOut) {
                     val temp = measureTimeMillis {
-                        synchronized (testng) {
+                        synchronized(testng) {
                             val suite = XmlSuite()
                             suite.name = cls.name
                             suite.setSkipFailedInvocationCounts(true)
                             val test = XmlTest(suite)
-                            test.name = cls.name
+                            test.name = testIdentifier as String
                             val xclass = XmlClass(cls.name)
                             test.xmlClasses = listOf(xclass)
                             testng.defaultSuiteName = suite.name
                             testng.setXmlSuites(listOf(suite))
                             listener.setTra(tra)
                             listener.setTestCls(cls)
+                            listener.setDesc(desc)
                             try {
                                 testng.run()
                             } finally {
                                 listener.setTra(null)
                                 listener.setTestCls(null)
+                                listener.setDesc(null)
                             }
                         }
                     }
                     if (executionTime == -1L) {
                         executionTime = temp
                     }
-                    logger.debug("Test ${desc.name} finished after $executionTime ms")
+                    logger.debug("Test ${this@TestNGTestItem} finished after $executionTime ms")
                 }
             }
             job.join()
@@ -77,12 +93,16 @@ class TestNGTestItem(cls: Class<*>, executionTime: Long = -1) : TestItem(cls, ex
             when (ex) {
                 is TimeoutCancellationException -> {
                     tra.results.add(TestResult(desc, ex, TestResult.TestState.TIMEOUT))
-                    logger.debug("Test ${desc.name} execution TIMEOUT - allowed time $timeOut ms")
+                    logger.debug("Test ${this@TestNGTestItem} execution TIMEOUT - allowed time $timeOut ms")
                 }
             }
             throw ex
         } finally {
             job!!.cancel()
         }
+    }
+
+    override fun toString(): String {
+        return ("${desc.testCls}.${desc.name}()")
     }
 }

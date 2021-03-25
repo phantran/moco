@@ -40,10 +40,16 @@ class AEntryPointTest: AnnotationSpec() {
     private val classpath = System.getProperty("java.class.path") + File.pathSeparator + codeRoot + File.pathSeparator + testRoot
     private val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
 
+    @BeforeEach
+    fun init() {
+        unmockkAll()
+        FileUtils.deleteDirectory(File(buildRoot + "moco"))
+    }
+
     @AfterAll
     fun cleanUp() {
         unmockkAll()
-        FileUtils.deleteDirectory(File(buildRoot + "moco"));
+        FileUtils.deleteDirectory(File(buildRoot + "moco"))
     }
 
     @Test
@@ -52,7 +58,7 @@ class AEntryPointTest: AnnotationSpec() {
             val excluded = ""
             val fOpNames = Operator.supportedOperatorNames.filter { !excluded.contains(it) }
             val configuration = Configuration(
-                "/Users/phantran/Study/Passau/Thesis/TestGamekins/test/",
+                baseDir,
                 System.currentTimeMillis().toString(),
                 buildRoot,
                 codeRoot,
@@ -95,7 +101,7 @@ class AEntryPointTest: AnnotationSpec() {
             )
             H2Database().initDBTablesIfNotExists()
             MoCoEntryPoint(configuration).execute()
-            MoCoEntryPoint.runScore.roundToInt() shouldBeInRange IntRange(50, 100)
+            MoCoEntryPoint.runScore.roundToInt() shouldBeInRange IntRange(14, 16)
         } finally {
             H2Database.shutDownDB()
         }

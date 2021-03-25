@@ -17,6 +17,8 @@
 
 package io.moco.engine.preprocessing
 
+import io.moco.engine.test.SerializableTestInfo
+
 /**
  * Preprocess result of a class under test
  * An instant of this class contains information that is collected during preprocessing of codebase of a specific class
@@ -28,5 +30,5 @@ package io.moco.engine.preprocessing
 data class PreprocessClassResult(
     val classUnderTestName: String,
     val testClasses: MutableSet<String>,
-    val coveredLines: MutableMap<Int, MutableSet<String>>?,
+    val coveredLines: MutableMap<Int, MutableSet<SerializableTestInfo>>?,
 )
