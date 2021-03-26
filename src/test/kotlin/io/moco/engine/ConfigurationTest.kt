@@ -53,6 +53,8 @@ class ConfigurationTest: AnnotationSpec() {
             buildRoot,
             codeRoot,
             testRoot,
+            codeRoot,
+            testRoot,
             "$buildRoot${File.separator}moco",
             "io/moco/MoCo",
             "io/moco/engine, io/moco/dev/main, io/moco/persistence, io/moco/utils",

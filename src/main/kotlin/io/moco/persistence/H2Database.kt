@@ -200,9 +200,11 @@ class H2Database : Database() {
         )
 
         fun shutDownDB() {
-            connectionsPool.connection.use { con ->
-                con?.createStatement().use { st ->
-                    st?.execute("SHUTDOWN")
+            if (::connectionsPool.isInitialized) {
+                connectionsPool.connection.use { con ->
+                    con?.createStatement().use { st ->
+                        st?.execute("SHUTDOWN")
+                    }
                 }
             }
         }

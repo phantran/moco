@@ -30,13 +30,14 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 import java.nio.file.Paths
 
-class PreprocessWorkerTest: AnnotationSpec() {
+class PreprocessWorkerTest : AnnotationSpec() {
 
     private val baseDir = Paths.get("").toAbsolutePath().toString()
     private val buildRoot = "$baseDir/src/test/resources/test-artifacts/"
     private val codeRoot = "$baseDir/src/test/resources/test-artifacts/sources"
     private val testRoot = "$baseDir/src/test/resources/test-artifacts/tests"
-    private val classpath = System.getProperty("java.class.path") + File.pathSeparator + codeRoot + File.pathSeparator + testRoot
+    private val classpath =
+        System.getProperty("java.class.path") + File.pathSeparator + codeRoot + File.pathSeparator + testRoot
     private val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
     private val excluded = ""
     private val fOpNames = Operator.supportedOperatorNames.filter { !excluded.contains(it) }
@@ -44,6 +45,8 @@ class PreprocessWorkerTest: AnnotationSpec() {
         "/Users/phantran/Study/Passau/Thesis/TestGamekins/test/",
         System.currentTimeMillis().toString(),
         buildRoot,
+        codeRoot,
+        testRoot,
         codeRoot,
         testRoot,
         "$buildRoot${File.separator}moco",
@@ -84,8 +87,14 @@ class PreprocessWorkerTest: AnnotationSpec() {
         val args = arrayOf("0", *configuration.getPreprocessProcessArgs().toTypedArray(), "", "", "false")
         PreprocessorWorker.prepareWorker(args)
         val analysedCodeBase = Codebase(
-            PreprocessorWorker.codeRoot, PreprocessorWorker.testRoot, PreprocessorWorker.excludedSourceClasses,
-            PreprocessorWorker.excludedSourceFolders, PreprocessorWorker.excludedTestClasses, PreprocessorWorker.excludedTestFolders
+            PreprocessorWorker.codeRoot,
+            PreprocessorWorker.testRoot,
+            PreprocessorWorker.codeRoot,
+            PreprocessorWorker.testRoot,
+            PreprocessorWorker.excludedSourceClasses,
+            PreprocessorWorker.excludedSourceFolders,
+            PreprocessorWorker.excludedTestClasses,
+            PreprocessorWorker.excludedTestFolders
         )
         val relevantTests = PreprocessorWorker.getRelevantTests(
             PreprocessorWorker.filteredClsByGitCommit,

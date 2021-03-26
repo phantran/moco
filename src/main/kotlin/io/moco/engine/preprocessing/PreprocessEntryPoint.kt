@@ -49,7 +49,7 @@ class PreprocessEntryPoint {
                 else {
                     previousStatus = processStatus
                     // Add more parameter to param to process to signal that this is a rerun because of previous error
-                    if (processWorkerArguments.getOrNull(14) == null) processWorkerArguments.add("true")
+                    if (processWorkerArguments.getOrNull(17) == null) processWorkerArguments.add("true")
                 }
             }
             if (processStatus != MoCoProcessCode.OK.code) {

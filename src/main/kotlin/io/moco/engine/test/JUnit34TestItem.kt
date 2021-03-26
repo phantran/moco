@@ -17,8 +17,10 @@
 
 package io.moco.engine.test
 
+import io.moco.utils.MoCoLogger
 import junit.framework.TestCase
 import kotlinx.coroutines.*
+import org.junit.internal.builders.AllDefaultPossibilitiesBuilder
 import org.junit.internal.runners.ErrorReportingRunner
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.Runner
@@ -39,9 +41,11 @@ class JUnit34TestItem(
     override val desc: Description = Description(testIdentifier, this.cls.name)
 
     override suspend fun execute(tra: TestResultAggregator, timeOut: Long) {
-        val runner: Runner = createRunner(cls, testIdentifier as String, isJUnit3)
-        if (runner is ErrorReportingRunner) {
+//        val runner: Runner = createRunner(cls, testIdentifier as String, isJUnit3)
+        val runner: Runner? = createRunner(cls)
+        if (runner is ErrorReportingRunner || runner == null) {
             logger.debug("Error while creating test runner for $cls")
+            return
         }
         var job: Job? = null
         try {
@@ -75,47 +79,67 @@ class JUnit34TestItem(
 
     @Suppress("DEPRECATION")
     companion object {
-        fun createRunner(cls: Class<*>, methodName: String, isJUnit3: Boolean): Runner {
-            if (isJUnit3) {
-                val test = cls.newInstance() as TestCase
-                test.name = methodName
-                return JUnit38ClassRunner(test)
-            } else {
-                return object : BlockJUnit4ClassRunner(cls) {
-                    override fun computeTestMethods(): List<FrameworkMethod> {
-                        return try {
-                            val method = cls.getMethod(methodName)
-                            listOf(FrameworkMethod(method))
-                        } catch (e: Exception) {
-                            throw RuntimeException(e)
-                        }
-                    }
-                }
+        val logger = MoCoLogger()
+        // TODO: support tests by methods later
+//        fun createRunner(cls: Class<*>, methodName: String, isJUnit3: Boolean): Runner {
+//            if (isJUnit3) {
+//                val test = cls.newInstance() as TestCase
+//                test.name = methodName
+//                return JUnit38ClassRunner(test)
+//            } else {
+//                return object : BlockJUnit4ClassRunner(cls) {
+//                    override fun computeTestMethods(): List<FrameworkMethod>? {
+//                        return try {
+//                            val method = cls.getMethod(methodName)
+//                            listOf(FrameworkMethod(method))
+//                        } catch (e: Exception) {
+//                            logger.warn("Cannot create runner for this test")
+//                            null
+//                        }
+//                    }
+//                }
+//            }
+//        }
+
+        fun createRunner(cls: Class<*>): Runner? {
+            val builder = AllDefaultPossibilitiesBuilder(true)
+            return try {
+                builder.runnerForClass(cls)
+            } catch (ex: Throwable) {
+                logger.info(ex.printStackTrace().toString())
+                null
             }
         }
+
 
         fun getTests(res: MutableList<TestItem>, isJUnit3: Boolean, item: Class<*>) {
             if (isJUnit3) {
                 // Junit 3
-                item.declaredMethods.map {
-                    if (it.name.startsWith("test")) {
-                        res.add(JUnit34TestItem(item, it.name,true, -1))
-                    }
-                }
+                // TODO: support tests by methods later
+//                item.declaredMethods.map {
+//                    if (it.name.startsWith("test")) {
+//                        res.add(JUnit34TestItem(item, it.name, true, -1))
+//                    }
+//                }
+                res.add(JUnit34TestItem(item, item.name, true, -1))
             } else {
                 // Junit 4
-                item.declaredMethods.map {
-                    if (it.annotations.any { it1 ->
-                            it1.annotationClass.java == org.junit.Test::class.java
-                        }) {
-                        res.add(JUnit34TestItem(item, it.name,false, -1))
-                    }
-                }
+                // TODO: support tests by methods later
+//                item.declaredMethods.map {
+//                    if (it.annotations.any { it1 ->
+//                            it1.annotationClass.java == org.junit.Test::class.java
+//                        }) {
+//                        res.add(JUnit34TestItem(item, it.name, false, -1))
+//                    }
+//                }
+                res.add(JUnit34TestItem(item, item.name, false, -1))
+
             }
         }
     }
 
     override fun toString(): String {
-        return ("${desc.testCls}.${desc.name}()")
+//        return ("${desc.testCls}.${desc.name}()")
+        return ("${desc.name}")
     }
 }

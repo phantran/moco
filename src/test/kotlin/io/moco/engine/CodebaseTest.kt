@@ -41,8 +41,10 @@ class CodebaseTest : AnnotationSpec() {
         val excludedTestFolders = mutableListOf("")
         val codePath = Paths.get("").toAbsolutePath().toString() + "/target/classes/io/moco/engine"
         val testPath = Paths.get("").toAbsolutePath().toString() + "/target/test-classes/io/moco/engine"
-        val codeBase = Codebase(codePath, testPath, excludedSourceClasses, excludedSourceFolders,
-            excludedTestClasses, excludedTestFolders)
+        val codeBase = Codebase(
+            codePath, testPath, codePath, testPath, excludedSourceClasses, excludedSourceFolders,
+            excludedTestClasses, excludedTestFolders
+        )
         codeBase.sourceClassNames.size shouldNotBe 0
         codeBase.toString() shouldNotBe ""
     }

@@ -49,10 +49,23 @@ class MoCo : AbstractMojo() {
     var project: MavenProject? = null
 
     /**
+     * Path to the directory of compiled source code
+     */
+    @Parameter(defaultValue = "", property = "codeRootDir", required = false)
+    private val codeRootDir: String = ""
+
+    /**
+     * Path to the directory of compiled test code
+     */
+    @Parameter(defaultValue = "", property = "testRootDir", required = false)
+    private val testRootDir: String = ""
+
+    /**
      * Preprocess storage file name
      */
     @Parameter(defaultValue = "preprocess", property = "preprocessResultsFolder", required = false)
     private val preprocessResultsFolder: String = "preprocess"
+
 
     /**
      * Mutation result storage file name
@@ -170,46 +183,72 @@ class MoCo : AbstractMojo() {
     private val session: MavenSession? = null
 
 
-
     @Throws(MojoExecutionException::class)
     override fun execute() {
+        var dbON = false
         try {
             if (!turnOff) {
                 if (project != null && project!!.build != null) {
                     // Skip if MoCo dependency is not in pom.xml
                     if (project?.dependencies?.any {
                             it.artifactId == mojo?.artifactId && it.groupId == mojo?.groupId
-                    } == false ) {
-                        log.info("Skipped because MoCo dependency is not specified in pom.xml")
+                        } == false) {
+                        log.info("MoCo is skipped because MoCo is not specified as a dependency of this project in pom.xml")
                         return
                     }
-
                     MoCoLogger.useMvnLog(log)
                     log.info("-----------------------------------------------------------------------")
                     log.info("                               M O C O")
                     log.info("-----------------------------------------------------------------------")
                     log.info("START")
-                    log.info("Note: make sure to use MoCo after test phase")
+                    log.info("Note: make sure to use MoCo after tests phase")
                     // Often named as "target" or "build" folder, contains compiled classes, JaCoCo report, MoCo report, etc...
                     var rootProject = project
                     while (rootProject!!.hasParent()) rootProject = rootProject.parent
+                    val s = File.separator
+                    val persistencePath =
+                        localRepository?.basedir + "${s}io${s}moco${s}" + rootProject.artifactId + "${s}persistence"
 
-                    val persistencePath = localRepository?.basedir + "/io/moco/" + rootProject.artifactId + "/persistence"
-
+                    log.info("Configured Compiled Code Directory: $codeRootDir")
+                    log.info("Configured Compiled Test Directory: $testRootDir")
                     val buildRoot = project?.build?.directory.toString()
                     val codeRoot = project?.build?.outputDirectory.toString()
+                    var codeTarget = codeRoot
+                    if (codeRootDir.isNotEmpty()) {
+                        val temp = "$codeTarget$s$codeRootDir"
+                        if (File(temp).exists()) {
+                            codeTarget = temp
+                        } else {
+                            log.info("Exit - Configured compiled sources directory is not found in this project")
+                            return
+                        }
+                    }
+
                     val testRoot = project?.build?.testOutputDirectory.toString()
+                    var testTarget = testRoot
+                    if (testRootDir.isNotEmpty()) {
+                        val temp = "$testTarget$s$testRootDir"
+                        if (File(temp).exists()) {
+                            testTarget = temp
+                        } else {
+                            log.info("Exit - Configured compiled tests directory is not found in this project")
+                            return
+                        }
+                    }
+
                     val classPath = prepareAllClassPaths(rootProject)
-                    val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
-                    val mocoBuildPath = "$buildRoot${File.separator}$mocoRoot"
+                    val jvm = System.getProperty("java.home") + s + "bin" + s + "java"
+                    val mocoBuildPath = "$buildRoot${s}$mocoRoot"
                     val fOpNames = Operator.supportedOperatorNames.filter { !excludedMuOpNames.contains(it) }
 
                     val configuration = Configuration(
                         rootProjectBaseDir = rootProject.basedir.toString(),
-                        mavenSession= session.toString(),
+                        mavenSession = session.toString(),
                         buildRoot = buildRoot,
                         codeRoot = codeRoot,
                         testRoot = testRoot,
+                        codeTarget = codeTarget,
+                        testTarget = testTarget,
                         mocoBuildPath = mocoBuildPath,
                         excludedSourceClasses = excludedSourceClasses,
                         excludedSourceFolders = excludedSourceFolders,
@@ -245,17 +284,18 @@ class MoCo : AbstractMojo() {
                         user = "moco",
                         password = "moco",
                     )
+                    dbON = true
                     H2Database().initDBTablesIfNotExists()
                     log.info("Project: GroupID - ${project?.groupId!!}, artifactId - ${project?.artifactId!!}")
                     MoCoEntryPoint(configuration).execute()
-                } else log.info("MoCo can't detect your project, please check configuration in pom.xml")
+                } else log.info("MoCo cannot detect your project, please check the configuration in pom.xml")
             } else {
-                log.info("MoCo is currently disabled in pom.xml file")
+                log.info("MoCo is currently disabled in this project pom.xml file")
             }
         } catch (e: Exception) {
-            log.error(e.message)
+            log.error(e.printStackTrace().toString())
         } finally {
-            if (!turnOff) H2Database.shutDownDB()
+            if (dbON) H2Database.shutDownDB()
         }
     }
 
@@ -270,7 +310,9 @@ class MoCo : AbstractMojo() {
         val runtimeRootCp = rootProject?.runtimeClasspathElements
         val compileRootCp = rootProject?.compileClasspathElements
         val testCompileRootCp = rootProject?.testClasspathElements
-        val resPath = System.getProperty("java.class.path").split(File.pathSeparator)
+
+        val resPath = prepareTestDependenciesPath()
+            .union(System.getProperty("java.class.path").split(File.pathSeparator).toSet())
             .union(compileCp!!.toSet())
             .union(compileRootCp!!.toSet())
             .union(runtimeCp!!.toSet())
@@ -290,6 +332,30 @@ class MoCo : AbstractMojo() {
             }
         }
         return "${resPath.joinToString(separator = File.pathSeparator)}:${buildRoot}:$codeRoot:${testRoot}"
+    }
+
+    private fun prepareTestDependenciesPath(): MutableSet<String> {
+        // Experimental feature, might be deleted later
+        val s = File.separator
+        val root = localRepository?.basedir.toString()
+        val res: MutableSet<String> = mutableSetOf()
+        val depNames: List<List<String>> = listOf(
+            listOf("org${s}junit${s}platform", "junit-platform-launcher", "1.7.1"),
+            listOf("org${s}junit${s}jupiter", "junit-jupiter", "5.8.0-M1"),
+            listOf("org${s}junit${s}jupiter", "junit-jupiter-engine", "5.8.0-M1"),
+            listOf("org${s}junit${s}jupiter", "junit-jupiter-params", "5.8.0-M1"),
+            listOf("org${s}junit${s}platform", "junit-platform-runner", "1.7.1"),
+            listOf("junit", "junit", "4.11"),
+            listOf("org${s}testng", "testng", "6.9.10")
+        )
+        depNames.map {
+            val depPath = root + s + it[0] + s + it[1] + s + it[2] + s + it[1] + "-" + it[2] + ".jar"
+            val depFile = File(depPath)
+            if (depFile.exists()) {
+                res.add(depPath)
+            }
+        }
+        return mutableSetOf()
     }
 }
 

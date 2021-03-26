@@ -26,28 +26,32 @@ import java.io.File
  * classes in the preprocessing phase.
  * @constructor
  *
- * @param codePath
- * @param testPath
+ * @param codeTarget
+ * @param testTarget
+ * @param codeRoot
+ * @param testRoot
  * @param excludedSourceClasses
  * @param excludedSourceFolders
  * @param excludedTestClasses
  * @param excludedTestFolders
  */
 class Codebase(
-    codePath: String,
-    testPath: String,
+    val codeRoot: String,
+    val testRoot: String,
+    private val codeTarget: String,
+    private val testTarget: String,
     excludedSourceClasses: List<String>,
     excludedSourceFolders: List<String>,
     excludedTestClasses: List<String>,
     excludedTestFolders: List<String>,
 ) {
 
-    private val codeRoots: List<File> = codePath.split(",").map { File(it) }
-    private val testRoots: List<File> = testPath.split(",").map { File(it) }
+    private val codeRoots: List<File> = codeTarget.split(",").map { File(it) }
+    private val testRoots: List<File> = testTarget.split(",").map { File(it) }
     val sourceClassNames: MutableSet<ClassName> =
-        getAllClassNames(codeRoots, excludedSourceClasses, excludedSourceFolders)
+        getAllClassNames(codeRoots, excludedSourceClasses, excludedSourceFolders, false)
     val testClassesNames: MutableSet<ClassName> =
-        getAllClassNames(testRoots, excludedTestClasses, excludedTestFolders)
+        getAllClassNames(testRoots, excludedTestClasses, excludedTestFolders, true)
 
     private var curRoot: File = File("")
 
@@ -62,13 +66,15 @@ class Codebase(
      * @return
      */
     private fun getAllClassNames(
-        roots: List<File>,
-        filter: List<String>,
-        folderFilter: List<String>
+        roots: List<File>, filter: List<String>,
+        folderFilter: List<String>, forTest: Boolean
     ): MutableSet<ClassName> {
+        curRoot = if (forTest) File(testRoot)
+        else File(codeRoot)
+
         val res: MutableSet<ClassName> = mutableSetOf()
         for (root: File in roots) {
-            curRoot = root
+
             res.addAll(getClassNames(root, filter, folderFilter))
         }
         return res
@@ -113,8 +119,9 @@ class Codebase(
      * @return
      */
     private fun fileToClassName(file: File, filter: List<String>, folderFilter: List<String>): ClassName? {
-        if (!(folderFilter.size == 1 && folderFilter[0] ==  "") &&
-            folderFilter.any { file.absolutePath.contains(it) }) {
+        if (!(folderFilter.size == 1 && folderFilter[0] == "") &&
+            folderFilter.any { file.absolutePath.contains(it) }
+        ) {
             return null
         }
 
@@ -122,6 +129,7 @@ class Codebase(
             curRoot.absolutePath.length + 1,
             file.absolutePath.length - ".class".length
         )
+
         // Remove inner class in compiled class names at the moment
         val indexOfDollarSign = res.indexOf("$", 0)
         // Return class name

@@ -51,12 +51,12 @@ class Preprocessor(
                 return
             }
             PreprocessorTracker.errorTests = recoveredResult.errorTests
-            logger.debug("Preprocessing: ${remainingTests.size} test cases to run after filtering")
+            logger.debug("Preprocessing: ${remainingTests.size} test(s) to run after filtering")
             val filtered = wrapped.filter { remainingTests.contains(it.testItem.toString()) }
             val sorted = filtered.sortedBy { it.testItem.toString() }
             collectInfo(sorted)
         } else {
-            logger.debug("Preprocessing: ${wrapped.size} test cases to run after filtering")
+            logger.debug("Preprocessing: ${wrapped.size} test(s) to run after filtering")
             val sorted = wrapped.sortedBy { it.testItem.toString() }
             collectInfo(sorted)
         }

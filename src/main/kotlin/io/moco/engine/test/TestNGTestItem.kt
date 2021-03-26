@@ -44,13 +44,15 @@ class TestNGTestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -
         private val listener: TestNGRunListener = TestNGRunListener()
 
         fun getTests(res: MutableList<TestItem>, item: Class<*>) {
-            item.declaredMethods.map {
-                if (it.annotations.any { it1 ->
-                        it1.annotationClass.java == org.testng.annotations.Test::class.java
-                    }) {
-                    res.add(JUnit34TestItem(item, it.name, false, -1))
-                }
-            }
+            // TODO: support better test splitting by methods later
+//            item.declaredMethods.map {
+//                if (it.annotations.any { it1 ->
+//                        it1.annotationClass.java == org.testng.annotations.Test::class.java
+//                    }) {
+//                    res.add(JUnit34TestItem(item, it.name, false, -1))
+//                }
+//            }
+            res.add(TestNGTestItem(item, item.name, -1))
         }
     }
 
@@ -65,7 +67,7 @@ class TestNGTestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -
                             suite.name = cls.name
                             suite.setSkipFailedInvocationCounts(true)
                             val test = XmlTest(suite)
-                            test.name = testIdentifier as String
+                            test.name = cls.name
                             val xclass = XmlClass(cls.name)
                             test.xmlClasses = listOf(xclass)
                             testng.defaultSuiteName = suite.name
@@ -103,6 +105,7 @@ class TestNGTestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -
     }
 
     override fun toString(): String {
-        return ("${desc.testCls}.${desc.name}()")
+//        return ("${desc.testCls}.${desc.name}()")
+        return ("${desc.name}")
     }
 }

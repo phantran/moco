@@ -152,7 +152,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
             } else {
                 logger.info("Head commit: ${projectMeta?.meta?.get("storedHeadCommit")}")
                 clsByGit = gitProcessor!!.getChangedClsSinceLastStoredCommit(
-                    configuration.groupId.replace(".", "/"), projectMeta?.meta!!
+                    configuration.groupId.replace(".", File.separator), projectMeta?.meta!!
                 )
                 if (clsByGit != null) {
                     if (clsByGit?.isEmpty() == true) {

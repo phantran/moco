@@ -33,7 +33,6 @@ class PreprocessorTracker {
         val cutToTests: MutableMap<String, MutableSet<String>> = mutableMapOf()
 
         // Internal class name of ProcessorTracker to be called by asm method visitor
-//        private var testExecutionTime = mutableMapOf<String, Long>()
         val internalClsName: String = PreprocessorTracker::class.qualifiedName.toString().replace(".", "/")
         var previousRemainingTests: List<String?> = mutableListOf()
         var errorTests: MutableList<String?> = mutableListOf()
@@ -43,16 +42,19 @@ class PreprocessorTracker {
         @JvmStatic
         fun registerMappingCutToTestInfo(testItem: TestItem) {
             // Update cutToLineTestMap
-            val testInfo = SerializableTestInfo(testItem.cls.name,
+            val testInfo = SerializableTestInfo(
+                testItem.cls.name,
                 testItem.testIdentifier.toString(),
                 testItem.toString(),
-                testItem.executionTime)
+                testItem.executionTime
+            )
             for ((cut, lines) in lineTracker.entries) {
                 if (cutToLineTestMap.keys.contains(cut)) {
                     lines.map {
-                        if (cutToLineTestMap[cut]!!.containsKey(it)) {
-                            cutToLineTestMap[cut]!![it]?.add(testInfo)
-                        } else cutToLineTestMap[cut]!!.set(it, mutableSetOf(testInfo))
+                        val lineTestsMap: MutableMap<Int, MutableSet<SerializableTestInfo>>? = cutToLineTestMap[cut]
+                        if (lineTestsMap!!.containsKey(it)) {
+                            lineTestsMap[it]?.add(testInfo)
+                        } else lineTestsMap.set(it, mutableSetOf(testInfo))
                     }
                 } else {
                     cutToLineTestMap[cut] = mutableMapOf()

@@ -24,11 +24,13 @@ data class Configuration(
     val buildRoot: String,
     val codeRoot: String,
     val testRoot: String,
+    val codeTarget: String,
+    val testTarget: String,
     val mocoBuildPath: String,
-    val excludedSourceClasses : String,
-    val excludedSourceFolders : String,
-    val excludedTestClasses : String,
-    val excludedTestFolders : String,
+    val excludedSourceClasses: String,
+    val excludedSourceFolders: String,
+    val excludedTestClasses: String,
+    val excludedTestFolders: String,
     val classPath: String,
     val jvm: String,
     val preprocessResultsFolder: String,
@@ -56,9 +58,11 @@ data class Configuration(
     }
 
     fun getPreprocessProcessArgs(): MutableList<String> {
-        return mutableListOf(mocoBuildPath, codeRoot, testRoot, excludedSourceClasses, excludedSourceFolders,
-            excludedTestClasses, excludedTestFolders, preprocessResultsFolder,
-            preprocessTestTimeout, debugEnabled.toString(), verbose.toString(), noLogAtAll.toString()
+        return mutableListOf(
+            mocoBuildPath, codeRoot, testRoot, codeTarget, testTarget,
+            excludedSourceClasses, excludedSourceFolders, excludedTestClasses,
+            excludedTestFolders, preprocessResultsFolder, preprocessTestTimeout,
+            debugEnabled.toString(), verbose.toString(), noLogAtAll.toString()
         )
     }
 }

@@ -31,13 +31,14 @@ import java.nio.file.Paths
 import kotlin.math.roundToInt
 
 
-class AEntryPointTest: AnnotationSpec() {
+class AEntryPointTest : AnnotationSpec() {
 
     private val baseDir = Paths.get("").toAbsolutePath().toString()
     private val buildRoot = "$baseDir/src/test/resources/test-artifacts/"
     private val codeRoot = "$baseDir/src/test/resources/test-artifacts/sources"
     private val testRoot = "$baseDir/src/test/resources/test-artifacts/tests"
-    private val classpath = System.getProperty("java.class.path") + File.pathSeparator + codeRoot + File.pathSeparator + testRoot
+    private val classpath =
+        System.getProperty("java.class.path") + File.pathSeparator + codeRoot + File.pathSeparator + testRoot
     private val jvm = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
 
     @BeforeEach
@@ -53,6 +54,7 @@ class AEntryPointTest: AnnotationSpec() {
     }
 
     @Test
+    @Ignore
     fun testEntryPoint() {
         try {
             val excluded = ""
@@ -61,6 +63,8 @@ class AEntryPointTest: AnnotationSpec() {
                 baseDir,
                 System.currentTimeMillis().toString(),
                 buildRoot,
+                codeRoot,
+                testRoot,
                 codeRoot,
                 testRoot,
                 "$buildRoot${File.separator}moco",

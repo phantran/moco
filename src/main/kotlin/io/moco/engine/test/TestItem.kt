@@ -24,6 +24,7 @@ import junit.framework.TestSuite
 import org.junit.platform.suite.api.SelectClasses
 import org.junit.platform.suite.api.SelectPackages
 import org.junit.runners.Suite
+import java.lang.reflect.Modifier
 
 
 open class TestItem(
@@ -50,18 +51,39 @@ open class TestItem(
                     // execution time < 0 means error tests in preprocessing phase
                     val testClass = ClassName.clsNameToClass(clsName)
                     if (it.testIdentifier.isNotEmpty()) {
-                    when (checkTestFramework(testClass as Class<*>)) {
-                            TestFramework.JUNIT3 -> res.add(JUnit34TestItem(testClass, it.testIdentifier, true, it.executionTime))
-                            TestFramework.JUNIT4 -> res.add(JUnit34TestItem(testClass, it.testIdentifier, false, it.executionTime))
+                        when (checkTestFramework(testClass as Class<*>)) {
+                            TestFramework.JUNIT3 -> res.add(
+                                JUnit34TestItem(
+                                    testClass,
+                                    it.testIdentifier,
+                                    true,
+                                    it.executionTime
+                                )
+                            )
+                            TestFramework.JUNIT4 -> res.add(
+                                JUnit34TestItem(
+                                    testClass,
+                                    it.testIdentifier,
+                                    false,
+                                    it.executionTime
+                                )
+                            )
                             TestFramework.JUNIT5 -> {
-                                val testItem = JUnit5TestItem.getTestItem(testClass, it.testIdentifier, it.executionTime)
+                                val testItem =
+                                    JUnit5TestItem.getTestItem(testClass, it.testIdentifier, it.executionTime)
                                 if (testItem != null) res.add(testItem)
                                 else null
                             }
-                            TestFramework.TESTNG -> res.add(TestNGTestItem(testClass, it.testIdentifier, it.executionTime))
+                            TestFramework.TESTNG -> res.add(
+                                TestNGTestItem(
+                                    testClass,
+                                    it.testIdentifier,
+                                    it.executionTime
+                                )
+                            )
 
-                        else -> null
-                    }
+                            else -> null
+                        }
                     } else null
                 } else null
             }
@@ -79,7 +101,7 @@ open class TestItem(
             val res: MutableList<TestItem> = mutableListOf()
             for (item in testClasses) {
                 val typeFramework = checkTestFramework(item)
-                if (isNotTestSuite(item, typeFramework)) {
+                if (isNotTestSuite(item, typeFramework) && !(item.isInterface || Modifier.isAbstract(item.modifiers))) {
                     when (typeFramework) {
                         TestFramework.JUNIT3 -> JUnit34TestItem.getTests(res, true, item)
                         TestFramework.JUNIT4 -> JUnit34TestItem.getTests(res, false, item)
