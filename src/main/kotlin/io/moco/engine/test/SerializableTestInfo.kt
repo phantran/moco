@@ -15,14 +15,13 @@
  *
  */
 
-package io.moco.persistence
+package io.moco.engine.test
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import java.io.Serializable
 
-data class MutationStorage(
-    // IMPORTANT: Do not change json property name
-    @JsonProperty("entries")
-    @get: Synchronized @set: Synchronized
-    var entries: MutableMap<String, MutableSet<MutableMap<String, Any?>>>,
-    var runID: String
-)
+data class SerializableTestInfo(
+    val cls: String,
+    val testIdentifier: String,
+    val name: String,
+    var executionTime: Long = -1
+): Serializable

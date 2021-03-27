@@ -24,7 +24,9 @@ data class ProjectMeta(
     override var entry: MutableMap<String, String> = mutableMapOf("metaKey" to "", "metaValue" to ""),
     var meta: MutableMap<String, String> = mutableMapOf(
         "lastRunID" to "",
-        "latestStoredCommitID" to "",
+        "lastMavenSessionID" to "",
+        "storedHeadCommit" to "",
+        "storedPreviousHeadCommit" to "",
         "latestStoredBranchName" to "",
         "sourceBuildFolder" to "",
         "artifactId" to "",

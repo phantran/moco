@@ -23,6 +23,7 @@ import io.moco.persistence.ProjectTestHistory
 import io.moco.utils.GitProcessor
 import io.moco.utils.MoCoLogger
 
+
 class Metrics(private val mutationStorage: MutationStorage) {
     val logger = MoCoLogger()
 
@@ -33,6 +34,9 @@ class Metrics(private val mutationStorage: MutationStorage) {
             total += value.count { it["result"] != "run_error" }
             killedMutants += value.count { it["result"] == "killed" }
         }
+        logger.info("Total mutants in this run: ${total.toInt()}")
+        logger.info("Killed mutants in this run: ${killedMutants.toInt()}")
+
         var res = 0.0
         if (total > 0.0) {
             res = (killedMutants / total) * 100.0
@@ -40,7 +44,7 @@ class Metrics(private val mutationStorage: MutationStorage) {
         return res
     }
 
-    fun calculateAccumulatedCoverage(configuredOperators: String): Double {
+    private fun calculateAccumulatedCoverage(configuredOperators: String): Double {
         val savedProgress = ProgressClassTest().getData("coveredOperators = \'$configuredOperators\'")
         var killedMutants = 0.0
         var totalMutants = 0.0

@@ -48,7 +48,7 @@ data class ClassName(@JsonProperty("className") val name: String) : Serializable
             return ClassName(name)
         }
 
-        fun clsNameToClass(clsName: ClassName, loader: ClassLoader? = ClassLoaderUtil.clsLoader): Class<*>? {
+        fun clsNameToClass(clsName: ClassName, loader: ClassLoader? = ClassLoaderUtil.contextClsLoader): Class<*>? {
             return try {
                 Class.forName(clsName.javaName, false, loader)
             } catch (ex: Exception) {
@@ -57,6 +57,7 @@ data class ClassName(@JsonProperty("className") val name: String) : Serializable
                     is NoClassDefFoundError -> logger.error("Error NoClassDefFoundError while loading class $clsName using name")
                     is LinkageError -> logger.error("Error LinkageError while loading class $clsName using name")
                     is SecurityException -> logger.error("Error SecurityException while loading class $clsName using name")
+                    is ClassFormatError -> logger.error("Error ClassFormatError while loading class $clsName using name")
                 }
                 null
             }

@@ -24,7 +24,6 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 
-
 /**
  * AOD - Arithmetic Operator Deletion
  *
@@ -67,12 +66,14 @@ class AOD(
         "double" to listOf(Opcodes.DADD, Opcodes.DSUB, Opcodes.DMUL, Opcodes.DDIV, Opcodes.DREM)
     )
 
-    private val varStoreOpcodes: List<Int> = listOf(Opcodes.ISTORE, Opcodes.LSTORE, Opcodes.FSTORE, Opcodes.DSTORE, Opcodes.ASTORE)
+    private val varStoreOpcodes: List<Int> =
+        listOf(Opcodes.ISTORE, Opcodes.LSTORE, Opcodes.FSTORE, Opcodes.DSTORE, Opcodes.ASTORE)
 
     override fun visitVarInsn(opcode: Int, `var`: Int) {
         if (varStoreOpcodes.contains(opcode)) {
             val collectedMu = tracker.mutatedClassTracker.getCollectedMutations().filter {
-                it.lineOfCode == tracker.currConsideredLineNumber }
+                it.lineOfCode == tracker.currConsideredLineNumber
+            }
             collectedMu.map { it.relatedVarIndices.add(`var`) }
         }
         super.visitVarInsn(opcode, `var`)

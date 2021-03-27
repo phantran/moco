@@ -29,11 +29,10 @@ import java.util.Collections.unmodifiableList
 import kotlin.system.measureTimeMillis
 
 
-class Junit5TestItem(
-    cls: Class<*>, private val testIdentifier: TestIdentifier, executionTime: Long = -1
-) : TestItem(cls, executionTime) {
+class JUnit5TestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -1) :
+    TestItem(cls, testIdentifier, executionTime) {
 
-    override val desc = Description(testIdentifier.displayName, cls.name)
+    override val desc = Description((testIdentifier as TestIdentifier).displayName, cls.name)
 
     override suspend fun execute(tra: TestResultAggregator, timeOut: Long) {
         var job: Job? = null
@@ -41,7 +40,7 @@ class Junit5TestItem(
             val launcher = LauncherFactory.create()
             val launcherDiscoveryRequest = LauncherDiscoveryRequestBuilder
                 .request()
-                .selectors(DiscoverySelectors.selectUniqueId(testIdentifier.uniqueId))
+                .selectors(DiscoverySelectors.selectUniqueId((testIdentifier as TestIdentifier).uniqueId))
                 .build()
             launcher.registerTestExecutionListeners(JUnit5RunListener(desc, tra))
 
@@ -53,7 +52,7 @@ class Junit5TestItem(
                     if (executionTime == -1L) {
                         executionTime = temp
                     }
-                    logger.debug("Test ${desc.testCls}.${desc.name} finished after $executionTime ms")
+                    logger.debug("Test ${this@JUnit5TestItem} finished after $executionTime ms")
                 }
             }
             job.join()
@@ -61,8 +60,9 @@ class Junit5TestItem(
             when (e) {
                 is TimeoutCancellationException -> {
                     tra.results.add(TestResult(desc, e, TestResult.TestState.TIMEOUT))
-                    logger.debug("Test ${desc.testCls}.${desc.name} execution TIMEOUT - allowed time $timeOut ms")
+                    logger.debug("Test ${this@JUnit5TestItem}  execution TIMEOUT - allowed time $timeOut ms")
                 }
+                else -> logger.info(e.printStackTrace().toString())
             }
             throw e
         } finally {
@@ -84,16 +84,39 @@ class Junit5TestItem(
         }
     }
 
+    override fun toString(): String {
+        return ("${desc.testCls}.${desc.name}")
+    }
+
     companion object {
         private val launcher: Launcher = LauncherFactory.create()
+        private val cachedIdentifiers: MutableSet<TestIdentifier> = mutableSetOf()
 
-        fun getTests(res: MutableList<TestItem>, item: Class<*>, executionTime: Long) {
+        fun getTests(res: MutableList<TestItem>, item: Class<*>) {
             val listener = TestIdentifierListener()
             launcher.execute(
                 LauncherDiscoveryRequestBuilder.request().selectors(DiscoverySelectors.selectClass(item))
                     .build(), listener
             )
-            listener.getIdentifiers().map { res.add(Junit5TestItem(item, it, executionTime)) }
+            listener.getIdentifiers().map { res.add(JUnit5TestItem(item, it, -1)) }
+        }
+
+        fun getTestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long): TestItem? {
+            // Cache identifiers so that found identifiers that are executing and being stuck won't
+            // make LauncherDiscoveryRequestBuilder falls in an infinite loop
+            var foundIdentifier: TestIdentifier? = cachedIdentifiers.find { it.toString() == testIdentifier.toString() }
+            if (foundIdentifier == null) {
+                val listener = TestIdentifierListener()
+                launcher.execute(
+                    LauncherDiscoveryRequestBuilder.request().selectors(DiscoverySelectors.selectClass(cls))
+                        .build(), listener
+                )
+                foundIdentifier = listener.getIdentifiers().find { it.toString() == testIdentifier }
+                if (foundIdentifier != null) cachedIdentifiers.add(foundIdentifier)
+            }
+            return if (foundIdentifier != null) {
+                JUnit5TestItem(cls, foundIdentifier, executionTime)
+            } else null
         }
     }
 }

@@ -168,6 +168,17 @@ class H2Database : Database() {
         }
     }
 
+    fun executeQuery(connection: Connection, query: String): ResultSet? {
+        return try {
+            val stm = connection.createStatement()
+            stm?.executeQuery(query)
+        } catch (ex: Exception) {
+            println(ex.printStackTrace())
+            logger.error("Error while execute query $query")
+            null
+        }
+    }
+
     companion object {
         private lateinit var connectionsPool: JdbcConnectionPool
         fun initPool(url: String, user: String, password: String ) {
@@ -189,9 +200,11 @@ class H2Database : Database() {
         )
 
         fun shutDownDB() {
-            connectionsPool.connection.use { con ->
-                con?.createStatement().use { st ->
-                    st?.execute("SHUTDOWN")
+            if (::connectionsPool.isInitialized) {
+                connectionsPool.connection.use { con ->
+                    con?.createStatement().use { st ->
+                        st?.execute("SHUTDOWN")
+                    }
                 }
             }
         }

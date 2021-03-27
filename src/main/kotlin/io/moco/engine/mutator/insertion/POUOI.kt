@@ -17,11 +17,11 @@
 
 package io.moco.engine.mutator.insertion
 
+import io.moco.engine.mutation.Mutation
 import io.moco.engine.operator.InsertionOperator
 import io.moco.engine.tracker.MutatedMethodTracker
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
-
 
 /**
  * POUOI - Post Unary Operator Insertion
@@ -64,6 +64,12 @@ class POUOI(
     private val operatorTypes = listOf(
         Pair("post-increment", "I"), Pair("post-decrement", "D"),
     )
+
+    private val returnOpcodes = listOf(Opcodes.ARETURN, Opcodes.DRETURN,
+        Opcodes.LRETURN, Opcodes.FRETURN, Opcodes.IRETURN)
+
+    // map from line of code to return statement
+    private var returnInsTracker: MutableSet<Int> = mutableSetOf()
 
     override fun visitVarInsn(opcode: Int, v: Int) {
         var supported = false
@@ -125,6 +131,8 @@ class POUOI(
     }
 
     override fun visitInsn(opcode: Int) {
+        // Tracker return statement to filter out post increment/decrement on return line
+        if (returnOpcodes.contains(opcode)) returnInsTracker.add(tracker.currConsideredLineNumber)
         var supported = false
         if (supportedOpcodes["arr"]!!.contains(opcode) && (!tracker.mutatedClassTracker.getClsInfo()?.isEnum!!)) {
             supported = true
@@ -332,5 +340,17 @@ class POUOI(
 
     override fun visitMaxs(maxStack: Int, maxLocals: Int) {
         super.visitMaxs(maxStack + 5, maxLocals + 5)
+    }
+
+    override fun visitEnd() {
+        // Filter out infinite loop mutation at the end of a method visit
+        val collectedMu = tracker.mutatedClassTracker.getCollectedMutations()
+        collectedMu.removeAll { isPostUnaryInsertionOnReturnLine(it) }
+        super.visitEnd()
+    }
+
+    private fun isPostUnaryInsertionOnReturnLine(mutation: Mutation): Boolean{
+        return mutation.mutationID.operatorName == operator.operatorName &&
+                returnInsTracker.contains(mutation.lineOfCode)
     }
 }

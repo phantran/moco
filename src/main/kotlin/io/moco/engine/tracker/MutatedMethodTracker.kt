@@ -66,38 +66,52 @@ class MutatedMethodTracker(
         opcode: String? = "",
         relatedVarIndices: MutableSet<Int> = mutableSetOf()
     ): Mutation? {
-        val newMutationID = MutationID(
-            mutatedMethodLocation, mutableListOf(instructionIndex),
-            operator.operatorName, mutatorID
-        )
-        collectInstructionsOrder(opcode, newMutationID)
+        if (operator.notReachedTypeQuantityLimit(mutatedClassTracker.mutationLimitTracker, currConsideredLineNumber)) {
+            val newMutationID = MutationID(
+                mutatedMethodLocation, mutableListOf(instructionIndex),
+                operator.operatorName, mutatorID
+            )
+            collectInstructionsOrder(opcode, newMutationID)
 
-        // MoCo does not collect mutations on a line that is uncovered by the tests.
-        if (!mutatedClassTracker.coveredLines.isNullOrEmpty()) {
-            if (!mutatedClassTracker.coveredLines.contains(currConsideredLineNumber)) {
+            // MoCo does not collect mutations on a line that is uncovered by the tests.
+            if (!mutatedClassTracker.coveredLines.isNullOrEmpty()) {
+                if (!mutatedClassTracker.coveredLines.contains(currConsideredLineNumber)) {
+                    return null
+                }
+            }
+            // Only collect unique mutation (mutation id must be unique)
+            if (mutatedClassTracker.shouldCollectThisMutation(newMutationID)) {
                 return null
             }
-        }
-        // Only collect unique mutation (mutation id must be unique)
-        if (mutatedClassTracker.shouldCollectThisMutation(newMutationID)) {
-            return null
-        }
 
-        // MoCo does not collect mutations in static init block
-        if (mutatedMethodLocation.methodName.name == "<clinit>") {
-            return null
+            // MoCo does not collect mutations in static init block
+            if (mutatedMethodLocation.methodName.name == "<clinit>") {
+                return null
+            }
+
+            val newMutation = Mutation(
+                newMutationID,
+                mutatedClassTracker.getFileName(),
+                currConsideredLineNumber,
+                description,
+                relatedVarIndices
+            )
+
+            this.mutatedClassTracker.addMutation(newMutation)
+            updateLimitByTypeTracker(operator.operatorName)
+            return newMutation
+        } else return null
+    }
+
+    private fun updateLimitByTypeTracker(operatorName: String) {
+        if (mutatedClassTracker.mutationLimitTracker?.containsKey(currConsideredLineNumber) == true) {
+            mutatedClassTracker.mutationLimitTracker[currConsideredLineNumber]?.add(operatorName)
+        } else {
+            mutatedClassTracker.mutationLimitTracker?.set(
+                currConsideredLineNumber,
+                mutableSetOf(operatorName)
+            )
         }
-
-        val newMutation = Mutation(
-            newMutationID,
-            mutatedClassTracker.getFileName(),
-            currConsideredLineNumber,
-            description,
-            relatedVarIndices
-        )
-
-        this.mutatedClassTracker.addMutation(newMutation)
-        return newMutation
     }
 
     private fun collectInstructionsOrder(opcode: String?, newMutationID: MutationID) {

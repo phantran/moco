@@ -30,7 +30,6 @@ import java.io.File
  */
 data class PreprocessStorage(
     val classRecord: MutableList<PreprocessClassResult>,
-    val testsExecutionTime: MutableMap<String, Long>?,
     val previousRemainingTests: List<String?>,
     val errorTests: MutableList<String?>,
 ) {

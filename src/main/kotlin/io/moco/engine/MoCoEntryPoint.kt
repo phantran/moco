@@ -46,6 +46,8 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     private var gitMode = configuration.gitMode
     private lateinit var byteLoader: ByteArrayLoader
     private var agentLoc: String? = null
+
+    @get: Synchronized
     private val mutationStorage: MutationStorage =
         MutationStorage(mutableMapOf(), System.currentTimeMillis().toString())
     private var clsByGit: List<String>? = listOf()
@@ -61,8 +63,10 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     fun execute() {
         try {
             val executionTime = measureTimeMillis {
-                if (!initMoCoOK()) logger.info("EXIT: Nothing to do")
-                else {
+                if (!initMoCoOK()) {
+                    logger.info("EXIT: Nothing to do")
+                    return
+                } else {
                     logger.info("Preprocessing started......")
                     PreprocessEntryPoint().preprocessing(clsByGit!!, recordedTestMapping, agentLoc!!)
                     logger.info("Preprocessing completed")
@@ -114,9 +118,10 @@ class MoCoEntryPoint(private val configuration: Configuration) {
 
         agentLoc = JarUtil.createTemporaryAgentJar(byteLoader)
         if (agentLoc == null) {
-            logger.info("Error while creating MoCo Agent Jar")
+            logger.error("Error while creating MoCo Agent Jar")
             return false
         }
+
         // Clear preprocessing JSON if exists
         JsonSource(
             "${mocoBuildPath}${File.separator}${preprocessResultsFolder}",
@@ -125,49 +130,29 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         return true
     }
 
-    private fun cleanBeforeExit() {
-        // Remove generated agent after finishing
-        JarUtil.removeTemporaryAgentJar(agentLoc)
-        // Save meta before exit
-        logger.debug("Saving project meta data before exiting...")
-        projectMeta!!.meta["lastRunID"] = mutationStorage.runID
-        if (gitMode) gitProcessor!!.setHeadCommitMeta(projectMeta!!, gitMode)
-        projectMeta!!.meta["sourceBuildFolder"] = configuration.codeRoot
-        projectMeta!!.meta["testBuildFolder"] = configuration.testRoot
-        projectMeta!!.meta["artifactId"] = configuration.artifactId
-        projectMeta!!.meta["groupId"] = configuration.groupId
-        projectMeta!!.meta["mocoVersion"] = configuration.mocoPluginVersion!!
-
-        if (newOp) {
-            projectMeta!!.meta["runOperators"] += "-" + fOpNames.joinToString(",")
-        }
-        projectMeta?.saveMetaData()
-        logger.debug("Remove temporary moco agent jar successfully")
-    }
-
     private fun gitInfoProcessing(): Boolean {
         if (gitMode) {
+            logger.info("Git mode: ON")
             try {
-                gitProcessor = GitProcessor(configuration.baseDir)
+                gitProcessor = GitProcessor(configuration.rootProjectBaseDir)
             } catch (e: Exception) {
                 logger.error(
                     "Git Mode is ON but Git information couldn't be processed, " +
-                            "make sure this source code was initialized as a Git repository"
+                            "make sure Git exits for this project"
                 )
+                logger.error(e.printStackTrace().toString())
                 return false
             }
         }
 
         if (!shouldRunFromScratch()) {
-            logger.info("Git mode: ON")
-            logger.info("Latest stored commit: ${projectMeta?.meta?.get("latestStoredCommitID")}")
-
-            if (projectMeta?.meta?.get("latestStoredCommitID").isNullOrEmpty()) {
+            if (projectMeta?.meta?.get("storedHeadCommit").isNullOrEmpty()) {
                 clsByGit = listOf("")
                 logger.info("Last commit info does not exist - skip Git commits diff analysis - proceed in normal mode")
             } else {
+                logger.info("Head commit: ${projectMeta?.meta?.get("storedHeadCommit")}")
                 clsByGit = gitProcessor!!.getChangedClsSinceLastStoredCommit(
-                    configuration.groupId.replace(".", "/"), projectMeta?.meta!!
+                    configuration.groupId.replace(".", File.separator), projectMeta?.meta!!
                 )
                 if (clsByGit != null) {
                     if (clsByGit?.isEmpty() == true) {
@@ -175,10 +160,12 @@ class MoCoEntryPoint(private val configuration: Configuration) {
                         // skip preprocessing in git mode and no detected changed class
                         return false
                     }
-                    logger.info("Preprocessing: Git mode - ${clsByGit!!.size} changed classes by git commits diff")
+                    logger.info("Preprocessing: Git mode - ${clsByGit!!.size} changed class(es) by git commits diff")
                     logger.debug("Classes found: $clsByGit")
                     recordedTestMapping = TestsCutMapping().getRecordedMapping(clsByGit!!)
                 } else {
+                    // clsByGit equals null could mean database has been reset or it's the first run
+                    // if it's null then we set it to empty list as below
                     clsByGit = listOf("")
                     logger.info("Preprocessing: Git mode: last stored commit not found - proceed in normal mode")
                 }
@@ -189,17 +176,17 @@ class MoCoEntryPoint(private val configuration: Configuration) {
 
     private fun shouldResetDB(): Boolean {
         // Reset if different version of MoCo
-        val recordedMocoVersion = projectMeta?.meta?.get("mocoVersion")?: return false
+        val recordedMocoVersion = projectMeta?.meta?.get("mocoVersion") ?: return false
         if (Configuration.currentConfig?.mocoPluginVersion != recordedMocoVersion) {
             return true
         }
         // MoCo will not used database if Git Mode is off -> proceed in normal mode
         // No execution data and meta data will be collected
         if (!gitMode) return false
-        val sourceBuildFolder = projectMeta?.meta?.get("sourceBuildFolder")?: return false
-        val recordedTestFolder = projectMeta?.meta?.get("testBuildFolder")?: return false
-        val recordedArtifactId = projectMeta?.meta?.get("artifactId")?: return false
-        val recordedGroupId = projectMeta?.meta?.get("groupId")?: return false
+        val sourceBuildFolder = projectMeta?.meta?.get("sourceBuildFolder") ?: return false
+        val recordedTestFolder = projectMeta?.meta?.get("testBuildFolder") ?: return false
+        val recordedArtifactId = projectMeta?.meta?.get("artifactId") ?: return false
+        val recordedGroupId = projectMeta?.meta?.get("groupId") ?: return false
         // If one changes the target build folder and test folder -> MoCo will erase the existing database and
         // run from scratch to avoid saving conflicting mutation data to database
         if (sourceBuildFolder != Configuration.currentConfig?.buildRoot) return true
@@ -211,6 +198,12 @@ class MoCoEntryPoint(private val configuration: Configuration) {
 
     fun shouldRunFromScratch(): Boolean {
         if (gitMode) {
+            if (projectMeta?.meta?.get("lastMavenSessionID") == Configuration.currentConfig?.mavenSession) {
+                if (projectMeta?.meta?.get("storedPreviousHeadCommit").isNullOrEmpty()) {
+                    // First run (already run for the first child maven project with corresponding pom.xml)
+                    return true
+                }
+            }
             // Run from scratch if mutation operators inclusion/exclusion configuration was changed
             val recordedOps = projectMeta?.meta?.get("runOperators")?.split("-")
             if (!recordedOps.isNullOrEmpty()) {
@@ -221,5 +214,26 @@ class MoCoEntryPoint(private val configuration: Configuration) {
             }
         } else return true
         return false
+    }
+
+    private fun cleanBeforeExit() {
+        // Remove generated agent after finishing
+        JarUtil.removeTemporaryAgentJar(agentLoc)
+        // Save meta before exit
+        logger.debug("Saving project meta data before exiting...")
+        projectMeta!!.meta["lastRunID"] = mutationStorage.runID
+        if (gitMode) gitProcessor!!.setHeadCommitMeta(projectMeta!!, gitMode)
+        projectMeta!!.meta["lastMavenSessionID"] = configuration.mavenSession
+        projectMeta!!.meta["sourceBuildFolder"] = configuration.codeRoot
+        projectMeta!!.meta["testBuildFolder"] = configuration.testRoot
+        projectMeta!!.meta["artifactId"] = configuration.artifactId
+        projectMeta!!.meta["groupId"] = configuration.groupId
+        projectMeta!!.meta["mocoVersion"] = configuration.mocoPluginVersion!!
+
+        if (newOp) {
+            projectMeta!!.meta["runOperators"] += "-" + fOpNames.joinToString(",")
+        }
+        projectMeta?.saveMetaData()
+        logger.debug("Remove temporary moco agent jar successfully")
     }
 }

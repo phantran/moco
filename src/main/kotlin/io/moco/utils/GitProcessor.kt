@@ -17,6 +17,7 @@
 
 package io.moco.utils
 
+import io.moco.engine.Configuration
 import io.moco.persistence.ProjectMeta
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.GitAPIException
@@ -50,15 +51,20 @@ class GitProcessor(gitRootPath: String) {
         // 1. null -> latest stored commit id is not found
         // 2. empty list -> diff can be calculated, however there's no changed classes detected or no new commits
         // 3. list with elements -> changed classes detected
-        val lastCommitName = projectMeta["latestStoredCommitID"]!!
-        if (headCommit.name == lastCommitName) {
+        var previousHead = projectMeta["storedHeadCommit"]!!
+        if (!projectMeta["lastMavenSessionID"].isNullOrEmpty() &&
+            projectMeta["lastMavenSessionID"] == Configuration.currentConfig?.mavenSession) {
+            previousHead = projectMeta["storedPreviousHeadCommit"]!!
+        }
+
+        if (headCommit.name == previousHead) {
             return listOf()
         }
         Git(repo).use { git ->
             val commits = git.log().all().call()
             for (commit in commits) {
-                if (commit.name == lastCommitName) {
-                    return listDiff(repo, git, lastCommitName, headCommit.name, projectGroupID)
+                if (commit.name == previousHead) {
+                    return listDiff(repo, git, previousHead, headCommit.name, projectGroupID)
                 }
             }
         }
@@ -68,11 +74,21 @@ class GitProcessor(gitRootPath: String) {
     @Throws(IOException::class)
     fun setHeadCommitMeta(projectMeta: ProjectMeta, gitMode: Boolean) {
         if (gitMode) {
-            projectMeta.meta["latestStoredCommitID"] = headCommit.name
-            projectMeta.meta["latestStoredBranchName"] = repo.fullBranch
+            if (projectMeta.meta["lastMavenSessionID"] != Configuration.currentConfig?.mavenSession) {
+                if (projectMeta.meta["storedHeadCommit"].isNullOrEmpty()) {
+                    projectMeta.meta["storedPreviousHeadCommit"] = ""
+                } else {
+                    projectMeta.meta["storedPreviousHeadCommit"] = projectMeta.meta["storedHeadCommit"]!!
+                }
+                projectMeta.meta["storedHeadCommit"] = headCommit.name
+                projectMeta.meta["latestStoredBranchName"] = repo.fullBranch
+            }
         } else {
-            if (projectMeta.meta["latestStoredCommitID"].isNullOrEmpty()) {
-                projectMeta.meta["latestStoredCommitID"] = ""
+            if (projectMeta.meta["storedHeadCommit"].isNullOrEmpty()) {
+                projectMeta.meta["storedHeadCommit"] = ""
+            }
+            if (projectMeta.meta["storedPreviousHeadCommit"].isNullOrEmpty()) {
+                projectMeta.meta["storedPreviousHeadCommit"] = ""
             }
             if (projectMeta.meta["latestStoredBranchName"].isNullOrEmpty()) {
                 projectMeta.meta["latestStoredBranchName"] = ""

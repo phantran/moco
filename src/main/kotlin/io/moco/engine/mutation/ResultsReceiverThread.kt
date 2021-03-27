@@ -17,8 +17,8 @@
 
 package io.moco.engine.mutation
 
-import io.moco.engine.ClassName
 import io.moco.engine.Configuration
+import io.moco.engine.test.SerializableTestInfo
 import io.moco.persistence.MutationStorage
 import io.moco.utils.DataStreamUtils
 import java.io.*
@@ -32,7 +32,9 @@ import java.util.concurrent.Callable
 class ResultsReceiverThread(
     private val socket: ServerSocket,
     private val workerArguments: MutationWorkerArguments,
+    @get: Synchronized
     private val mutationStorage: MutationStorage,
+    @get: Synchronized
     private val resultMapping: MutableMap<MutationID, MutableMap<String, Any>> = mutableMapOf(),
 ) {
 
@@ -44,6 +46,7 @@ class ResultsReceiverThread(
 
     var future: FutureTask<Int>? = null
 
+    @get: Synchronized
     private val sendArgumentsToWorker = Consumer { outputStream: DataOutputStream ->
         DataStreamUtils.writeObject(outputStream, workerArguments)
     }
@@ -130,35 +133,48 @@ class ResultsReceiverThread(
             if (resultMapping.containsKey(mutation.mutationID)) {
                 val clsName = mutation.mutationID.location.className?.getJavaName()
                 if (clsName != null) {
-                    val status = when ((resultMapping[mutation.mutationID]?.get("result") as MutationTestResult).mutationTestStatus) {
+                    val testRes = resultMapping[mutation.mutationID]?.get("result") as MutationTestResult
+                    val status = when (testRes.mutationTestStatus) {
                         MutationTestStatus.KILLED -> "killed"
                         MutationTestStatus.SURVIVED -> "survived"
                         else -> "run_error"
                     }
-                    val collectInstructionsOrder = resultMapping[mutation.mutationID]?.get("instructionsOder") as List<String>
-                    val additionalInfo = resultMapping[mutation.mutationID]?.get("additionalInfo")  as MutableMap<String, String>
+                    val killedByTest = when (testRes.killedByTest) {
+                        null, "null" -> "None"
+                        else -> testRes.killedByTest
+                    }
+                    val collectInstructionsOrder =
+                        resultMapping[mutation.mutationID]?.get("instructionsOder") as List<String>
+                    val additionalInfo =
+                        resultMapping[mutation.mutationID]?.get("additionalInfo") as MutableMap<String, String>
                     mutation.instructionsOrder = collectInstructionsOrder.toMutableList()
                     mutation.additionalInfo = additionalInfo
-                    // Change method name <init> to constructor for 3rd party plugins usage
-                    if (mutation.mutationID.location.methodName.name == "<init>") {
-                        mutation.mutationID.location.methodName.name = "constructor"
-                    }
+
                     // storage already contains class name entry
                     if (mutationStorage.entries.containsKey(clsName)) {
                         // NOTE: do not change map keys because of the consistency between moco and gamekins
-                        mutationStorage.entries[clsName]?.add(
-                            mapOf(
-                                "mutationDetails" to mutation,
-                                "result" to status,
-                                "uniqueID" to mutation.hashCode()
+                        val existing = mutationStorage.entries[clsName]?.find { it["mutationDetails"] == mutation }
+                        if (existing != null && status == "killed") {
+                            existing["result"] = status
+                            existing["killedByTest"] = killedByTest
+                            existing["uniqueID"] = mutation.hashCode()
+                        } else {
+                            mutationStorage.entries[clsName]?.add(
+                                mutableMapOf(
+                                    "mutationDetails" to mutation,
+                                    "result" to status,
+                                    "killedByTest" to killedByTest,
+                                    "uniqueID" to mutation.hashCode()
+                                )
                             )
-                        )
+                        }
                     } else {
                         // add new class name entry to storage
                         mutationStorage.entries[clsName] = mutableSetOf(
-                            mapOf(
+                            mutableMapOf(
                                 "mutationDetails" to mutation,
                                 "result" to status,
+                                "killedByTest" to killedByTest,
                                 "uniqueID" to mutation.hashCode()
                             )
                         )
@@ -170,8 +186,7 @@ class ResultsReceiverThread(
 
     class MutationWorkerArguments(
         val mutations: List<Mutation>,
-        val tests: List<ClassName>,
-        val testsExecutionTime: MutableMap<String, Long>,
+        val lineTestsMapping: MutableMap<Int, MutableSet<SerializableTestInfo>>,
         val classPath: String,
         val includedOperators: List<String>,
         val filter: String,

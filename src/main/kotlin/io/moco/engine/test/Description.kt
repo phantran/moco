@@ -20,4 +20,4 @@ package io.moco.engine.test
 import java.io.Serializable
 
 
-data class Description constructor(val name: String, val testCls: String?) : Serializable
+data class Description constructor(val name: Any, val testCls: String?) : Serializable

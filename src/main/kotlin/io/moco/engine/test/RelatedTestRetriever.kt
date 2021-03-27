@@ -23,7 +23,7 @@ import io.moco.engine.preprocessing.PreprocessClassResult
 import io.moco.engine.preprocessing.PreprocessStorage
 
 /**
- * Related test retriever
+ * Related test retriever DEPRECATED TO BE REMOVED
  *
  * @constructor
  *

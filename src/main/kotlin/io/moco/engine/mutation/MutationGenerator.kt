@@ -49,8 +49,10 @@ class MutationGenerator(
      * @param coveredLines
      * @return Collected possible mutations
      *///TODO: add filter as a property of this class to excluded classes and functions specify by users
-    fun findPossibleMutationsOfClass(clsNameToMutate: String, coveredLines: Set<Int>?): List<Mutation> {
-        val tracker = MutatedClassTracker(coveredLines = coveredLines)
+    fun findPossibleMutationsOfClass(clsNameToMutate: String,
+                                     coveredLines: Set<Int>?,
+                                     limitMutantsByType: Boolean = false): List<Mutation> {
+        val tracker = MutatedClassTracker(coveredLines = coveredLines, limitMutantsByType=limitMutantsByType)
         val bytesArray: ByteArray? = bytesArrayLoader.getByteArray(clsNameToMutate)
         if (bytesArray != null) {
             return visitAndCollectMutations(tracker, bytesArray)

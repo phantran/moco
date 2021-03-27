@@ -29,15 +29,32 @@ data class ProgressClassTest(
 
     fun saveProgress(data: MutationStorage, configuredOperators: String) {
         val entries: MutableSet<MutableMap<String, String?>> = mutableSetOf()
-        for ((key, value) in data.entries) {
-            entries.add(
-                mutableMapOf(
-                    "className" to key,
-                    "coveredOperators" to configuredOperators,
-                    "totalMutants" to value.count { it["result"] != "run_error" }.toString(),
-                    "killedMutants" to value.count { it["result"] == "killed" }.toString(),
+        if (isEmptyTable()) {
+            for ((key, value) in data.entries) {
+                entries.add(
+                    mutableMapOf(
+                        "className" to key,
+                        "coveredOperators" to configuredOperators,
+                        "totalMutants" to value.count { it["result"] != "run_error" }.toString(),
+                        "killedMutants" to value.count { it["result"] == "killed" }.toString(),
+                    )
                 )
-            )
+            }
+        } else {
+            data.entries.map {
+                val className = it.key.replace(".", "/")
+                val persistedData = PersistentMutationResult().getData("className = '$className'")
+                val totalMutants = persistedData.count { it1 -> it1.entry["result"] != "run_error" }
+                val killedMutants = persistedData.count { it1 -> it1.entry["result"] == "killed" }
+                entries.add(
+                    mutableMapOf(
+                        "className" to it.key,
+                        "coveredOperators" to configuredOperators,
+                        "totalMutants" to totalMutants.toString(),
+                        "killedMutants" to killedMutants.toString(),
+                    )
+                )
+            }
         }
         saveMultipleEntries(sourceName, entries.toList())
     }

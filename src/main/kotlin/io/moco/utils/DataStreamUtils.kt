@@ -21,7 +21,9 @@ import java.io.*
 
 
 object DataStreamUtils {
+
     @Throws(IOException::class)
+    @Synchronized
     fun writeObject(outputStream: DataOutputStream, value: Serializable) {
         try {
             ByteArrayOutputStream().use { bos ->
@@ -38,6 +40,7 @@ object DataStreamUtils {
     }
 
     @Suppress("UNCHECKED_CAST")
+    @Synchronized
     fun <T : Serializable?> readObject(dis: DataInputStream): T {
         return try {
             val length: Int = dis.readInt()
@@ -50,6 +53,7 @@ object DataStreamUtils {
     }
 
     @Throws(IOException::class)
+    @Synchronized
     private fun deserialize(bytes: ByteArray): Any? {
         val bis = ByteArrayInputStream(bytes)
         try {

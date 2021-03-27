@@ -38,7 +38,6 @@ class JarUtil {
                         .toString() + ("" + Math.random()).replace("\\.".toRegex(), ""),
                     ".jar"
                 )
-
                 val outputStream = FileOutputStream(jarName)
                 val jarFile = File(jarName.absolutePath)
                 val manifest = Manifest()
@@ -63,8 +62,9 @@ class JarUtil {
                     addClass(MoCoAgent::class.java.name, jos, byteLoader)
                 }
                 jarName.absolutePath
-            } catch (ex: IOException) {
+            } catch (ex: Exception) {
                 logger.error("Cannot create MoCo Agent Jar")
+                logger.error(ex.printStackTrace().toString())
                 throw ex
             }
         }
@@ -76,7 +76,7 @@ class JarUtil {
             }
         }
 
-        @Throws(IOException::class)
+        @Throws(Exception::class)
         private fun addClass(clsName: String, jarOutputStream: JarOutputStream, byteLoader: ByteArrayLoader) {
             jarOutputStream.putNextEntry(ZipEntry(clsName.replace(".", "/") + ".class"))
             val temp = byteLoader.getByteArray(clsName) ?: throw Exception()

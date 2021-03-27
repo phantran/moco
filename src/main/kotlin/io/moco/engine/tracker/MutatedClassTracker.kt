@@ -23,11 +23,17 @@ import io.moco.engine.mutation.Mutation
 import io.moco.engine.mutation.MutationID
 
 
-class MutatedClassTracker(val targetMutation: Mutation? = null, val coveredLines: Set<Int>? = null) {
+class MutatedClassTracker(val targetMutation: Mutation? = null,
+                          val coveredLines: Set<Int>? = null,
+                          limitMutantsByType: Boolean = false) {
     private var mutations: MutableList<Mutation> = mutableListOf()
     private var generatedTargetMutation: Mutation? = null
     private var clsInfo: ClassInfo? = null
     private var fileName: String? = null
+    // If number of mutations per line is limited by limitMutantsByType parameter
+    // the tracker of the number of mutations of each line will be initialized and not null
+    val mutationLimitTracker: MutableMap<Int, MutableSet<String>>? = if (limitMutantsByType) mutableMapOf() else null
+
     // "-" is used to as delimiter of mutator id -> so we take the first element of the split mutator id string
     // This original opcode is then used in mutated method tracker to detect same opcode on the line of code
     // of the target mutation

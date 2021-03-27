@@ -20,6 +20,15 @@ package io.moco.engine.mutation
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.io.Serializable
 
+/**
+ * Mutation i d
+ *
+ * @property location
+ * @property instructionIndices
+ * @property operatorName
+ * @property mutatorID
+ * @constructor Create empty Mutation i d
+ */
 data class MutationID(
     // IMPORTANT: Do not change json property names
     @JsonProperty("methodInfo") val location: MutatedMethodLocation,
@@ -28,6 +37,12 @@ data class MutationID(
     @JsonProperty("mutatorID") var mutatorID: String
 ): Serializable {
 
+    /**
+     * Compare without instruction
+     *
+     * @param other
+     * @return
+     */
     fun compareWithoutInstruction(other: MutationID): Boolean {
         if (location.methodName == other.location.methodName &&
             location.className == other.location.className &&

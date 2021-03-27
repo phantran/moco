@@ -33,6 +33,8 @@ object PreprocessorWorker {
     lateinit var mocoBuildPath: String
     lateinit var codeRoot: String
     lateinit var testRoot: String
+    lateinit var codeTarget: String
+    lateinit var testTarget: String
     lateinit var excludedSourceClasses: List<String>
     lateinit var excludedSourceFolders: List<String>
     lateinit var excludedTestClasses: List<String>
@@ -40,12 +42,14 @@ object PreprocessorWorker {
     lateinit var preprocessResultsFolder: String
     var recordedTestMapping: List<String>? = null
     var isRerun: Boolean = false
+
     // filteredClsByGitCommit is null of empty if
     // 1. Git mode is off
     // 2. Project run for the first time and no project meta exists
     var filteredClsByGitCommit: List<String>? = null
     val logger = MoCoLogger()
     lateinit var jsonConverter: JsonSource
+
     /**
      * Main
      *
@@ -58,7 +62,7 @@ object PreprocessorWorker {
      *
      * If GIT changed classes mode is on, preprocessing will be skipped if no changed test classes are
      * detected since last commit.
-     *
+     *s
      * The final result of this step is stored in preprocess JSON file and store in H2 persistent DB if DB mode is on
      * DB mode is on by default
      */
@@ -69,7 +73,7 @@ object PreprocessorWorker {
         try {
             if (isRerun) logger.debug("Continue processing step due to the previous test error")
             val analysedCodeBase = Codebase(
-                codeRoot, testRoot, excludedSourceClasses,
+                codeRoot, testRoot, codeTarget, testTarget, excludedSourceClasses,
                 excludedSourceFolders, excludedTestClasses, excludedTestFolders
             )
             logger.debug("Preprocessing: Code base has ${analysedCodeBase.sourceClassNames.size} source classes")
@@ -90,8 +94,8 @@ object PreprocessorWorker {
             exitProcess(MoCoProcessCode.OK.code)
         } catch (ex: Exception) {
             jsonConverter.savePreprocessToJson(PreprocessorTracker.getPreprocessResults())
-            logger.debug("Preprocessing: Data saved and exit")
-            logger.debug("Preprocessing: Exit because of error")
+            logger.debug("Preprocessing: Sub-process exited because of a test error")
+            logger.debug("Preprocessing: Data saved and exited")
             if (!ex.message.isNullOrEmpty()) {
                 val exitIndex = ex.message!!.toIntOrNull()
                 if (exitIndex != null) {
@@ -106,22 +110,24 @@ object PreprocessorWorker {
         mocoBuildPath = args[1]  // path to build or target folder of project
         codeRoot = args[2]
         testRoot = args[3]
-        excludedSourceClasses = if (args[4] != "") args[4].split(",").map { it.trim() } else listOf()
-        excludedSourceFolders = if (args[5] != "") args[5].split(",").map { it.trim() } else listOf()
-        excludedTestClasses = if (args[6] != "") args[6].split(",").map { it.trim() } else listOf()
-        excludedTestFolders = if (args[7] != "") args[7].split(",").map { it.trim() } else listOf()
-        preprocessResultsFolder = args[8]
-        TestItemWrapper.configuredTestTimeOut = if (args[9].toIntOrNull() != null) args[9].toLong() else -1L
-        MoCoLogger.debugEnabled = args[10] == "true"
-        MoCoLogger.verbose = args[11] == "true"
-        if (args[12] == "true") MoCoLogger.noLogAtAll = true
+        codeTarget = args[4]
+        testTarget = args[5]
+        excludedSourceClasses = if (args[6] != "") args[6].split(",").map { it.trim() } else listOf()
+        excludedSourceFolders = if (args[7] != "") args[7].split(",").map { it.trim() } else listOf()
+        excludedTestClasses = if (args[8] != "") args[8].split(",").map { it.trim() } else listOf()
+        excludedTestFolders = if (args[9] != "") args[9].split(",").map { it.trim() } else listOf()
+        preprocessResultsFolder = args[10]
+        TestItemWrapper.configuredTestTimeOut = if (args[11].toIntOrNull() != null) args[11].toLong() else -1L
+        MoCoLogger.debugEnabled = args[12] == "true"
+        MoCoLogger.verbose = args[13] == "true"
+        if (args[14] == "true") MoCoLogger.noLogAtAll = true
         // filteredClsByGitCommit is null of empty if
         // 1. Git mode is off
         // 2. Project run for the first time and no project meta exists
         filteredClsByGitCommit =
-            if (args[13] != "") args[13].split(",").map { it.trim() } else null
-        recordedTestMapping = if (args[14] != "") args[14].split(",").map { it.trim() } else null
-        isRerun = if (args.getOrNull(15) != null) args[15].toBoolean() else false
+            if (args[15] != "") args[15].split(",").map { it.trim() } else null
+        recordedTestMapping = if (args[16] != "") args[16].split(",").map { it.trim() } else null
+        isRerun = if (args.getOrNull(17) != null) args[17].toBoolean() else false
         MoCoLogger.useKotlinLog()
         jsonConverter = JsonSource(
             "$mocoBuildPath${File.separator}$preprocessResultsFolder", "preprocess"
@@ -135,14 +141,19 @@ object PreprocessorWorker {
         // Return list of relevant tests to be executed
         // tests that are changed according to git diff and tests that were mapped before to
         // corresponding changed source classes
-        logger.debug("Recorded test relevant tests from previous runs: $recordedTestMapping")
-        logger.debug("Changed classes by Git: $filteredClsByGitCommit")
+        logger.debug("Recorded test relevant tests from previous runs: ${recordedTestMapping ?: "None"}")
+        logger.debug("Changed classes by Git: ${filteredClsByGitCommit ?: "None"}")
         val res = if (!filteredClsByGitCommit.isNullOrEmpty()) {
             codebase.testClassesNames.filter {
-                filteredClsByGitCommit.any{ it1 -> it1.contains(it.name) }
+                filteredClsByGitCommit.any { it1 -> it1.contains(it.name) }
             }.toMutableSet()
         } else codebase.testClassesNames
-        if (recordedTestMapping != null) res.addAll(recordedTestMapping.map { ClassName(it) })
+        if (recordedTestMapping != null) {
+            val temp = recordedTestMapping.filter {
+                excludedTestFolders.any { it1 -> !it.contains(it1.substringAfterLast(File.separator)) }
+            }
+            res.addAll(temp.minus(excludedTestClasses).map { ClassName(it) })
+        }
         return res.toList()
     }
 }

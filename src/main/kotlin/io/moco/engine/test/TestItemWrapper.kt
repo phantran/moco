@@ -48,16 +48,13 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
     companion object {
         var configuredTestTimeOut: Long = -1
 
-        fun wrapTestItem(testItems: List<TestItem>): Pair<List<TestItemWrapper>, List<TestResultAggregator>> {
+        fun wrapTestItem(testItems: List<TestItem>): List<TestItemWrapper> {
             val wrappedItems: MutableList<TestItemWrapper> = mutableListOf()
-            val aggregator: MutableList<TestResultAggregator> = mutableListOf()
-
             for (item: TestItem in testItems) {
                 val resultAggregator = TestResultAggregator(mutableListOf())
                 wrappedItems.add(TestItemWrapper(item, resultAggregator))
-                aggregator.add(resultAggregator)
             }
-            return Pair(wrappedItems, aggregator)
+            return wrappedItems
         }
     }
 }
