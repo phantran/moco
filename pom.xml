@@ -14,7 +14,7 @@
     <url>http://moco.io</url>
 
 <!--    <prerequisites>-->
-<!--        <maven>${maven.version}</maven>-->
+<!--        <maven>3.0</maven>-->
 <!--    </prerequisites>-->
 
     <developers>
@@ -43,6 +43,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <asm.version>8.0</asm.version>
         <descriptor.skip>false</descriptor.skip>
+        <test.skip>false</test.skip>
     </properties>
 
     <dependencies>
@@ -319,6 +320,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
                 <configuration>
+                    <skip>${test.skip}</skip>
                     <excludes>
                         <exclude>**/test-artifacts/**</exclude>
                         <exclude>**/dev/**</exclude>

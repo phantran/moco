@@ -1,6 +1,9 @@
+# MoCo
+
+This is the [m0c0-maven-plugin](http://moco.io/).
+
 [![pipeline status](https://gitlab.infosun.fim.uni-passau.de/phan/moco/badges/master/pipeline.svg)](https://gitlab.infosun.fim.uni-passau.de/phan/moco/-/commits/master)
 
-# MoCo
 
 A Maven plugin written in Kotlin that supports mutation testing for Java projects
 
@@ -37,11 +40,12 @@ MoCo is available in Maven Central and it could be used easily by adding it to t
 </plugin>
 ```
 
+If you are developing MoCo locally, you can enter the version as `1.0-SNAPSHOT`.
+
 The default Maven phase of MoCo the verify phase, if you want to change the phase that executes MoCo, just use the execution 
 configuration as below
 
 ```xml
-
 <execution>
     <goals>
         <goal>moco</goal>
@@ -64,18 +68,21 @@ If `codeRoot` and `testRoot` are not specified, MoCo will use the default folder
 could check the configuration section or use helpmojo goal for more details about all configurable parameters of MoCo.
 
 #### Test Frameworks
-MoCo supports TestNG and JUnit (3,4,5)
+MoCo supports TestNG and JUnit (3, 4, 5)
 
 #### Report
 After each execution, MoCo will produce a file named `moco.json`. The default path to this file is 
 `target\moco\mutation\moco.json` (if `target` is your project output build folder).
-This `moco.json` file contains information about all mutations that MoCo has collected and run tests  so far.
+This `moco.json` file contains information about all mutations that MoCo has collected and executed so far.
 
 
 #### Configuration 
 Details about configurable parameters of MoCo will be updated here later. For the moment, please use
 the helpmojo command to learn more about it
 `mvn m0c0:help -Ddetail=true`
+
+### Contributing
+If you find a problem with MoCo, it would be very helpful to create a ticket and describe it.
 
 ### License
 
@@ -84,6 +91,6 @@ project has dependencies that are under different licenses.
 
 ### Author Information
 
-Tran Phan
+##### Tran Phan
 
-phan06@ads.uni-passau.de
+phantran197@gmail.com

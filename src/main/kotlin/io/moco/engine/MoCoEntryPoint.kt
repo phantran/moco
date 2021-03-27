@@ -160,7 +160,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
                         // skip preprocessing in git mode and no detected changed class
                         return false
                     }
-                    logger.info("Preprocessing: Git mode - ${clsByGit!!.size} changed classes by git commits diff")
+                    logger.info("Preprocessing: Git mode - ${clsByGit!!.size} changed class(es) by git commits diff")
                     logger.debug("Classes found: $clsByGit")
                     recordedTestMapping = TestsCutMapping().getRecordedMapping(clsByGit!!)
                 } else {

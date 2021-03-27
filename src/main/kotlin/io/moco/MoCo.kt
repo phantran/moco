@@ -33,6 +33,7 @@ import org.apache.maven.project.MavenProject
 import java.io.File
 import org.apache.maven.plugin.MojoExecution
 import org.apache.maven.execution.MavenSession
+import java.nio.file.Paths
 
 /**
  * Goal which perform mutation tests, collect mutation information and store mutation information into JSON file
@@ -61,47 +62,38 @@ class MoCo : AbstractMojo() {
     private val testRootDir: String = ""
 
     /**
-     * Preprocess storage file name
+     * Preprocess storage file name (The folder that contains preprocess.json file)
      */
     @Parameter(defaultValue = "preprocess", property = "preprocessResultsFolder", required = false)
     private val preprocessResultsFolder: String = "preprocess"
 
 
     /**
-     * Mutation result storage file name
+     * Mutation result storage file name (The folder that contains moco.json file)
      */
     @Parameter(defaultValue = "mutation", property = "mutationResultsFolder", required = false)
     private val mutationResultsFolder: String = "mutation"
 
     /**
-     * Excluded source classes, comma separated string, specify as class name with "/", example: io/moco/Example
+     * Excluded source classes, comma separated string, specify as class name with "/", Example: org/example/Example
      */
     @Parameter(defaultValue = "", property = "excludedSourceClasses", required = false)
     private val excludedSourceClasses: String = ""
 
     /**
-     * Excluded source folder (built class), comma separated string
+     * Excluded source folder (built class), comma separated string. Example: org/example,io/moco
      */
     @Parameter(defaultValue = "", property = "excludedSourceFolder", required = false)
     private val excludedSourceFolders: String = ""
 
     /**
-     * moco build folder that contains all generated sources by MoCo
+     * MoCo build folder that contains all generated sources by MoCo, it's better to keep it as default
      */
     @Parameter(defaultValue = "moco", property = "mocoRoot", required = false)
     private val mocoRoot: String = "moco"
 
     /**
-     * Because MoCo modifies byte code of class under test during runtime for instrumentation purpose,
-     * There might be cases a test framework can detect infinite loop and exit early, but it cannot detect such
-     * cases when MoCo insert some instrumentation instructions to the byte code. MoCo cannot escape the loop and
-     * finish its execution. For such cases, please turn on debugging to check which one of your test cases cause
-     * an infinite loop or configure preprocessTestTimeout parameter (unit milliseconds), by default preprocessTestTimeout parameter is
-     * not set. Since it assumes all test cases can function properly before MoCo performing mutation testing.
-     *
-     * Value of 0 means no time out will be taken into consideration
-     * This value of test time out is only used in case timeout cannot be automatically calculated by using
-     * recorded execution time of that test.
+     * Time out for a test in the preprocessing phase of MoCo
      */
     @Parameter(defaultValue = "-1", property = "preprocessTestTimeout", required = false)
     private val preprocessTestTimeout: String = "-1"
@@ -119,7 +111,7 @@ class MoCo : AbstractMojo() {
     private val excludedTestFolders: String = ""
 
     /**
-     * Excluded mutation operators, comma separated string
+     * Excluded mutation operators, comma separated string, for example: AOR,ROR
      */
     @Parameter(defaultValue = "", property = "excludedMuOpNames", required = false)
     private val excludedMuOpNames: String = ""
@@ -131,7 +123,7 @@ class MoCo : AbstractMojo() {
     private val gitMode: Boolean = true
 
     /**
-     * Turn off debug messages to console, turn on to check MoCo Execution
+     * Turn off debug messages to console
      */
     @Parameter(defaultValue = "false", property = "debugEnabled", required = false)
     private val debugEnabled: Boolean = false
@@ -143,32 +135,32 @@ class MoCo : AbstractMojo() {
     private val verbose: Boolean = true
 
     /**
-     * Number of max threads to use by the main process of MoCo
+     * Maximum number of threads to use by the main process of MoCo
      */
     @Parameter(defaultValue = "2", property = "numberOfThreads", required = false)
     private val numberOfThreads: Int = 2
 
     /**
-     * Set to true to calculate mutation score for each run
+     * Set to true to calculate mutation score for each run (this feature is not stable yet)
      */
-    @Parameter(defaultValue = "true", property = "enableMetrics", required = false)
-    private val enableMetrics: Boolean = true
+    @Parameter(defaultValue = "false", property = "enableMetrics", required = false)
+    private val enableMetrics: Boolean = false
 
     /**
-     * Turn off to skip dumbing mutation test results to moco.json file at the end
+     * Turn off to skip storing mutation test results to moco.json file at the end of MoCo execution
      */
     @Parameter(defaultValue = "true", property = "useForCICD", required = false)
     private val useForCICD: Boolean = true
 
     /**
-     * Limit mutation of each mutation operator on each line of code to 1
-     * Set this parameter to false to tell MoCo to generate all possible mutations that it could collect
+     * Set this parameter to true to limit the number mutations of each mutation operator on each line to just 1
+     * Set this parameter to false to tell MoCo to generate all possible mutations that it could collect on a line of code
      */
     @Parameter(defaultValue = "true", property = "limitMutantsByType", required = false)
     private val limitMutantsByType: Boolean = true
 
     /**
-     * Set to true to disable MoCo
+     * Set to true to skip MoCo execution
      */
     @Parameter(defaultValue = "false", property = "skip", required = false)
     private val skip: Boolean = false
@@ -204,7 +196,9 @@ class MoCo : AbstractMojo() {
                     log.info("Note: make sure to use MoCo after tests phase")
                     // Often named as "target" or "build" folder, contains compiled classes, JaCoCo report, MoCo report, etc...
                     var rootProject = project
-                    while (rootProject!!.hasParent()) rootProject = rootProject.parent
+                    while (rootProject!!.hasParent()) {
+                        rootProject = rootProject.parent
+                    }
                     val s = File.separator
                     val persistencePath =
                         localRepository?.basedir + "${s}io${s}moco${s}" + rootProject.artifactId + "${s}persistence"
@@ -241,8 +235,11 @@ class MoCo : AbstractMojo() {
                     val mocoBuildPath = "$buildRoot${s}$mocoRoot"
                     val fOpNames = Operator.supportedOperatorNames.filter { !excludedMuOpNames.contains(it) }
 
+                    val rootProjectBaseDir = if (rootProject.basedir != null) rootProject.basedir.toString()
+                    else Paths.get("").toAbsolutePath().toString()
+
                     val configuration = Configuration(
-                        rootProjectBaseDir = rootProject.basedir.toString(),
+                        rootProjectBaseDir = rootProjectBaseDir,
                         mavenSession = session.toString(),
                         buildRoot = buildRoot,
                         codeRoot = codeRoot,
