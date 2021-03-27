@@ -164,14 +164,14 @@ class MoCo : AbstractMojo() {
      * Limit mutation of each mutation operator on each line of code to 1
      * Set this parameter to false to tell MoCo to generate all possible mutations that it could collect
      */
-    @Parameter(defaultValue = "true", property = "numberOfThreads", required = false)
+    @Parameter(defaultValue = "true", property = "limitMutantsByType", required = false)
     private val limitMutantsByType: Boolean = true
 
     /**
      * Set to true to disable MoCo
      */
-    @Parameter(defaultValue = "false", property = "turnOff", required = false)
-    private val turnOff: Boolean = false
+    @Parameter(defaultValue = "false", property = "skip", required = false)
+    private val skip: Boolean = false
 
     @Parameter(defaultValue = "\${mojoExecution}", readonly = true, required = true)
     private val mojo: MojoExecution? = null
@@ -187,7 +187,7 @@ class MoCo : AbstractMojo() {
     override fun execute() {
         var dbON = false
         try {
-            if (!turnOff) {
+            if (!skip) {
                 if (project != null && project!!.build != null) {
                     // Skip if MoCo dependency is not in pom.xml
                     if (project?.dependencies?.any {
@@ -209,8 +209,8 @@ class MoCo : AbstractMojo() {
                     val persistencePath =
                         localRepository?.basedir + "${s}io${s}moco${s}" + rootProject.artifactId + "${s}persistence"
 
-                    log.info("Configured Compiled Code Directory: $codeRootDir")
-                    log.info("Configured Compiled Test Directory: $testRootDir")
+                    log.info("Configured compiled code directory: ${if (codeRootDir.isNotEmpty()) codeRootDir else "default"}")
+                    log.info("Configured compiled test directory: ${if (testRootDir.isNotEmpty()) testRootDir else "default"}")
                     val buildRoot = project?.build?.directory.toString()
                     val codeRoot = project?.build?.outputDirectory.toString()
                     var codeTarget = codeRoot

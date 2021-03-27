@@ -29,8 +29,8 @@ import java.util.Collections.unmodifiableList
 import kotlin.system.measureTimeMillis
 
 
-class JUnit5TestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -1)
-    : TestItem(cls, testIdentifier, executionTime) {
+class JUnit5TestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -1) :
+    TestItem(cls, testIdentifier, executionTime) {
 
     override val desc = Description((testIdentifier as TestIdentifier).displayName, cls.name)
 
@@ -62,8 +62,8 @@ class JUnit5TestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -
                     tra.results.add(TestResult(desc, e, TestResult.TestState.TIMEOUT))
                     logger.debug("Test ${this@JUnit5TestItem}  execution TIMEOUT - allowed time $timeOut ms")
                 }
+                else -> logger.info(e.printStackTrace().toString())
             }
-            logger.info(e.printStackTrace().toString())
             throw e
         } finally {
             job!!.cancel()
@@ -104,7 +104,7 @@ class JUnit5TestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -
         fun getTestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long): TestItem? {
             // Cache identifiers so that found identifiers that are executing and being stuck won't
             // make LauncherDiscoveryRequestBuilder falls in an infinite loop
-            var foundIdentifier: TestIdentifier? = cachedIdentifiers.find { it.toString() == testIdentifier.toString()}
+            var foundIdentifier: TestIdentifier? = cachedIdentifiers.find { it.toString() == testIdentifier.toString() }
             if (foundIdentifier == null) {
                 val listener = TestIdentifierListener()
                 launcher.execute(

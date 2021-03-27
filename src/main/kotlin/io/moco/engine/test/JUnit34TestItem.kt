@@ -70,6 +70,7 @@ class JUnit34TestItem(
                     tra.results.add(TestResult(desc, e, TestResult.TestState.TIMEOUT))
                     logger.debug("Test ${this@JUnit34TestItem}  execution TIMEOUT - allowed time $timeOut ms")
                 }
+                else -> logger.info(e.printStackTrace().toString())
             }
             throw e
         } finally {

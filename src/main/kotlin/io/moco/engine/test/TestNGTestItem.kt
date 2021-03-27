@@ -97,6 +97,7 @@ class TestNGTestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -
                     tra.results.add(TestResult(desc, ex, TestResult.TestState.TIMEOUT))
                     logger.debug("Test ${this@TestNGTestItem} execution TIMEOUT - allowed time $timeOut ms")
                 }
+                else -> logger.info(ex.printStackTrace().toString())
             }
             throw ex
         } finally {

@@ -41,7 +41,6 @@ class TestItemWrapper(val testItem: TestItem, val testResultAggregator: TestResu
             }
         } catch (ex: Exception) {
             logger.debug("Error while executing test $testItem")
-            logger.error(ex.printStackTrace().toString())
             throw ex
         }
     }
