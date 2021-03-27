@@ -17,4 +17,4 @@ cache:
 test:
   stage: test
   script:
-    - mvn $MAVEN_CLI_OPTS clean test
+    - mvn $MAVEN_CLI_OPTS -Ddescriptor.skip=true clean test

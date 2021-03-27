@@ -54,7 +54,6 @@ class AEntryPointTest : AnnotationSpec() {
     }
 
     @Test
-    @Ignore
     fun testEntryPoint() {
         try {
             val excluded = ""
@@ -105,7 +104,7 @@ class AEntryPointTest : AnnotationSpec() {
             )
             H2Database().initDBTablesIfNotExists()
             MoCoEntryPoint(configuration).execute()
-            MoCoEntryPoint.runScore.roundToInt() shouldBeInRange IntRange(14, 16)
+            MoCoEntryPoint.runScore.roundToInt() shouldBeInRange IntRange(50, 60)
         } finally {
             H2Database.shutDownDB()
         }

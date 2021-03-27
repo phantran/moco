@@ -34,14 +34,15 @@
     </repositories>
 
     <properties>
-        <kotlin.version>1.4.31</kotlin.version>
+        <kotlin.version>1.4.21</kotlin.version>
         <kotlin.code.style>official</kotlin.code.style>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <maven.version>3.6.3</maven.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.version>3.3.9</maven.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <asm.version>8.0</asm.version>
+        <descriptor.skip>false</descriptor.skip>
     </properties>
 
     <dependencies>
@@ -87,12 +88,12 @@
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
-            <version>1.4.31</version>
+            <version>1.4.21</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-core</artifactId>
-            <version>1.4.3</version>
+            <version>1.4.2</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
@@ -106,22 +107,17 @@
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-launcher</artifactId>
-            <version>1.7.1</version>
+            <version>1.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite-api</artifactId>
+            <version>1.6.2</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.8.0-M1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.8.0-M1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-runner</artifactId>
-            <version>1.7.1</version>
+            <version>5.7.0</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -133,11 +129,11 @@
             <artifactId>testng</artifactId>
             <version>6.9.10</version>
         </dependency>
-        <dependency>
-            <groupId>pl.pragmatists</groupId>
-            <artifactId>JUnitParams</artifactId>
-            <version>1.0.4</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>pl.pragmatists</groupId>-->
+<!--            <artifactId>JUnitParams</artifactId>-->
+<!--            <version>1.0.4</version>-->
+<!--        </dependency>-->
         <!-- =============================================== -->
 
 
@@ -294,39 +290,9 @@
 
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.6.0</version>
-                <configuration>
-                    <extractors>
-                        <extractor>kotlin</extractor>
-                    </extractors>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.github.gantsign.maven.plugin-tools</groupId>
-                        <artifactId>kotlin-maven-plugin-tools</artifactId>
-                        <version>0.9.25</version>
-                    </dependency>
-                </dependencies>
-                <executions>
-                    <execution>
-                        <id>default-descriptor</id>
-                        <phase>process-classes</phase>
-                    </execution>
-                    <execution>
-                        <id>help-goal</id>
-                        <goals>
-                            <goal>helpmojo</goal>
-                        </goals>
-                    </execution>
-                </executions>
-
-            </plugin>
-            <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
-                <version>1.4.31</version>
+                <version>1.4.21</version>
                 <configuration>
                     <jvmTarget>1.8</jvmTarget>
                 </configuration>
@@ -391,7 +357,36 @@
                     </excludes>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <version>3.6.0</version>
+                <configuration>
+                    <skip>${descriptor.skip}</skip>
+                    <extractors>
+                        <extractor>kotlin</extractor>
+                    </extractors>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.github.gantsign.maven.plugin-tools</groupId>
+                        <artifactId>kotlin-maven-plugin-tools</artifactId>
+                        <version>0.9.25</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>default-descriptor</id>
+                        <phase>process-classes</phase>
+                    </execution>
+                    <execution>
+                        <id>help-goal</id>
+                        <goals>
+                            <goal>helpmojo</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>

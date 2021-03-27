@@ -90,6 +90,7 @@ class JUnit5TestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -
 
     companion object {
         private val launcher: Launcher = LauncherFactory.create()
+        private val cachedIdentifiers: MutableSet<TestIdentifier> = mutableSetOf()
 
         fun getTests(res: MutableList<TestItem>, item: Class<*>) {
             val listener = TestIdentifierListener()
@@ -101,12 +102,18 @@ class JUnit5TestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -
         }
 
         fun getTestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long): TestItem? {
-            val listener = TestIdentifierListener()
-            launcher.execute(
-                LauncherDiscoveryRequestBuilder.request().selectors(DiscoverySelectors.selectClass(cls))
-                    .build(), listener
-            )
-            val foundIdentifier = listener.getIdentifiers().find { it.toString() == testIdentifier }
+            // Cache identifiers so that found identifiers that are executing and being stuck won't
+            // make LauncherDiscoveryRequestBuilder falls in an infinite loop
+            var foundIdentifier: TestIdentifier? = cachedIdentifiers.find { it.toString() == testIdentifier.toString()}
+            if (foundIdentifier == null) {
+                val listener = TestIdentifierListener()
+                launcher.execute(
+                    LauncherDiscoveryRequestBuilder.request().selectors(DiscoverySelectors.selectClass(cls))
+                        .build(), listener
+                )
+                foundIdentifier = listener.getIdentifiers().find { it.toString() == testIdentifier }
+                if (foundIdentifier != null) cachedIdentifiers.add(foundIdentifier)
+            }
             return if (foundIdentifier != null) {
                 JUnit5TestItem(cls, foundIdentifier, executionTime)
             } else null
