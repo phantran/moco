@@ -30,5 +30,5 @@ data class Mutation (
     @JsonIgnore var relatedVarIndices: MutableSet<Int> = mutableSetOf(),
     @JsonProperty("instructionsOrder") var instructionsOrder: MutableList<String> = mutableListOf(),  // Additional information about the mutant
     @JsonProperty("additionalInfo") var additionalInfo: MutableMap<String, String> = mutableMapOf(),  // Additional information about the mutant
-    //TODO: Add feature for find finally block and static initializer later
+    //TODO: Add feature for find finally block later
 ) : Serializable

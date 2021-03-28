@@ -71,64 +71,67 @@ class POUOI(
     // map from line of code to return statement
     private var returnInsTracker: MutableSet<Int> = mutableSetOf()
 
-    override fun visitVarInsn(opcode: Int, v: Int) {
-        var supported = false
-        if (supportedOpcodes["var"]!!.contains(opcode) &&
-            (!tracker.mutatedClassTracker.getClsInfo()?.isEnum!!)
-        ) {
-            supported = true
-        }
-        mv.visitVarInsn(opcode, v)
-        if (supported) {
-            for (operatorType in operatorTypes) {
-                // Always collect mutation information in both collecting and creating phase
-                val newMutation = tracker.registerMutation(
-                    operator,
-                    createDesc(operatorType.first, opcode),
-                    createUniqueID(opcode, "PO", operatorType.second),
-                    opcodeDesc[opcode]?.second, mutableSetOf(v)
-                ) ?: return
-                // But only do visiting to create actual mutant if in creating phase
-                if (tracker.mutatedClassTracker.targetMutation != null) {
-                    if (tracker.isTargetMutation(newMutation)) {
-                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
-                        logger.debug("${operatorType.first} of variable : $v")
-                        // Collect variable name info
-                        varIndexToLineNo = Pair(v, tracker.currConsideredLineNumber)
-                        when (operatorType.second) {
-                            "I" -> handleVarPostOp(opcode, v)
-                            "D" -> handleVarPostOp(opcode, v, false)
-                        }
-                        return
-                    }
-                }
-            }
-        }
-    }
 
-    private fun handleVarPostOp(opcode: Int, v: Int, isInc: Boolean = true) {
-        when (opcode) {
-            Opcodes.ILOAD -> mv.visitIincInsn(v, if (isInc) 1 else -1)
-            Opcodes.FLOAD -> {
-                mv.visitInsn(Opcodes.DUP)
-                mv.visitInsn(Opcodes.FCONST_1)
-                mv.visitInsn(if (isInc) Opcodes.FADD else Opcodes.FSUB)
-                mv.visitVarInsn(Opcodes.FSTORE, v)
-            }
-            Opcodes.LLOAD -> {
-                mv.visitInsn(Opcodes.DUP2)
-                mv.visitInsn(Opcodes.LCONST_1)
-                mv.visitInsn(if (isInc) Opcodes.LADD else Opcodes.LSUB)
-                mv.visitVarInsn(Opcodes.LSTORE, v)
-            }
-            Opcodes.DLOAD -> {
-                mv.visitInsn(Opcodes.DUP2)
-                mv.visitInsn(Opcodes.DCONST_1)
-                mv.visitInsn(if (isInc) Opcodes.DADD else Opcodes.DSUB)
-                mv.visitVarInsn(Opcodes.DSTORE, v)
-            }
-        }
-    }
+    // FIXME: post increment of local variable often results in redundant mutations or mutations that can't be killed
+    // FIXME: so it's disabled at the moment
+//    override fun visitVarInsn(opcode: Int, v: Int) {
+//        var supported = false
+//        if (supportedOpcodes["var"]!!.contains(opcode) &&
+//            (!tracker.mutatedClassTracker.getClsInfo()?.isEnum!!)
+//        ) {
+//            supported = true
+//        }
+//        mv.visitVarInsn(opcode, v)
+//        if (supported) {
+//            for (operatorType in operatorTypes) {
+//                // Always collect mutation information in both collecting and creating phase
+//                val newMutation = tracker.registerMutation(
+//                    operator,
+//                    createDesc(operatorType.first, opcode),
+//                    createUniqueID(opcode, "PO", operatorType.second),
+//                    opcodeDesc[opcode]?.second, mutableSetOf(v)
+//                ) ?: return
+//                // But only do visiting to create actual mutant if in creating phase
+//                if (tracker.mutatedClassTracker.targetMutation != null) {
+//                    if (tracker.isTargetMutation(newMutation)) {
+//                        tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
+//                        logger.debug("${operatorType.first} of variable : $v")
+//                        // Collect variable name info
+//                        varIndexToLineNo = Pair(v, tracker.currConsideredLineNumber)
+//                        when (operatorType.second) {
+//                            "I" -> handleVarPostOp(opcode, v)
+//                            "D" -> handleVarPostOp(opcode, v, false)
+//                        }
+//                        return
+//                    }
+//                }
+//            }
+//        }
+//    }
+
+//    private fun handleVarPostOp(opcode: Int, v: Int, isInc: Boolean = true) {
+//        when (opcode) {
+//            Opcodes.ILOAD -> mv.visitIincInsn(v, if (isInc) 1 else -1)
+//            Opcodes.FLOAD -> {
+//                mv.visitInsn(Opcodes.DUP)
+//                mv.visitInsn(Opcodes.FCONST_1)
+//                mv.visitInsn(if (isInc) Opcodes.FADD else Opcodes.FSUB)
+//                mv.visitVarInsn(Opcodes.FSTORE, v)
+//            }
+//            Opcodes.LLOAD -> {
+//                mv.visitInsn(Opcodes.DUP2)
+//                mv.visitInsn(Opcodes.LCONST_1)
+//                mv.visitInsn(if (isInc) Opcodes.LADD else Opcodes.LSUB)
+//                mv.visitVarInsn(Opcodes.LSTORE, v)
+//            }
+//            Opcodes.DLOAD -> {
+//                mv.visitInsn(Opcodes.DUP2)
+//                mv.visitInsn(Opcodes.DCONST_1)
+//                mv.visitInsn(if (isInc) Opcodes.DADD else Opcodes.DSUB)
+//                mv.visitVarInsn(Opcodes.DSTORE, v)
+//            }
+//        }
+//    }
 
     override fun visitInsn(opcode: Int) {
         // Tracker return statement to filter out post increment/decrement on return line

@@ -23,7 +23,7 @@ import io.moco.engine.preprocessing.PreprocessClassResult
 import io.moco.engine.preprocessing.PreprocessStorage
 
 /**
- * Related test retriever DEPRECATED TO BE REMOVED
+ * Related test retriever
  *
  * @constructor
  *
@@ -45,6 +45,7 @@ class RelatedTestRetriever(buildRoot: String) {
      * @return
      */
     fun retrieveRelatedTest(cut: ClassName, executionTimeInfo: Map<String, Long>): List<ClassName> {
+        // TODO: DEPRECATED - NO LONGER USED AND TO BE REMOVED
         for (item: PreprocessClassResult in store.classRecord) {
             if (cut.name == item.classUnderTestName && !item.testClasses.isNullOrEmpty()) {
                 // Filter test classes with execution time = -1 and transform to internal class name

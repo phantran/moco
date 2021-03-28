@@ -87,7 +87,7 @@ class MutatedClassVisitor(
             }
             // Use loop visitor to detect loop (for, while, do while)
             if (collectingPhase) {
-                chain = LoopVisitor(chain, methodTracker)
+                chain = FilterVisitor(chain, methodTracker)
             }
             val wrapped = LineVisitor(chain, methodTracker)
             InstructionVisitor(wrapped, methodTracker)
