@@ -44,7 +44,7 @@ class MutatedClassTracker(val targetMutation: Mutation? = null,
     }
 
     fun shouldCollectThisMutation(id: MutationID): Boolean {
-//                return mutations.any { it.mutationID == id }
+//      return mutations.any { it.mutationID == id }
         return mutations.any { it.mutationID.compareWithoutInstruction(id) }
     }
 

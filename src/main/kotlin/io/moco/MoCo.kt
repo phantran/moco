@@ -62,14 +62,14 @@ class MoCo : AbstractMojo() {
     private val testRootDir: String = ""
 
     /**
-     * Preprocess storage file name (The folder that contains preprocess.json file)
+     * Preprocess storage folder name (The folder that contains preprocess.json file)
      */
     @Parameter(defaultValue = "preprocess", property = "preprocessResultsFolder", required = false)
     private val preprocessResultsFolder: String = "preprocess"
 
 
     /**
-     * Mutation result storage file name (The folder that contains moco.json file)
+     * Mutation result storage folder name (The folder that contains moco.json file)
      */
     @Parameter(defaultValue = "mutation", property = "mutationResultsFolder", required = false)
     private val mutationResultsFolder: String = "mutation"
@@ -81,31 +81,31 @@ class MoCo : AbstractMojo() {
     private val excludedSourceClasses: String = ""
 
     /**
-     * Excluded source folder (built class), comma separated string. Example: org/example,io/moco
+     * Excluded source folder (built class), comma separated string. Example: org/example/abc,org/example/xyz
      */
     @Parameter(defaultValue = "", property = "excludedSourceFolder", required = false)
     private val excludedSourceFolders: String = ""
 
     /**
-     * MoCo build folder that contains all generated sources by MoCo, it's better to keep it as default
+     * MoCo build folder name that contains all generated sources by MoCo, it's better to keep this as default
      */
     @Parameter(defaultValue = "moco", property = "mocoRoot", required = false)
     private val mocoRoot: String = "moco"
 
     /**
-     * Time out for a test in the preprocessing phase of MoCo
+     * Time out for a test in the preprocessing phase of MoCo (ms)
      */
     @Parameter(defaultValue = "-1", property = "preprocessTestTimeout", required = false)
     private val preprocessTestTimeout: String = "-1"
 
     /**
-     * Excluded tests classes, comma separated string, specify as class name with "/", example: io/moco/TestExample
+     * Excluded tests classes, comma separated string, specify as class name with "/", example: org/example/TestExample
      */
     @Parameter(defaultValue = "", property = "excludedTestClasses", required = false)
     private val excludedTestClasses: String = ""
 
     /**
-     * Excluded test folder, comma separated string
+     * Excluded test folder, comma separated string, example: org/example/abc,org/example/xyz
      */
     @Parameter(defaultValue = "", property = "excludedTestFolder", required = false)
     private val excludedTestFolders: String = ""
@@ -295,6 +295,7 @@ class MoCo : AbstractMojo() {
             if (dbON) H2Database.shutDownDB()
         }
     }
+
 
     private fun prepareAllClassPaths(rootProject: MavenProject?): String {
         // Loop through the hierarchy of maven project and add all relevant classpaths

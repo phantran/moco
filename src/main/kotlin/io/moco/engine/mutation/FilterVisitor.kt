@@ -25,7 +25,22 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
 
-class LoopVisitor(
+/**
+ * Filter visitor
+ *
+ * This class is reponsible for filtering collected mutations at the end of the mutations collecting step
+ *
+ * Currently, most of the implementation of this class is to filter out mutations of loop counters since
+ * such kind of mutations usually result in timeout test errors
+ *
+ * If you wanted to add more types of mutation filter, you could put them in the visitEnd method of this class
+ *
+ * @property mutatedMethodTracker
+ * @constructor
+ *
+ * @param delegateMethodVisitor
+ */
+class FilterVisitor(
     delegateMethodVisitor: MethodVisitor?,
     private val mutatedMethodTracker: MutatedMethodTracker,
 ) : MethodVisitor(JavaInfo.ASM_VERSION, delegateMethodVisitor) {
@@ -113,6 +128,7 @@ class LoopVisitor(
     override fun visitEnd() {
         // Filter out infinite loop mutation at the end of a method visit
         val collectedMu = mutatedMethodTracker.mutatedClassTracker.getCollectedMutations()
+        // Filter infinite loop mutations
         collectedMu.removeAll { mutationForLoopCounters(it, mutatedMethodTracker) }
         super.visitEnd()
     }

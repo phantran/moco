@@ -20,9 +20,13 @@ MoCo supports TestNG and JUnit (3, 4, 5)
 
 ### Setup Project
 
-Clone this repository and install it by using Maven install command
+Clone this repository and install it by using Maven install command:
+
 `mvn install`
 
+While developing MoCo, a quick installation to test MoCo in your local repository can be done with:
+
+` mvn install -Ddescriptor.skip -Dtest.skip`
 
 ### Usage
 
@@ -82,6 +86,28 @@ Target source classes and test classes for mutation are configurable through `co
 If `codeRoot` and `testRoot` are not specified, MoCo will use the default folder path information given by Maven. You
 could check the configuration section or use helpmojo goal for more details about all configurable parameters of MoCo.
 
+It's highly recommended to configure your `codeRoot` and `testRoot` for MoCo mutation testing if your project is big.
+It will take a long time to finish if you have a big project with hundred of source classes and test classes. 
+
+To remedy the problem of rerunning mutation tests for unchanged source classes with 
+corresponding test classes, MoCo offers Gitmode. Gitmode is ON by default, it helps reduce 
+mutation testing time significantly by only executing changed classes. You can turn it off with
+```xml
+<gitMode>false</gitMode>
+```
+
+Mutation score is currently not calculated by default. You can enable it by adding this to your configuration
+```xml
+<enableMetrics>true</enableMetrics>
+```
+
+Mutation testing is computational expensive even with the bytecode manipulation approach. 
+A big project with hundred of tests can take hours to finish. To speed it up you can use more worker threads.
+Example: Using 3 threads.
+```xml
+<numberOfThreads>3</numberOfThreads>
+```
+
 #### Report
 After each execution, MoCo will produce a file named `moco.json`. The default path to this file is 
 `**\moco\mutation\moco.json` (inside your project output build folder).
@@ -89,12 +115,12 @@ This `moco.json` file contains information about all mutations that MoCo has col
 
 
 #### Configuration 
-Details about configurable parameters of MoCo will be updated here later. For the moment, please use
+Details about more configurable parameters of MoCo will be updated here later. For the moment, you could use
 the helpmojo command to learn more about it
 `mvn m0c0:help -Ddetail=true`
 
 ### Contributing
-If you find a problem with MoCo and fix it, it would be very helpful to create a ticket along with your pull request.
+If you find a problem with MoCo and wanted to fix it, it would be very helpful to create a ticket along with your pull request.
 
 ### License
 
