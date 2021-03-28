@@ -1,6 +1,6 @@
 # MoCo
 
-This is the [m0c0-maven-plugin](http://moco.io/).
+This is the [m0c0-maven-plugin](http://).
 
 [![pipeline status](https://gitlab.infosun.fim.uni-passau.de/phan/moco/badges/master/pipeline.svg)](https://gitlab.infosun.fim.uni-passau.de/phan/moco/-/commits/master)
 
@@ -15,21 +15,38 @@ approach to motivate software testing activities.
 - Kotlin or Java
 - Apache Maven 3
 
+#### Test Frameworks
+MoCo supports TestNG and JUnit (3, 4, 5)
+
 ### Setup Project
 
 Clone this repository and install it by using Maven install command
 `mvn install`
 
+
 ### Usage
 
 #### pom.xml
-MoCo is available in Maven Central and it could be used easily by adding it to the pom.xml file of your project
 
+Since MoCo is not yet published to Maven Central, you need to install MoCo to your local repository to use it.
+Just follow the setup instructions above to install MoCo to your local repository, 
+then MoCo could be used easily by adding the following information to pom.xml file of your project:
+
+- To dependencies tag
+```xml
+<dependency>
+    <groupId>io.moco</groupId>
+    <artifactId>m0c0-maven-plugin</artifactId>
+    <version>1.0-SNAPSHOT</version>
+</dependency>
+```
+
+- To build tag
 ```xml
 <plugin>
     <groupId>io.moco</groupId>
     <artifactId>m0c0-maven-plugin</artifactId>
-    <version>ENTER-MOCO-VERSION-HERE</version>
+    <version>1.0-SNAPSHOT</version>
     <executions>
         <execution>
             <goals>
@@ -40,8 +57,6 @@ MoCo is available in Maven Central and it could be used easily by adding it to t
 </plugin>
 ```
 
-If you are developing MoCo locally, you can enter the version as `1.0-SNAPSHOT`.
-
 The default Maven phase of MoCo the verify phase, if you want to change the phase that executes MoCo, just use the execution 
 configuration as below
 
@@ -50,13 +65,13 @@ configuration as below
     <goals>
         <goal>moco</goal>
     </goals>
-    <phase>ENTER-PHASE-HERE</phase>
+    <phase>[ENTER-PHASE-HERE]</phase>
 </execution>
 ```
 
 #### Trigger MoCo
 If MoCo is added as a dependency of your project as above, it can be triggered with 
-`mvn install` or `mvn verify` (if you keep the default phase as verify). Or MoCo can be executed alone with this command
+`mvn install` or `mvn verify` (if phase is kept as default). It can also be executed alone with this command
 `mvn m0c0:moco`
 
 Because MoCo uses compiled test classes and compiled source classes of your project for mutation testing, please make
@@ -67,12 +82,9 @@ Target source classes and test classes for mutation are configurable through `co
 If `codeRoot` and `testRoot` are not specified, MoCo will use the default folder path information given by Maven. You
 could check the configuration section or use helpmojo goal for more details about all configurable parameters of MoCo.
 
-#### Test Frameworks
-MoCo supports TestNG and JUnit (3, 4, 5)
-
 #### Report
 After each execution, MoCo will produce a file named `moco.json`. The default path to this file is 
-`target\moco\mutation\moco.json` (if `target` is your project output build folder).
+`**\moco\mutation\moco.json` (inside your project output build folder).
 This `moco.json` file contains information about all mutations that MoCo has collected and executed so far.
 
 
@@ -82,7 +94,7 @@ the helpmojo command to learn more about it
 `mvn m0c0:help -Ddetail=true`
 
 ### Contributing
-If you find a problem with MoCo, it would be very helpful to create a ticket and describe it.
+If you find a problem with MoCo and fix it, it would be very helpful to create a ticket along with your pull request.
 
 ### License
 
