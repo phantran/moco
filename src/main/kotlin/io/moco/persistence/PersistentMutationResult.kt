@@ -134,10 +134,10 @@ data class PersistentMutationResult(
 
 
     @Suppress("UNCHECKED_CAST")
-    fun getAllData(): MutableMap<String, MutableSet<MutableMap<String, Any?>>> {
+    fun getAllData(killedIncluded: Boolean = false): MutableMap<String, MutableSet<MutableMap<String, Any?>>> {
         // This method will be used to retrieve all persisted mutation results in case
         // moco.json has not been created or it has been deleted
-        val retrieved = this.getData("result = 'survived'")
+        val retrieved = if (!killedIncluded) this.getData("result = 'survived'") else this.getData("")
         val res: MutableMap<String, MutableSet<MutableMap<String, Any?>>> = mutableMapOf()
         retrieved.map {
             val mutation = Mutation(

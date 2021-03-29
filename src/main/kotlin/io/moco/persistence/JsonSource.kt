@@ -19,6 +19,7 @@ package io.moco.persistence
 
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.moco.engine.Configuration
 import io.moco.engine.preprocessing.PreprocessStorage
 import io.moco.utils.MoCoLogger
 import java.io.File
@@ -109,6 +110,29 @@ class JsonSource(private val folderPath: String, private val fileName: String) :
         } catch (e: IOException) {
             logger.error(e.printStackTrace().toString())
             throw RuntimeException("Error while saving mutation results to csv file")
+        }
+    }
+
+    companion object {
+        private val logger = MoCoLogger()
+
+        fun createMoCoJsonIfBuildFolderWasCleaned(
+            buildRoot: String?,
+            mocoBuildPath: String,
+            mutationResultsFolder: String,
+            runID: String
+        ) {
+            if (buildRoot == null) return
+            val buildFolder = File(buildRoot)
+            val mocoJSONFile = File("${mocoBuildPath}${File.separator}$mutationResultsFolder${File.separator}moco.json")
+
+            if (buildFolder.exists() && !mocoJSONFile.exists()) {
+                val retrieveEntries = PersistentMutationResult().getAllData(killedIncluded = true)
+                val mutationStorage = MutationStorage(retrieveEntries, runID)
+                val jsonSource = JsonSource("${mocoBuildPath}${File.separator}$mutationResultsFolder", "moco")
+                jsonSource.save(mutationStorage)
+                logger.info("moco.json file does not exists, moco.json has been created with recorded mutation results")
+            }
         }
     }
 

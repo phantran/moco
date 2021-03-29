@@ -46,10 +46,11 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     private var gitMode = configuration.gitMode
     private lateinit var byteLoader: ByteArrayLoader
     private var agentLoc: String? = null
+    private var runID: String = System.currentTimeMillis().toString()
 
     @get: Synchronized
     private val mutationStorage: MutationStorage =
-        MutationStorage(mutableMapOf(), System.currentTimeMillis().toString())
+        MutationStorage(mutableMapOf(), this.runID)
     private var clsByGit: List<String>? = listOf()
     private var projectMeta: ProjectMeta? = null
     private var recordedTestMapping: String? = null
@@ -157,7 +158,14 @@ class MoCoEntryPoint(private val configuration: Configuration) {
                 if (clsByGit != null) {
                     if (clsByGit?.isEmpty() == true) {
                         logger.info("Preprocessing: Git mode: No changed files found by git commits diff")
-                        // skip preprocessing in git mode and no detected changed class
+                        if (Configuration.currentConfig?.useForCICD == true) {
+                            JsonSource.createMoCoJsonIfBuildFolderWasCleaned(
+                                Configuration.currentConfig?.buildRoot,
+                                mocoBuildPath,
+                                Configuration.currentConfig!!.mutationResultsFolder,
+                                runID
+                            )
+                        }
                         return false
                     }
                     logger.info("Preprocessing: Git mode - ${clsByGit!!.size} changed class(es) by git commits diff")
