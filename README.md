@@ -12,7 +12,7 @@ approach to motivate software testing activities.
 
 ### Project requirements
 
-- Kotlin or Java
+- Java 8+
 - Apache Maven 3
 
 #### Test Frameworks
@@ -24,7 +24,7 @@ Clone this repository and install it by using Maven install command:
 
 `mvn install`
 
-While developing MoCo, a quick installation to test MoCo in your local repository can be done with:
+While developing MoCo, a quick installation without testing and generating descriptor to test MoCo in your local repository can be done with:
 
 ` mvn install -Ddescriptor.skip -Dtest.skip`
 
@@ -109,7 +109,7 @@ Mutation score is currently not calculated by default. You can enable it by addi
 <enableMetrics>true</enableMetrics>
 ```
 
-Mutation testing is computational expensive even with the bytecode manipulation approach. 
+Mutation testing is computationally expensive even with the bytecode manipulation approach. 
 A big project with hundred of tests can take hours to finish. To speed it up you can use more worker threads.
 Example: Using 3 threads.
 ```xml

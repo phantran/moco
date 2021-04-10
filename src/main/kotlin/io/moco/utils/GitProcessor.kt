@@ -33,6 +33,7 @@ import java.io.File
 import java.io.IOException
 import java.lang.Exception
 import kotlin.jvm.Throws
+import kotlin.math.log
 
 class GitProcessor(gitRootPath: String) {
 
@@ -74,12 +75,15 @@ class GitProcessor(gitRootPath: String) {
     @Throws(IOException::class)
     fun setHeadCommitMeta(projectMeta: ProjectMeta, gitMode: Boolean) {
         if (gitMode) {
+            logger.debug("Last Maven session: ${projectMeta.meta["lastMavenSessionID"]}")
+            logger.debug("Current Maven session: ${Configuration.currentConfig?.mavenSession}")
             if (projectMeta.meta["lastMavenSessionID"] != Configuration.currentConfig?.mavenSession) {
                 if (projectMeta.meta["storedHeadCommit"].isNullOrEmpty()) {
                     projectMeta.meta["storedPreviousHeadCommit"] = ""
                 } else {
                     projectMeta.meta["storedPreviousHeadCommit"] = projectMeta.meta["storedHeadCommit"]!!
                 }
+                logger.debug("Record the head commit ${headCommit.name} to project meta")
                 projectMeta.meta["storedHeadCommit"] = headCommit.name
                 projectMeta.meta["latestStoredBranchName"] = repo.fullBranch
             }

@@ -81,6 +81,7 @@ object MutationTestExecutor {
                     } catch (e: Exception) {
                         if (e is TimeoutCancellationException) {
                             testMonitor.markTimeoutMutationType(mutation)
+                            testMonitor.updateBlackListedTests(test, mutation)
                             logger.debug("Cancel remaining test of this mutants because of timeout error")
                             break
                         }

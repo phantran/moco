@@ -110,6 +110,15 @@ class MutationTestWorker(
                 val clsJavaName = mutation.mutationID.location.className?.getJavaName()
                 targetClassByteArr = mGen.bytesArrayLoader.getByteArray(clsJavaName)
             }
+            val filteredWrappedTest = wrappedTest.filter {
+                !((testMonitor.blacklistedTests.keys.contains(it.testItem.toString())) &&
+                        (testMonitor.blacklistedTests[it.testItem.toString()]?.
+                        contains("${mutation.mutationID.location.className}-${mutation.lineOfCode}") == true))
+            }
+            if (filteredWrappedTest.isEmpty()) {
+                logger.debug("Skip - this mutation has no test cases to be executed after filtering potential erroneous tests")
+                continue
+            }
             runOneByOne(mutation, wrappedTest, targetClassByteArr)
         }
     }

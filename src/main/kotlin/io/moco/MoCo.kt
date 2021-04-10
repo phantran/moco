@@ -194,6 +194,8 @@ class MoCo : AbstractMojo() {
                     log.info("-----------------------------------------------------------------------")
                     log.info("START")
                     log.info("Note: make sure to use MoCo after tests phase")
+                    log.info("Maven session timestamp: ${session?.startTime?.time.toString()}")
+
                     // Often named as "target" or "build" folder, contains compiled classes, JaCoCo report, MoCo report, etc...
                     var rootProject = project
                     while (rootProject!!.hasParent()) {
@@ -205,8 +207,13 @@ class MoCo : AbstractMojo() {
                         log.info("Exit - MoCo can't detect your local git repository")
                         return
                     }
-                    val persistencePath =
-                        localRepository.basedir + "${s}io${s}moco${s}" + rootProject.artifactId + "${s}persistence"
+
+                    val property = "java.io.tmpdir"
+                    var tempDir = System.getProperty(property)
+                    log.info("DB directory is $tempDir")
+                    if (tempDir.last() != '/') tempDir += "/"
+                    val persistencePath = tempDir + "moco${s}" + "${rootProject.groupId}-${rootProject.artifactId}" + "${s}moco"
+                    // localRepository.basedir + "${s}io${s}moco${s}" + rootProject.artifactId + "${s}persistence"
 
                     log.info("Configured compiled code directory: ${if (codeRootDir.isNotEmpty()) codeRootDir else "default"}")
                     log.info("Configured compiled test directory: ${if (testRootDir.isNotEmpty()) testRootDir else "default"}")
@@ -245,7 +252,7 @@ class MoCo : AbstractMojo() {
 
                     val configuration = Configuration(
                         rootProjectBaseDir = rootProjectBaseDir,
-                        mavenSession = session.toString(),
+                        mavenSession = session?.startTime?.time.toString(),
                         buildRoot = buildRoot,
                         codeRoot = codeRoot,
                         testRoot = testRoot,

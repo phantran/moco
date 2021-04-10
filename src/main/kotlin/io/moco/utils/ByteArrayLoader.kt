@@ -19,6 +19,7 @@ package io.moco.utils
 
 import java.io.*
 import java.lang.RuntimeException
+import java.nio.Buffer
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.util.zip.ZipFile
@@ -91,11 +92,11 @@ class ByteArrayLoader(cp: String?) {
                 val outputChannel = Channels.newChannel(output)
                 val buffer = ByteBuffer.allocateDirect(16 * 1024)
                 while (inputChannel.read(buffer) != -1) {
-                    buffer.flip()
+                    (buffer as Buffer).flip()
                     outputChannel.write(buffer)
                     buffer.compact()
                 }
-                buffer.flip()
+                (buffer as Buffer).flip()
                 while (buffer.hasRemaining()) {
                     outputChannel.write(buffer)
                 }
