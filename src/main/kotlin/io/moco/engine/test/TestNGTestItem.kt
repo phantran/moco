@@ -61,6 +61,7 @@ class TestNGTestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -
         try {
             job = GlobalScope.launch {
                 withTimeout(timeOut) {
+                    logger.debug("Test ${this@TestNGTestItem} started - timeout after $timeOut ms")
                     val temp = measureTimeMillis {
                         synchronized(testng) {
                             val suite = XmlSuite()

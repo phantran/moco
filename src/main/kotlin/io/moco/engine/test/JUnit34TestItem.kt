@@ -53,6 +53,7 @@ class JUnit34TestItem(
             val listener: RunListener = JUnit34RunListener(desc, tra)
             runNotifier.addFirstListener(listener)
             job = GlobalScope.launch {
+                logger.debug("Test ${this@JUnit34TestItem} started - timeout after $timeOut ms")
                 withTimeout(timeOut) {
                     val temp = measureTimeMillis {
                         runner.run(runNotifier)

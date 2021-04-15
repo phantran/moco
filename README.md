@@ -12,7 +12,7 @@ approach to motivate software testing activities.
 
 ### Project requirements
 
-- Kotlin or Java
+- Java 8+
 - Apache Maven 3
 
 #### Test Frameworks
@@ -24,7 +24,7 @@ Clone this repository and install it by using Maven install command:
 
 `mvn install`
 
-While developing MoCo, a quick installation to test MoCo in your local repository can be done with:
+While developing MoCo, a quick installation without testing and generating descriptor to test MoCo in your local repository can be done with:
 
 ` mvn install -Ddescriptor.skip -Dtest.skip`
 
@@ -75,7 +75,7 @@ configuration as below
 
 #### Trigger MoCo
 If MoCo is added as a dependency of your project as above, it can be triggered with 
-`mvn install` or `mvn verify` (if phase is kept as default). It can also be executed alone with this command
+`mvn verify` (if execution phase is kept as default). It can also be executed alone with this command
 `mvn m0c0:moco`
 
 Because MoCo uses compiled test classes and compiled source classes of your project for mutation testing, please make
@@ -89,9 +89,17 @@ could check the configuration section or use helpmojo goal for more details abou
 It's highly recommended to configure your `codeRoot` and `testRoot` for MoCo mutation testing if your project is big.
 It will take a long time to finish if you have a big project with hundred of source classes and test classes. 
 
+Example: We wanted to have mutation tests only for source classes inside org/example (assume there is 
+ a corresponding org/example folder in built test classes folder), then the configuration is:
+```xml
+<codeRoot>org/example</codeRoot>
+```
+```xml
+<testRoot>org/example</testRoot>
+```
 To remedy the problem of rerunning mutation tests for unchanged source classes with 
 corresponding test classes, MoCo offers Gitmode. Gitmode is ON by default, it helps reduce 
-mutation testing time significantly by only executing changed classes. You can turn it off with
+execution time significantly by only considering changed classes. You can turn it off with
 ```xml
 <gitMode>false</gitMode>
 ```
@@ -101,7 +109,7 @@ Mutation score is currently not calculated by default. You can enable it by addi
 <enableMetrics>true</enableMetrics>
 ```
 
-Mutation testing is computational expensive even with the bytecode manipulation approach. 
+Mutation testing is computationally expensive even with the bytecode manipulation approach. 
 A big project with hundred of tests can take hours to finish. To speed it up you can use more worker threads.
 Example: Using 3 threads.
 ```xml
@@ -116,7 +124,8 @@ This `moco.json` file contains information about all mutations that MoCo has col
 
 #### Configuration 
 Details about more configurable parameters of MoCo will be updated here later. For the moment, you could use
-the helpmojo command to learn more about it
+the helpmojo command to learn more about it.
+
 `mvn m0c0:help -Ddetail=true`
 
 ### Contributing
@@ -130,5 +139,12 @@ project has dependencies that are under different licenses.
 ### Author Information
 
 ##### Tran Phan
-
 phantran197@gmail.com
+
+This project was developed as a part of my master thesis at
+[Chair of Software Engineering II](https://www.fim.uni-passau.de/lehrstuhl-fuer-software-engineering-ii/),
+University of Passau.
+
+
+
+

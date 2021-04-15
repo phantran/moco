@@ -62,10 +62,9 @@ class ROR(
     )
 
     override val supportedOpcodes = mapOf(
-        "zero" to listOf(Opcodes.IFLT, Opcodes.IFLE, Opcodes.IFNE, Opcodes.IFEQ, Opcodes.IFGT, Opcodes.IFGE),
+        "zero" to listOf(Opcodes.IFLT, Opcodes.IFGE, Opcodes.IFLE, Opcodes.IFGT, Opcodes.IFNE, Opcodes.IFEQ),
         "val" to listOf(
-            Opcodes.IF_ICMPLT, Opcodes.IF_ICMPLE, Opcodes.IF_ICMPNE, Opcodes.IF_ICMPEQ,
-            Opcodes.IF_ICMPGT, Opcodes.IF_ICMPGE
+            Opcodes.IF_ICMPLT, Opcodes.IF_ICMPGE, Opcodes.IF_ICMPLE, Opcodes.IF_ICMPGT, Opcodes.IF_ICMPNE, Opcodes.IF_ICMPEQ
         ),
         "reference" to listOf(Opcodes.IF_ACMPEQ, Opcodes.IF_ACMPNE),
         "null" to listOf(Opcodes.IFNULL, Opcodes.IFNONNULL)

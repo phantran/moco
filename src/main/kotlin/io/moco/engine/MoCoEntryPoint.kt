@@ -46,10 +46,11 @@ class MoCoEntryPoint(private val configuration: Configuration) {
     private var gitMode = configuration.gitMode
     private lateinit var byteLoader: ByteArrayLoader
     private var agentLoc: String? = null
+    private var runID: String = System.currentTimeMillis().toString()
 
     @get: Synchronized
     private val mutationStorage: MutationStorage =
-        MutationStorage(mutableMapOf(), System.currentTimeMillis().toString())
+        MutationStorage(mutableMapOf(), this.runID)
     private var clsByGit: List<String>? = listOf()
     private var projectMeta: ProjectMeta? = null
     private var recordedTestMapping: String? = null
@@ -148,26 +149,33 @@ class MoCoEntryPoint(private val configuration: Configuration) {
         if (!shouldRunFromScratch()) {
             if (projectMeta?.meta?.get("storedHeadCommit").isNullOrEmpty()) {
                 clsByGit = listOf("")
-                logger.info("Last commit info does not exist - skip Git commits diff analysis - proceed in normal mode")
+                logger.info("Recorded commit id does not exist - skip Git commits diff analysis - proceed in normal mode")
             } else {
-                logger.info("Head commit: ${projectMeta?.meta?.get("storedHeadCommit")}")
+                logger.info("Recorded commit: ${projectMeta?.meta?.get("storedHeadCommit")}")
                 clsByGit = gitProcessor!!.getChangedClsSinceLastStoredCommit(
                     configuration.groupId.replace(".", File.separator), projectMeta?.meta!!
                 )
                 if (clsByGit != null) {
                     if (clsByGit?.isEmpty() == true) {
-                        logger.info("Preprocessing: Git mode: No changed files found by git commits diff")
-                        // skip preprocessing in git mode and no detected changed class
+                        logger.info("Preprocessing: Git mode - No changed files found between recorded commit and head commit")
+                        if (Configuration.currentConfig?.useForCICD == true) {
+                            JsonSource.createMoCoJsonIfBuildFolderWasCleaned(
+                                Configuration.currentConfig?.buildRoot,
+                                mocoBuildPath,
+                                Configuration.currentConfig!!.mutationResultsFolder,
+                                runID
+                            )
+                        }
                         return false
                     }
-                    logger.info("Preprocessing: Git mode - ${clsByGit!!.size} changed class(es) by git commits diff")
+                    logger.info("Preprocessing: Git mode - ${clsByGit!!.size} changed class(es) between recorded commit and head commit")
                     logger.debug("Classes found: $clsByGit")
                     recordedTestMapping = TestsCutMapping().getRecordedMapping(clsByGit!!)
                 } else {
                     // clsByGit equals null could mean database has been reset or it's the first run
                     // if it's null then we set it to empty list as below
                     clsByGit = listOf("")
-                    logger.info("Preprocessing: Git mode: last stored commit not found - proceed in normal mode")
+                    logger.info("Preprocessing: Git mode - recorded commit not found - proceed in normal mode")
                 }
             }
         }
@@ -201,6 +209,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
             if (projectMeta?.meta?.get("lastMavenSessionID") == Configuration.currentConfig?.mavenSession) {
                 if (projectMeta?.meta?.get("storedPreviousHeadCommit").isNullOrEmpty()) {
                     // First run (already run for the first child maven project with corresponding pom.xml)
+                    logger.info("No recorded head commit in database - run from scratch")
                     return true
                 }
             }
@@ -208,6 +217,7 @@ class MoCoEntryPoint(private val configuration: Configuration) {
             val recordedOps = projectMeta?.meta?.get("runOperators")?.split("-")
             if (!recordedOps.isNullOrEmpty()) {
                 if (!recordedOps.contains(fOpNames.joinToString(","))) {
+                    logger.info("First run or changed configured mutation operators - run from scratch")
                     newOp = true
                     return true
                 }

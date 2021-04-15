@@ -185,7 +185,7 @@ class MoCo : AbstractMojo() {
                     if (project?.dependencies?.any {
                             it.artifactId == mojo?.artifactId && it.groupId == mojo?.groupId
                         } == false) {
-                        log.info("MoCo is skipped because MoCo is not specified as a dependency of this project in pom.xml")
+                        log.info("MoCo is skipped because it is not specified as a dependency of this project in pom.xml")
                         return
                     }
                     MoCoLogger.useMvnLog(log)
@@ -194,14 +194,26 @@ class MoCo : AbstractMojo() {
                     log.info("-----------------------------------------------------------------------")
                     log.info("START")
                     log.info("Note: make sure to use MoCo after tests phase")
+                    log.info("Maven session timestamp: ${session?.startTime?.time.toString()}")
+
                     // Often named as "target" or "build" folder, contains compiled classes, JaCoCo report, MoCo report, etc...
                     var rootProject = project
                     while (rootProject!!.hasParent()) {
                         rootProject = rootProject.parent
                     }
                     val s = File.separator
-                    val persistencePath =
-                        localRepository?.basedir + "${s}io${s}moco${s}" + rootProject.artifactId + "${s}persistence"
+
+                    if (localRepository == null || localRepository.basedir.isNullOrEmpty()) {
+                        log.info("Exit - MoCo can't detect your local git repository")
+                        return
+                    }
+
+                    val property = "java.io.tmpdir"
+                    var tempDir = System.getProperty(property)
+                    log.info("DB directory is $tempDir")
+                    if (tempDir.last() != '/') tempDir += "/"
+                    val persistencePath = tempDir + "moco${s}" + "${rootProject.groupId}-${rootProject.artifactId}" + "${s}moco"
+                    // localRepository.basedir + "${s}io${s}moco${s}" + rootProject.artifactId + "${s}persistence"
 
                     log.info("Configured compiled code directory: ${if (codeRootDir.isNotEmpty()) codeRootDir else "default"}")
                     log.info("Configured compiled test directory: ${if (testRootDir.isNotEmpty()) testRootDir else "default"}")
@@ -240,7 +252,7 @@ class MoCo : AbstractMojo() {
 
                     val configuration = Configuration(
                         rootProjectBaseDir = rootProjectBaseDir,
-                        mavenSession = session.toString(),
+                        mavenSession = session?.startTime?.time.toString(),
                         buildRoot = buildRoot,
                         codeRoot = codeRoot,
                         testRoot = testRoot,
@@ -310,6 +322,7 @@ class MoCo : AbstractMojo() {
         val testCompileRootCp = rootProject?.testClasspathElements
 
         val resPath = prepareTestDependenciesPath()
+            .union(mutableSetOf(buildRoot, codeRoot, testRoot))
             .union(System.getProperty("java.class.path").split(File.pathSeparator).toSet())
             .union(compileCp!!.toSet())
             .union(compileRootCp!!.toSet())
@@ -329,21 +342,18 @@ class MoCo : AbstractMojo() {
                 resPath.addAll(testCompile.toSet())
             }
         }
-        return "${resPath.joinToString(separator = File.pathSeparator)}:${buildRoot}:$codeRoot:${testRoot}"
+        return resPath.joinToString(separator = File.pathSeparator)
     }
 
     private fun prepareTestDependenciesPath(): MutableSet<String> {
-        // Experimental feature, might be deleted later
         val s = File.separator
         val root = localRepository?.basedir.toString()
         val res: MutableSet<String> = mutableSetOf()
         val depNames: List<List<String>> = listOf(
-            listOf("org${s}junit${s}platform", "junit-platform-launcher", "1.7.1"),
-            listOf("org${s}junit${s}jupiter", "junit-jupiter", "5.8.0-M1"),
-            listOf("org${s}junit${s}jupiter", "junit-jupiter-engine", "5.8.0-M1"),
-            listOf("org${s}junit${s}jupiter", "junit-jupiter-params", "5.8.0-M1"),
-            listOf("org${s}junit${s}platform", "junit-platform-runner", "1.7.1"),
-            listOf("junit", "junit", "4.11"),
+            listOf("org${s}junit${s}platform", "junit-platform-launcher", "1.7.0"),
+            listOf("org${s}junit${s}platform", "junit-platform-suite-api", "1.6.2"),
+            listOf("org${s}junit${s}jupiter", "junit-jupiter", "5.7.0"),
+            listOf("junit", "junit", "4.12"),
             listOf("org${s}testng", "testng", "6.9.10")
         )
         depNames.map {
@@ -353,7 +363,7 @@ class MoCo : AbstractMojo() {
                 res.add(depPath)
             }
         }
-        return mutableSetOf()
+        return res
     }
 }
 

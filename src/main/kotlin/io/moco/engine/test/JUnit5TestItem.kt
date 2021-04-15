@@ -17,6 +17,7 @@
 
 package io.moco.engine.test
 
+import io.moco.utils.MoCoLogger
 import kotlinx.coroutines.*
 import org.junit.platform.engine.discovery.DiscoverySelectors
 import org.junit.platform.launcher.Launcher
@@ -45,6 +46,7 @@ class JUnit5TestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -
             launcher.registerTestExecutionListeners(JUnit5RunListener(desc, tra))
 
             job = GlobalScope.launch {
+                logger.debug("Test ${this@JUnit5TestItem} started - timeout after $timeOut ms")
                 withTimeout(timeOut) {
                     val temp = measureTimeMillis {
                         launcher.execute(launcherDiscoveryRequest)
@@ -91,6 +93,7 @@ class JUnit5TestItem(cls: Class<*>, testIdentifier: Any, executionTime: Long = -
     companion object {
         private val launcher: Launcher = LauncherFactory.create()
         private val cachedIdentifiers: MutableSet<TestIdentifier> = mutableSetOf()
+        val logger = MoCoLogger()
 
         fun getTests(res: MutableList<TestItem>, item: Class<*>) {
             val listener = TestIdentifierListener()

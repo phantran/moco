@@ -18,6 +18,7 @@
 package io.moco.engine.mutation
 
 import io.moco.engine.ClassName
+import io.moco.engine.test.TestItemWrapper
 
 
 class MutationTestMonitor {
@@ -27,6 +28,18 @@ class MutationTestMonitor {
         val lineOfCode: Int, val operatorName: String,
         val className: ClassName, var count: Int = 0
     )
+
+    var blacklistedTests: MutableMap<String, MutableSet<String>> = mutableMapOf()
+
+    fun updateBlackListedTests(test: TestItemWrapper?, mutation: Mutation) {
+        if (test == null) return
+        val testName = test.testItem.toString()
+        if (blacklistedTests.keys.contains(testName)) {
+            blacklistedTests[testName]?.add("${mutation.mutationID.location.className}-${mutation.lineOfCode}")
+        } else {
+            blacklistedTests[testName] = mutableSetOf("${mutation.mutationID.location.className}-${mutation.lineOfCode}")
+        }
+    }
 
     fun markTimeoutMutationType(mutation: Mutation) {
         val temp = timeoutMutationTypeList.find { sameTypeOfMutation(it, mutation) }

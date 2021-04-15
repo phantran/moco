@@ -139,18 +139,19 @@ object PreprocessorWorker {
         recordedTestMapping: List<String>?
     ): List<ClassName> {
         // Return list of relevant tests to be executed
-        // tests that are changed according to git diff and tests that were mapped before to
-        // corresponding changed source classes
+        // tests that are changed according to git diff and tests that
+        // were mapped in the previous run to corresponding changed source classes
         logger.debug("Recorded test relevant tests from previous runs: ${recordedTestMapping ?: "None"}")
-        logger.debug("Changed classes by Git: ${filteredClsByGitCommit ?: "None"}")
+        logger.debug("Changed classes by Git commit diff: ${filteredClsByGitCommit ?: "None"}")
         val res = if (!filteredClsByGitCommit.isNullOrEmpty()) {
             codebase.testClassesNames.filter {
                 filteredClsByGitCommit.any { it1 -> it1.contains(it.name) }
             }.toMutableSet()
         } else codebase.testClassesNames
+
         if (recordedTestMapping != null) {
             val temp = recordedTestMapping.filter {
-                excludedTestFolders.any { it1 -> !it.contains(it1.substringAfterLast(File.separator)) }
+                !excludedTestFolders.any { it1 -> it1.isNotEmpty() && it.contains(it1.substringAfterLast(File.separator)) }
             }
             res.addAll(temp.minus(excludedTestClasses).map { ClassName(it) })
         }
