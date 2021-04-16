@@ -53,7 +53,7 @@ class PreprocessEntryPoint {
                 }
             }
             if (processStatus != MoCoProcessCode.OK.code) {
-                logger.warn("Please check you test suite because there might be erroneous tests in your test suite")
+                logger.warn("Please check your test suite because there might be erroneous tests in your test suite")
             }
         } catch (ex: Exception) {
             logger.error("Error while executing preprocessing phase - ${ex.message}")

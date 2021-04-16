@@ -70,6 +70,8 @@ class ROR(
         "null" to listOf(Opcodes.IFNULL, Opcodes.IFNONNULL)
     )
 
+    var assertionTracker: MutableSet<Int> = mutableSetOf()
+
 
     override fun visitJumpInsn(opcode: Int, label: Label?) {
         var supported: Boolean = false
@@ -83,25 +85,30 @@ class ROR(
         }
         var visited = false
         if (supported) {
-            for (newOpcode in supportedOpcodes[type]!!) {
-                if (newOpcode != opcode) {
-                    // Collect mutation information
-                    val newMutation = tracker.registerMutation(
-                        operator, createDesc(opcode, newOpcode),
-                        createUniqueID(opcode, newOpcode), opcodeDesc[opcode]?.second
-                    ) ?: continue
-                    if (tracker.mutatedClassTracker.targetMutation != null) {
-                        // In mutant creation phase, visit corresponding instruction to mutate it
-                        if (tracker.isTargetMutation(newMutation)) {
-                            tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
-                            logger.debug("Old Opcode: $opcode")
-                            logger.debug("New Opcode: $newOpcode")
-                            mv.visitJumpInsn(newOpcode, label)
-                            visited = true
-                            break
+            // Ignore assertion enable check
+            if (!(assertionTracker.contains(tracker.currConsideredLineNumber) && opcode == Opcodes.IFNE)) {
+                for (newOpcode in supportedOpcodes[type]!!) {
+                    if (newOpcode != opcode) {
+                        // Collect mutation information
+                        val newMutation = tracker.registerMutation(
+                            operator, createDesc(opcode, newOpcode),
+                            createUniqueID(opcode, newOpcode), opcodeDesc[opcode]?.second
+                        ) ?: continue
+                        if (tracker.mutatedClassTracker.targetMutation != null) {
+                            // In mutant creation phase, visit corresponding instruction to mutate it
+                            if (tracker.isTargetMutation(newMutation)) {
+                                tracker.mutatedClassTracker.setGeneratedTargetMutation(newMutation)
+                                logger.debug("Old Opcode: $opcode")
+                                logger.debug("New Opcode: $newOpcode")
+                                mv.visitJumpInsn(newOpcode, label)
+                                visited = true
+                                break
+                            }
                         }
                     }
                 }
+            } else {
+                assertionTracker.remove(tracker.currConsideredLineNumber)
             }
             if (!visited) {
                 // Go on without mutating bytecode after collecting all possible mutations
@@ -110,5 +117,13 @@ class ROR(
         } else {
             mv.visitJumpInsn(opcode, label)
         }
+    }
+
+
+    override fun visitFieldInsn(opcode: Int, owner: String, name: String, desc: String) {
+        if (opcode == Opcodes.GETSTATIC && name.substring(1) == "assertionsDisabled") {
+            assertionTracker.add(tracker.currConsideredLineNumber)
+        }
+        mv.visitFieldInsn(opcode, owner, name, desc)
     }
 }
