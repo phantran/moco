@@ -41,6 +41,7 @@ class WorkerProcess(
         if (processArgs["javaAgentJarPath"] != null) {
             commandsToProcess.add(processArgs["javaAgentJarPath"] as String)
         }
+        commandsToProcess.add("-ea")
         if (processArgs["classPath"] != null) {
             commandsToProcess.add("-cp")
             commandsToProcess.add(processArgs["classPath"] as String)
