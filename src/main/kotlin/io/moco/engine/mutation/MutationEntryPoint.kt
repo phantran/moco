@@ -86,7 +86,7 @@ class MutationEntryPoint(
             for (item in preprocessedStorage.classRecord) {
                 foundMutations[item.classUnderTestName] =
                     mGen.findPossibleMutationsOfClass(item.classUnderTestName, item.coveredLines?.keys,
-                                                     Configuration.currentConfig!!.limitMutantsByType).distinct()
+                                                     Configuration.currentConfig!!.filterMutants).distinct()
             }
             val filteredMutations = filterMutations(foundMutations, newOperatorsSelected)
             logger.debug("Found ${filteredMutations.size} class(es) can be mutated")
