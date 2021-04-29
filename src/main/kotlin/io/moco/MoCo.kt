@@ -156,8 +156,8 @@ class MoCo : AbstractMojo() {
      * Set this parameter to true to limit the number mutations of each mutation operator on each line to just 1
      * Set this parameter to false to tell MoCo to generate all possible mutations that it could collect on a line of code
      */
-    @Parameter(defaultValue = "true", property = "limitMutantsByType", required = false)
-    private val limitMutantsByType: Boolean = true
+    @Parameter(defaultValue = "true", property = "filterMutants", required = false)
+    private val filterMutants: Boolean = true
 
     /**
      * Set to true to skip MoCo execution
@@ -276,7 +276,7 @@ class MoCo : AbstractMojo() {
                         gitMode = gitMode,
                         preprocessTestTimeout = preprocessTestTimeout,
                         mutationPerClass = 0,
-                        limitMutantsByType = limitMutantsByType,
+                        filterMutants = filterMutants,
                         debugEnabled = debugEnabled,
                         verbose = verbose,
                         numberOfThreads = numberOfThreads,

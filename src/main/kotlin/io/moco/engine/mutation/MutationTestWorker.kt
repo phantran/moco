@@ -119,6 +119,7 @@ class MutationTestWorker(
                 logger.debug("Skip - this mutation has no test cases to be executed after filtering potential erroneous tests")
                 continue
             }
+
             runOneByOne(mutation, wrappedTest, targetClassByteArr)
         }
     }

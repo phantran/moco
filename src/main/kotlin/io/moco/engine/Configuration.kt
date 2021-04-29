@@ -44,7 +44,7 @@ data class Configuration(
     val gitMode: Boolean,
     val preprocessTestTimeout: String,
     val mutationPerClass: Int,
-    val limitMutantsByType: Boolean,
+    val filterMutants: Boolean,
     val debugEnabled: Boolean,
     val verbose: Boolean,
     val numberOfThreads: Int,
