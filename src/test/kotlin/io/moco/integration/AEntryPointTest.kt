@@ -54,7 +54,7 @@ class AEntryPointTest : AnnotationSpec() {
     }
 
     @Test
-    fun testEntryPoint() {
+    fun testEntryPoint1() {
         try {
             val excluded = ""
             val fOpNames = Operator.supportedOperatorNames.filter { !excluded.contains(it) }
@@ -105,6 +105,124 @@ class AEntryPointTest : AnnotationSpec() {
             H2Database().initDBTablesIfNotExists()
             MoCoEntryPoint(configuration).execute()
             MoCoEntryPoint.runScore.roundToInt() shouldBeInRange IntRange(50, 60)
+        } finally {
+            H2Database.shutDownDB()
+        }
+    }
+
+
+    @Test
+    fun testEntryPoint2() {
+        try {
+            val excluded = ""
+            val fOpNames = Operator.supportedOperatorNames.filter { !excluded.contains(it) }
+            val configuration = Configuration(
+                baseDir,
+                System.currentTimeMillis().toString(),
+                buildRoot,
+                codeRoot,
+                testRoot,
+                codeRoot,
+                testRoot,
+                "$buildRoot${File.separator}moco",
+                "dev.Hihi",
+                "",
+                "dev.HihiTest",
+                "io/moco/integration/",
+                classpath,
+                jvm,
+                "preprocess",
+                "mutation",
+                excluded,
+                fOpNames,
+                buildRoot,
+                listOf(),
+                "dev",
+                "m0c0-maven-plugin",
+                false,
+                "200",
+                0,
+                false,
+                debugEnabled = false,
+                verbose = false,
+                2,
+                noLogAtAll = true,
+                enableMetrics = true,
+                mocoPluginVersion = "1.0-SNAPSHOT"
+            )
+            Configuration.currentConfig = configuration
+            MoCoLogger.useKotlinLog()
+            MoCoLogger.noLogAtAll = true
+            MoCoLogger.debugEnabled = Configuration.currentConfig!!.debugEnabled
+            H2Database.initPool(
+                url = "jdbc:h2:file:${Configuration.currentConfig?.mocoBuildPath}" +
+                        "${File.separator}/persistence/moco;mode=MySQL",
+                user = "moco",
+                password = "moco",
+            )
+            H2Database().initDBTablesIfNotExists()
+            MoCoEntryPoint(configuration).execute()
+            MoCoEntryPoint.runScore.roundToInt() shouldBeInRange IntRange(55, 60)
+        } finally {
+            H2Database.shutDownDB()
+        }
+    }
+
+
+    @Test
+    fun testEntryPoint3() {
+        try {
+            val excluded = ""
+            val fOpNames = Operator.supportedOperatorNames.filter { !excluded.contains(it) }
+            val configuration = Configuration(
+                baseDir,
+                System.currentTimeMillis().toString(),
+                buildRoot,
+                codeRoot,
+                testRoot,
+                codeRoot,
+                testRoot,
+                "$buildRoot${File.separator}moco",
+                "dev.Hihi",
+                "",
+                "dev.HihiTest",
+                "io/moco/integration/",
+                classpath,
+                jvm,
+                "preprocess",
+                "mutation",
+                excluded,
+                fOpNames,
+                buildRoot,
+                listOf(),
+                "dev",
+                "m0c0-maven-plugin",
+                true,
+                "200",
+                0,
+                true,
+                debugEnabled = false,
+                verbose = false,
+                2,
+                noLogAtAll = true,
+                enableMetrics = true,
+                mocoPluginVersion = "1.0-SNAPSHOT"
+            )
+            Configuration.currentConfig = configuration
+            MoCoLogger.useKotlinLog()
+            MoCoLogger.noLogAtAll = true
+            MoCoLogger.debugEnabled = Configuration.currentConfig!!.debugEnabled
+            H2Database.initPool(
+                url = "jdbc:h2:file:${Configuration.currentConfig?.mocoBuildPath}" +
+                        "${File.separator}/persistence/moco;mode=MySQL",
+                user = "moco",
+                password = "moco",
+            )
+            H2Database().initDBTablesIfNotExists()
+            MoCoEntryPoint(configuration).execute()
+            MoCoEntryPoint.runScore.roundToInt() shouldBeInRange IntRange(55, 60)
+            MoCoEntryPoint(configuration).execute()
+            MoCoEntryPoint.runScore.roundToInt() shouldBeInRange IntRange(55, 60)
         } finally {
             H2Database.shutDownDB()
         }
