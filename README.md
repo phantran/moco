@@ -3,10 +3,18 @@
 This is the [m0c0-maven-plugin](http://).
 
 ![example workflow](https://github.com/phantran/moco/actions/workflows/actions.yml/badge.svg)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=phantran_moco&metric=alert_status)](https://sonarcloud.io/dashboard?id=phantran_moco)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.phantran/m0c0-maven-plugin/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/io.github.phantran/m0c0-maven-plugin)
 
-A Maven plugin written in Kotlin that supports mutation testing for Java projects
 
-This Maven plugin was originally developed to support Gamekins which is a Jenkins plugin that uses a gamification
+A Maven plugin written in Kotlin that supports mutation testing for Java projects.
+
+Mutation testing is computationally expensive, and that prevents mutation testing from being applied in 
+big projects and CI/CD pipelines. MoCo is a mutation testing tool that uses the bytecode manipulation approach, and it applies optimization such as Git Mode (only execute mutation tests for changed source classes) and database caching, thus mutation testing execution time in MoCo can be reduced significantly.
+With the applied optimization, MoCo has good performance, and it can calculate mutation scores without re-running mutation tests for the whole project under test.
+
+MoCo was originally developed to support Gamekins which is a Jenkins plugin that uses a gamification
 approach to motivate software testing activities.
 
 ### Project requirements
@@ -31,16 +39,15 @@ While developing MoCo, a quick installation without testing and generating descr
 
 #### pom.xml
 
-Since MoCo is not yet published to Maven Central, you need to install MoCo to your local repository to use it.
-Just follow the setup instructions above to install MoCo to your local repository, 
-then MoCo could be used easily by adding the following information to pom.xml file of your project:
+MoCo is available on Maven Central, and it can be used easily by adding the following information to 
+pom.xml file of your project (replace MOCO-VERSION with a MoCo version, e.g. `1.0`):
 
 - To dependencies tag
 ```xml
 <dependency>
     <groupId>io.github.phantran</groupId>
     <artifactId>m0c0-maven-plugin</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>MOCO-VERSION</version>
 </dependency>
 ```
 
@@ -49,7 +56,7 @@ then MoCo could be used easily by adding the following information to pom.xml fi
 <plugin>
     <groupId>io.github.phantran</groupId>
     <artifactId>m0c0-maven-plugin</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>MOCO-VERSION</version>
     <executions>
         <execution>
             <goals>
@@ -60,7 +67,7 @@ then MoCo could be used easily by adding the following information to pom.xml fi
 </plugin>
 ```
 
-The default Maven phase of MoCo the verify phase, if you want to change the phase that executes MoCo, just use the execution 
+The default Maven phase of MoCo is verify phase, if you want to change the phase that executes MoCo, just change the execution 
 configuration as below
 
 ```xml
@@ -68,7 +75,7 @@ configuration as below
     <goals>
         <goal>moco</goal>
     </goals>
-    <phase>[ENTER-PHASE-HERE]</phase>
+    <phase>ENTER-PHASE</phase>
 </execution>
 ```
 
@@ -96,23 +103,51 @@ Example: We wanted to have mutation tests only for source classes inside org/exa
 ```xml
 <testRoot>org/example</testRoot>
 ```
-To remedy the problem of rerunning mutation tests for unchanged source classes with 
-corresponding test classes, MoCo offers Gitmode. Gitmode is ON by default, it helps reduce 
-execution time significantly by only considering changed classes. You can turn it off with
+To remedy the problem of re-running mutation tests for unchanged source classes with 
+corresponding test classes, MoCo offers Git Mode. Git Mode is ON by default, it helps reduce 
+execution time significantly by only considering changed classes. We can turn it off with
 ```xml
 <gitMode>false</gitMode>
 ```
 
-Mutation score is currently not calculated by default. You can enable it by adding this to your configuration
+Mutation score is not calculated by default. You can enable it by adding this to your configuration
 ```xml
 <enableMetrics>true</enableMetrics>
 ```
 
 Mutation testing is computationally expensive even with the bytecode manipulation approach. 
-A big project with hundred of tests can take hours to finish. To speed it up you can use more worker threads.
+A big project with hundred of tests can take hours to finish. To speed it up you can use more worker threads. 
+MoCo uses 2 threads by default.
 Example: Using 3 threads.
 ```xml
 <numberOfThreads>3</numberOfThreads>
+```
+
+
+Below is an example configuration that uses MoCo version 1.0, Git Mode ON, mutation score calculation enabled, 
+debug messages logging enabled, test timeout in preprocessing phase (collecting mutations) as 500ms, 
+and use 3 threads for parallel execution:
+
+```xml
+<plugin>
+    <groupId>io.github.phantran</groupId>
+    <artifactId>m0c0-maven-plugin</artifactId>
+    <version>1.0</version>
+    <configuration>
+        <gitMode>true</gitMode>
+        <debugEnabled>true</debugEnabled>
+        <enableMetrics>true</enableMetrics>
+        <preprocessTestTimeout>500</preprocessTestTimeout>
+        <numberOfThreads>3</numberOfThreads>
+    </configuration>
+    <executions>
+        <execution>
+            <goals>
+                <goal>moco</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
 ```
 
 #### Report
@@ -140,7 +175,7 @@ project has dependencies that are under different licenses.
 #### Tran Phan
 phantran197@gmail.com
 
-This project was developed as a part of my work at
+This project was developed as a part of my work at the
 [Chair of Software Engineering II](https://www.fim.uni-passau.de/lehrstuhl-fuer-software-engineering-ii/),
 University of Passau.
 
