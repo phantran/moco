@@ -1,4 +1,4 @@
-name: MoCo CI
+name: Java CI
 
 on: [push]
 

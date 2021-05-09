@@ -2,8 +2,7 @@
 
 This is the [m0c0-maven-plugin](http://).
 
-[![pipeline status](https://gitlab.infosun.fim.uni-passau.de/phan/moco/badges/master/pipeline.svg)](https://gitlab.infosun.fim.uni-passau.de/phan/moco/-/commits/master)
-
+![example workflow](https://github.com/phantran/moco/actions/workflows/actions.yml/badge.svg)
 
 A Maven plugin written in Kotlin that supports mutation testing for Java projects
 
@@ -138,10 +137,10 @@ project has dependencies that are under different licenses.
 
 ### Author Information
 
-##### Tran Phan
+#### Tran Phan
 phantran197@gmail.com
 
-This project was developed as a part of my master thesis at
+This project was developed as a part of my work at
 [Chair of Software Engineering II](https://www.fim.uni-passau.de/lehrstuhl-fuer-software-engineering-ii/),
 University of Passau.
 
