@@ -63,4 +63,6 @@ buildSrcTmp/
 distTmp/
 outTmp/
 target
-**/kotlin/io/moco/dev
+**/kotlin/io/github/phantran/dev
+pom.xml.releaseBackup
+release.properties

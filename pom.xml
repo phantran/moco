@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.phantran</groupId>
@@ -9,9 +8,33 @@
     <packaging>maven-plugin</packaging>
 
     <name>m0c0-maven-plugin Maven Plugin</name>
+    <description>
+        A Maven plugin written in Kotlin that supports mutation testing for Java projects. MoCo uses the bytecode manipulation
+        approach and it applies optimizations with Git Mode and database caching, thus mutation testing execution time can be reduced significantly
+    </description>
 
-    <!-- FIXME change it to the project's website -->
-    <url>http://moco.io</url>
+    <url>https://github.com/phantran/moco</url>
+
+    <organization>
+        <url>https://github.com/phantran</url>
+        <name>TranPhan</name>
+    </organization>
+    <inceptionYear>2020</inceptionYear>
+
+    <issueManagement>
+        <system>Github</system>
+        <url>https://github.com/phantran/moco/issues</url>
+    </issueManagement>
+
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>A business-friendly OSS license</comments>
+        </license>
+    </licenses>
 
     <prerequisites>
         <maven>3.0</maven>
@@ -138,21 +161,21 @@
             <artifactId>testng</artifactId>
             <version>6.9.10</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.mockito</groupId>-->
-<!--            <artifactId>mockito-core</artifactId>-->
-<!--            <version>3.3.3</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.mockito</groupId>-->
-<!--            <artifactId>mockito-junit-jupiter</artifactId>-->
-<!--            <version>3.9.0</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>pl.pragmatists</groupId>-->
-<!--            <artifactId>JUnitParams</artifactId>-->
-<!--            <version>1.0.4</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.mockito</groupId>-->
+        <!--            <artifactId>mockito-core</artifactId>-->
+        <!--            <version>3.3.3</version>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.mockito</groupId>-->
+        <!--            <artifactId>mockito-junit-jupiter</artifactId>-->
+        <!--            <version>3.9.0</version>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>pl.pragmatists</groupId>-->
+        <!--            <artifactId>JUnitParams</artifactId>-->
+        <!--            <version>1.0.4</version>-->
+        <!--        </dependency>-->
         <!-- =============================================== -->
 
 
@@ -340,7 +363,7 @@
                     <extensions>true</extensions>
                     <configuration>
                         <serverId>ossrh</serverId>
-                        <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                        <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
                         <autoReleaseAfterClose>true</autoReleaseAfterClose>
                     </configuration>
                 </plugin>
@@ -495,30 +518,28 @@
                 <version>3.9.1</version>
             </plugin>
 
-
-            <plugin>
-                <groupId>com.github.github</groupId>
-                <artifactId>site-maven-plugin</artifactId>
-                <version>0.11</version>
-                <configuration>
-                    <message>Maven artifacts for ${project.version}</message> <!-- git commit message -->
-                    <noJekyll>true</noJekyll>  <!-- disable webpage processing -->
-                    <outputDirectory>${project.build.directory}/mvn-repo</outputDirectory> <!-- matches distribution management repository url above -->
-                    <branch>refs/heads/mvn-repo</branch> <!-- remote branch name -->
-                    <includes><include>**/*</include></includes>
-                    <repositoryName>mvn-moco-repo</repositoryName> <!-- github repo name -->
-                    <repositoryOwner>phantran</repositoryOwner> <!-- organization or user name  -->
-                </configuration>
-                <executions> <!-- run site-maven-plugin's 'site' target as part of the build's normal 'deploy' phase -->
-                    <execution>
-                        <goals>
-                            <goal>site</goal>
-                        </goals>
-                        <phase>deploy</phase>
-                    </execution>
-                </executions>
-            </plugin>
-
+            <!--            <plugin>-->
+            <!--                <groupId>com.github.github</groupId>-->
+            <!--                <artifactId>site-maven-plugin</artifactId>-->
+            <!--                <version>0.11</version>-->
+            <!--                <configuration>-->
+            <!--                    <message>Maven artifacts for ${project.version}</message> &lt;!&ndash; git commit message &ndash;&gt;-->
+            <!--                    <noJekyll>true</noJekyll>  &lt;!&ndash; disable webpage processing &ndash;&gt;-->
+            <!--                    <outputDirectory>${project.build.directory}/mvn-repo</outputDirectory> &lt;!&ndash; matches distribution management repository url above &ndash;&gt;-->
+            <!--                    <branch>refs/heads/mvn-repo</branch> &lt;!&ndash; remote branch name &ndash;&gt;-->
+            <!--                    <includes><include>**/*</include></includes>-->
+            <!--                    <repositoryName>mvn-moco-repo</repositoryName> &lt;!&ndash; github repo name &ndash;&gt;-->
+            <!--                    <repositoryOwner>phantran</repositoryOwner> &lt;!&ndash; organization or user name  &ndash;&gt;-->
+            <!--                </configuration>-->
+            <!--                <executions> &lt;!&ndash; run site-maven-plugin's 'site' target as part of the build's normal 'deploy' phase &ndash;&gt;-->
+            <!--                    <execution>-->
+            <!--                        <goals>-->
+            <!--                            <goal>site</goal>-->
+            <!--                        </goals>-->
+            <!--                        <phase>deploy</phase>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--            </plugin>-->
 
         </plugins>
     </build>
@@ -602,21 +623,18 @@
                 </plugins>
             </build>
         </profile>
-
     </profiles>
-
 
     <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
         <repository>
             <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/
             </url>
         </repository>
     </distributionManagement>
-
 
 </project>
