@@ -103,6 +103,5 @@ class PreprocessWorkerTest : AnnotationSpec() {
         )
         Preprocessor(relevantTests).preprocessing(PreprocessorWorker.isRerun, PreprocessorWorker.jsonConverter)
         PreprocessorTracker.getPreprocessResults() shouldNotBe null
-
     }
 }

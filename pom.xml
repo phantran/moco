@@ -387,7 +387,7 @@
                     <dependency>
                         <groupId>com.github.gantsign.maven.plugin-tools</groupId>
                         <artifactId>kotlin-maven-plugin-tools</artifactId>
-                        <version>0.9.25</version>
+                        <version>0.9.26</version>
                     </dependency>
                 </dependencies>
                 <executions>
@@ -448,9 +448,10 @@
 
     <pluginRepositories>
         <pluginRepository>
-            <id>bintray-gantsign-maven</id>
-            <name>bintray-plugins</name>
-            <url>https://dl.bintray.com/gantsign/maven</url>
+            <!-- id must match the id of the server in settings.xml -->
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/gantsign/kotlin-maven-plugin-tools</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
