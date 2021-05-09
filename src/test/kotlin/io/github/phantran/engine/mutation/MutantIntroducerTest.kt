@@ -1,0 +1,51 @@
+/*
+ * Copyright (c) 2021. Tran Phan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package io.github.phantran.engine.mutation
+
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.AnnotationSpec
+import io.mockk.*
+import io.github.phantran.engine.ClassName
+import io.github.phantran.engine.MoCoAgent
+import io.github.phantran.utils.ByteArrayLoader
+import io.github.phantran.utils.ClassLoaderUtil
+
+
+class MutantIntroducerTest: AnnotationSpec() {
+
+    @BeforeEach
+    fun init() {
+    }
+
+    @AfterAll
+    fun cleanUp() {
+        unmockkAll()
+    }
+
+    @Test
+    fun testIntroduce() {
+        val x = mockkClass(ByteArrayLoader::class)
+        every { x.getByteArray((any())) } returns ByteArray(1)
+        val temp = MutantIntroducer(x)
+        mockkStatic(MoCoAgent::class)
+        every { MoCoAgent.introduceMutant(any(), any()) } returns true
+        shouldThrow<ClassNotFoundException> {
+            temp.introduce(ClassName("abc"), ClassLoaderUtil.contextClsLoader, ByteArray(1))
+        }
+    }
+}

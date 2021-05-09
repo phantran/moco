@@ -1,0 +1,103 @@
+/*
+ * Copyright (c) 2021. Tran Phan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+
+package io.github.phantran.engine
+
+import io.github.phantran.engine.mutation.Mutation
+import io.github.phantran.engine.mutation.ResultsReceiverThread
+import io.github.phantran.engine.test.SerializableTestInfo
+import io.github.phantran.persistence.MutationStorage
+import java.io.IOException
+import java.lang.Exception
+import java.net.ServerSocket
+
+
+class WorkerProcess(
+    private val toBeExecutedWorker: Class<*>,
+    private val processArgs: Map<String, Any>,
+    private val workerArgs: List<String>
+) {
+    private var process: Process? = null
+
+    @Throws(IOException::class)
+    fun start() {
+        val commandsToProcess: MutableList<String> = mutableListOf()
+        commandsToProcess.add(processArgs["javaExecutable"] as String)
+        if (processArgs["javaAgentJarPath"] != null) {
+            commandsToProcess.add(processArgs["javaAgentJarPath"] as String)
+        }
+        commandsToProcess.add("-ea")
+        if (processArgs["classPath"] != null) {
+            commandsToProcess.add("-cp")
+            commandsToProcess.add(processArgs["classPath"] as String)
+        }
+        commandsToProcess.add(toBeExecutedWorker.name)
+        val port = processArgs["port"] as ServerSocket
+        commandsToProcess.add(port.localPort.toString())
+
+        commandsToProcess.addAll(workerArgs)
+
+        val processBuilder = ProcessBuilder(commandsToProcess)
+        try {
+            process = processBuilder.inheritIO().start()
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+        }
+
+    }
+
+    private fun destroyProcess() {
+        process?.destroy()
+    }
+
+    fun getProcess(): Process? {
+        return process
+    }
+
+    fun execMutationTestProcess(rt: ResultsReceiverThread) {
+        this.start()
+        rt.start()
+        try {
+            rt.waitUntilFinish()
+        } finally {
+            this.destroyProcess()
+        }
+    }
+
+
+    fun createMutationWorkerThread(
+        mutations: List<Mutation>,
+        lineTestsMapping: MutableMap<Int, MutableSet<SerializableTestInfo>>,
+        filteredMuOpNames: List<String>,
+        mutationStorage: MutationStorage
+    ): ResultsReceiverThread {
+        val mutationWorkerArgs =
+            ResultsReceiverThread.MutationWorkerArguments(
+                mutations, lineTestsMapping, processArgs["classPath"] as String, filteredMuOpNames, "")
+        return ResultsReceiverThread(processArgs["port"] as ServerSocket, mutationWorkerArgs, mutationStorage)
+    }
+
+    companion object {
+        fun processArgs(createdAgentLocation: String?, classPath: String): MutableMap<String, Any> {
+            return mutableMapOf(
+                "port" to ServerSocket(0), "javaExecutable" to Configuration.currentConfig!!.jvm,
+                "javaAgentJarPath" to "-javaagent:$createdAgentLocation", "classPath" to classPath
+            )
+        }
+    }
+}

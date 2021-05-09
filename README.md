@@ -38,7 +38,7 @@ then MoCo could be used easily by adding the following information to pom.xml fi
 - To dependencies tag
 ```xml
 <dependency>
-    <groupId>io.moco</groupId>
+    <groupId>io.github.phantran</groupId>
     <artifactId>m0c0-maven-plugin</artifactId>
     <version>1.0-SNAPSHOT</version>
 </dependency>
@@ -47,7 +47,7 @@ then MoCo could be used easily by adding the following information to pom.xml fi
 - To build tag
 ```xml
 <plugin>
-    <groupId>io.moco</groupId>
+    <groupId>io.github.phantran</groupId>
     <artifactId>m0c0-maven-plugin</artifactId>
     <version>1.0-SNAPSHOT</version>
     <executions>
