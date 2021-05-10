@@ -131,8 +131,8 @@ class MoCo : AbstractMojo() {
     /**
      * Set to false to display succinct console messages during MoCo execution
      */
-    @Parameter(defaultValue = "true", property = "verbose", required = false)
-    private val verbose: Boolean = true
+    @Parameter(defaultValue = "false", property = "verbose", required = false)
+    private val verbose: Boolean = false
 
     /**
      * Maximum number of threads to use by the main process of MoCo
@@ -143,8 +143,8 @@ class MoCo : AbstractMojo() {
     /**
      * Set to true to calculate mutation score for each run (this feature is not stable yet)
      */
-    @Parameter(defaultValue = "false", property = "enableMetrics", required = false)
-    private val enableMetrics: Boolean = false
+    @Parameter(defaultValue = "true", property = "enableMetrics", required = false)
+    private val enableMetrics: Boolean = true
 
     /**
      * Turn off to skip storing mutation test results to moco.json file at the end of MoCo execution
