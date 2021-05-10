@@ -4,7 +4,7 @@
 
     <groupId>io.github.phantran</groupId>
     <artifactId>m0c0-maven-plugin</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.0.1</version>
     <packaging>maven-plugin</packaging>
 
     <name>m0c0-maven-plugin Maven Plugin</name>
@@ -53,7 +53,7 @@
         <connection>scm:git:git://github.com/phantran/moco.git</connection>
         <developerConnection>scm:git:git@github.com:phantran/moco.git</developerConnection>
         <url>https://github.com/phantran/moco</url>
-        <tag>HEAD</tag>
+        <tag>1.0.1</tag>
     </scm>
 
     <repositories>
