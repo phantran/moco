@@ -1,12 +1,11 @@
 # MoCo
 
-This is the [m0c0-maven-plugin](http://).
-
 ![example workflow](https://github.com/phantran/moco/actions/workflows/actions.yml/badge.svg)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=phantran_moco&metric=alert_status)](https://sonarcloud.io/dashboard?id=phantran_moco)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.phantran/m0c0-maven-plugin/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/io.github.phantran/m0c0-maven-plugin)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.phantran/m0c0-maven-plugin/badge.svg?style=plastic&gav=true)](https://maven-badges.herokuapp.com/maven-central/io.github.phantran/m0c0-maven-plugin)
 
+This is the [m0c0-maven-plugin](http://).
 
 A Maven plugin written in Kotlin that supports mutation testing for Java projects.
 
@@ -15,7 +14,8 @@ big projects and CI/CD pipelines. MoCo is a mutation testing tool that uses the 
 With the applied optimization, MoCo has good performance, and it can calculate mutation scores without re-running mutation tests for the whole project under test.
 
 MoCo was originally developed to support Gamekins which is a Jenkins plugin that uses a gamification
-approach to motivate software testing activities.
+approach to motivate software testing activities. More information about Gamekins Jenkins plugin can be found here: https://github.com/se2p/gamekins
+
 
 ### Project requirements
 
@@ -40,7 +40,7 @@ While developing MoCo, a quick installation without testing and generating descr
 #### pom.xml
 
 MoCo is available on Maven Central, and it can be used easily by adding the following information to 
-pom.xml file of your project (replace MOCO-VERSION with a MoCo version, e.g. `1.0`):
+pom.xml file of your project (replace MOCO-VERSION with a MoCo version, e.g. `1.0.1`):
 
 - To dependencies tag
 ```xml
@@ -124,7 +124,7 @@ Example: Using 3 threads.
 ```
 
 
-Below is an example configuration that uses MoCo version 1.0, Git Mode ON, mutation score calculation enabled, 
+Below is an example configuration that uses MoCo version 1.0.1, Git Mode ON, mutation score calculation enabled, 
 debug messages logging enabled, test timeout in preprocessing phase (collecting mutations) as 500ms, 
 and use 3 threads for parallel execution:
 
@@ -132,7 +132,7 @@ and use 3 threads for parallel execution:
 <plugin>
     <groupId>io.github.phantran</groupId>
     <artifactId>m0c0-maven-plugin</artifactId>
-    <version>1.0</version>
+    <version>1.0.1</version>
     <configuration>
         <gitMode>true</gitMode>
         <debugEnabled>true</debugEnabled>
@@ -157,13 +157,15 @@ This `moco.json` file contains information about all mutations that MoCo has col
 
 
 #### Configuration 
-Details about more configurable parameters of MoCo will be updated here later. For the moment, you could use
+Details about more configurable parameters of MoCo will be updated here later. At the moment, you could use
 the helpmojo command to learn more about it.
 
 `mvn m0c0:help -Ddetail=true`
 
 ### Contributing
 If you find a problem with MoCo and wanted to fix it, it would be very helpful to create a ticket along with your pull request.
+The ticket in issues should describe clearly what your pull request is about. Please create new branch from the 
+development branch, implement the changes, then create a pull request to development branch after finishing.
 
 ### License
 
